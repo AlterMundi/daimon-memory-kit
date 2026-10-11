@@ -36,6 +36,10 @@ the original HMK metadata. Missing legacy attribution stays missing. Unknown
 selection/source fields remain in inert original sidecars; only known fields have
 implemented behavior.
 
+Expired temporary entries are omitted from every active-view file, including the
+manifest's selection copy. Preserve the original selection outside the view for
+history; otherwise searching that copy would reintroduce expired context.
+
 ```bash
 python3 scripts/codex_projection.py publish --database authorized/library.db \
   --selection selection.json --root isolated-codex-home/memories --writers-stopped

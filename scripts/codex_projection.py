@@ -159,7 +159,8 @@ def render(database, selection, *, now=None):
     files['MEMORY.md'] = ''.join(registry).encode()
     manifest = dict(schema=MANIFEST, native_layout='codex-memory-v1',
                     being_ref=selection['being_ref'], body_ref=selection['body_ref'],
-                    selection_original=selection, source_records=dependencies,
+                    selection_original={**selection, 'temporary_context': active},
+                    source_records=dependencies,
                     temporary_valid_until=min((e['expires_at'] for e in active), default=None),
                     members={name: dict(sha256=sha(data), bytes=len(data))
                              for name, data in sorted(files.items())},

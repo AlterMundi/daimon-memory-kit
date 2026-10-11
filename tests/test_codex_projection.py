@@ -96,6 +96,7 @@ def test_temporary_expiry_requires_refresh_without_canonical_writes(setup, tmp_p
     p.publish(mc.DB_PATH, selection, tmp_path/'late', writers_stopped=True, now=20)
     assert not (tmp_path/'late/temporary_context.md').exists()
     assert '719' not in (tmp_path/'late/memory_summary.md').read_text()
+    assert all('719' not in f.read_text() for f in (tmp_path/'late').rglob('*') if f.is_file())
     assert mc.DB_PATH.read_bytes() == before
 
 
