@@ -115,3 +115,7 @@ and inherited projection. Reworded projected facts are not new experience or
 independent support. This API deliberately does not declare semantic novelty,
 grant another being's authorship, automatically publish private data or turn a
 native file into a signed Matrix event.
+
+## Native receiving evidence
+
+The [bounded native cycle](../research/agent-memory-2026-10-06/pilots/2026-10-11-native-projection-cycle.md) demonstrates stock ephemeral receivers using injected native context and full filesystem originals without an HMK-query instruction. Current human/body bindings must not resolve unnamed historical speakers or participants; the projector carries that constraint without rewriting originals. The cycle retains one genuinely new native lesson, replay, a preference correction, expired-overlay removal and source-free reconstruction. A native-authored note is preserved before refresh, not automatically accepted as a new encounter. This evidence does not qualify every backend method, long-running freshness, or production automatic capture.

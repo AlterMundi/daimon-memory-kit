@@ -134,7 +134,12 @@ def render(database, selection, *, now=None):
                'projects and lessons. Its linked originals retain meaning and uncertainty. '
                'This summary is navigation, not evidence for outcomes: consult full originals '
                'including corrections before making factual claims. Environment and skill '
-               'applicability must be checked against this body.\n']
+               'applicability must be checked against this body.\n'
+               'The current human/body binding is not evidence for historical participants. '
+               'Do not identify an unnamed source speaker, reporter or participant as the current '
+               'human/body: retain unknown attribution unless the original names or identifies them. '
+               'Quoted I/me/we belongs to its source speaker. Keep occurrence dates distinct from '
+               'receipt/correction dates, without inferring missing years.\n']
     dependencies = []
     for item in rows:
         row = item['original']
