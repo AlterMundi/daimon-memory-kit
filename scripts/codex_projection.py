@@ -89,8 +89,31 @@ def load_sources(database, selection):
                 'JOIN chapters dst ON dst.id=l.dst_chapter_id '
                 'WHERE l.src_chapter_id=? OR l.dst_chapter_id=? '
                 'ORDER BY l.src_chapter_id,l.dst_chapter_id,l.link_type', (row['id'], row['id']))]
-            rows.append(dict(original=record, applicability=scope(entry['applicability']),
-                             relationships=relations, selection_original=entry))
+            item = dict(original=record, applicability=scope(entry['applicability']),
+                        relationships=relations, selection_original=entry)
+            evidence = json.loads(record['source_metadata_json']).get('evidence', [])
+            artifacts = []
+            for reference in sorted(set(evidence)):
+                if not reference.startswith('artifact:sha256:'):
+                    continue
+                artifact_id = reference.removeprefix('artifact:sha256:')
+                try:
+                    artifact = con.execute('SELECT envelope_json FROM native_learning_artifacts '
+                                           'WHERE artifact_id=?', (artifact_id,)).fetchone()
+                except sqlite3.OperationalError as exc:
+                    raise ValueError('canonical native artifact missing') from exc
+                if artifact is None:
+                    raise ValueError('canonical native artifact missing')
+                bundle = json.loads(artifact[0])
+                restore_learning(bundle)
+                if bundle['artifact_id'] != artifact_id:
+                    raise ValueError('canonical native artifact identity mismatch')
+                artifacts.append(dict(artifact_id=artifact_id, envelope_sha256=digest(bundle)))
+            if artifacts:
+                # Validate content dependencies without exposing original sessions
+                # in a receiving view. Selected assets can be restored explicitly.
+                item['native_artifact_dependencies'] = artifacts
+            rows.append(item)
         return rows
     finally:
         con.close()

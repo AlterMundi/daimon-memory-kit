@@ -103,6 +103,13 @@ successful replay claim. A failed record update leaves the source payload pendin
 and preserves legitimate current records. Different terminal selection bytes
 require an attributed successor, not an overwrite of the previous decision.
 
+Known `artifact:sha256:` evidence is a content dependency, unlike an ordinary
+world reference. Publication and source verification require its canonical
+envelope and member bytes to verify. The view retains its fingerprint but does
+not expose original native sessions. Restore only selected learned assets into
+the receiving workspace through `load_learning`; the complete archive remains
+in canon.
+
 Deciding whether meaning is genuinely new requires comparison against the source
 and inherited projection. Reworded projected facts are not new experience or
 independent support. This API deliberately does not declare semantic novelty,
