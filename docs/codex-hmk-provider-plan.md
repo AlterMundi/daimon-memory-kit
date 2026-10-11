@@ -2,10 +2,12 @@
 
 ## Selected direction — 2026-10-11
 
-The human prefers a complete HMK-backed replacement for native memory storage,
-with normal Codex memory behavior and the additional durable being-level
-capabilities already qualified in HMK. Two independently maintained active memory
-authorities are not the target. This updates stage five under [issue #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11).
+First understand exactly what native memory does, how Codex uses it and whether
+its products merit preservation or are already adequately served by HMK. The human
+prefers a complete HMK-backed provider if retaining that native behavior proves
+useful. Two independently maintained active memory authorities are not the target,
+and a feature-complete replacement is not yet a committed implementation decision.
+This updates stage five under [issue #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11).
 Stages 1–4 and the Eko/Oliva hosted rollout evidence remain valid.
 
 Feasibility is supported by accessible source and separable read/formation paths;
@@ -69,12 +71,36 @@ not silently discard the original artifact either.
 
 ## Smallest useful next delivery
 
-Inventory the owning call sites and reuse existing backend, extension, state and
-artifact tests. Establish the versioned provider contract and a configurable
-selection point; exercise one real extraction → consolidation → committed HMK
-artifact → fresh native recall path. Compare with native local on identical
-fictional input in separate authorized contexts. An intermediate read-only
-milestone must remain explicitly incomplete.
+Start with the native behavior/value study, not an adapter. The inspected
+[phase-one prompt](https://github.com/openai/codex/blob/cc7ba33601286a751477832b01de7b6f8de0dd9c/codex-rs/memories/write/templates/memories/stage_one_system.md)
+selects user operating preferences, reusable procedures, failure lessons, task maps
+and stable environment knowledge; routine status and low-signal inputs may yield
+empty output. The [read instructions](https://github.com/openai/codex/blob/cc7ba33601286a751477832b01de7b6f8de0dd9c/codex-rs/ext/memories/templates/memories/read_path.md)
+inject a summary and guide selective lookup of the registry, learned skills and
+source evidence. These instructions establish intended behavior, not observed
+quality, actual lookup frequency or benefit.
+
+Use a bounded fictional native experiment to observe source eligibility and
+timing, actual extraction/consolidation products, injection, tool/file lookups,
+citations/usage and subsequent pruning. Include a lasting preference, reusable
+failure lesson, ordinary meaningful shared episode and temporary project status.
+Compare fresh-task behavior with and without the generated memory under matching
+conditions: repeated human instructions avoided, useful learned procedures,
+correct attribution, tool work and costs. Preserve the test outputs as evidence;
+do not infer value solely because a summary file exists.
+
+Produce an explicit decision: which native products are part of worthwhile being
+learning, which are temporary working context, which are redundant with HMK, and
+which useful behavior would require an actual provider change. The study may
+justify complete replacement, a narrower integration or no native adoption. A
+negative finding must not be manufactured by treating all workflow learning as
+disposable, and feasibility alone does not justify building a complete adapter.
+
+Only if replacement is selected, inventory the remaining owning call sites and
+reuse existing backend, extension, state and artifact tests. Establish the
+versioned provider contract and configurable selection; exercise one actual
+extraction → consolidation → committed HMK artifact → fresh native recall path
+against the native baseline. A read-only milestone remains explicitly incomplete.
 
 Then close the remaining parity rows with focused cases, source loss, aging,
 corrections, replay, failure and copied-store new-writing/rollback witnesses.
@@ -84,7 +110,7 @@ separately. Propose reusable extension points upstream after a coherent working
 change; acceptance by upstream is not a prerequisite for demonstrating our adapter.
 Evaluate the actual patch size and upgrade burden before claiming a small fork.
 
-The current request selects and documents this direction; no runtime is enabled
+The current request selects and documents this investigation; no runtime is enabled
 here. Production native memory remains disabled. Real-corpus formation, automatic
 injection and any new background work require an explicit receiving scope under
 the next implementation goal. Private sessions, other beings and signed Matrix
