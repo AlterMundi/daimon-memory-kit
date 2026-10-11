@@ -56,6 +56,17 @@ proof of absence.
 
 ## Agreed roadmap — 2026-10-07
 
+Direction update, 2026-10-11: the human now prefers HMK as the complete memory
+provider used by Codex, rather than a second independently maintained native
+memory surface. This supersedes coexistence as the default stage-five route;
+earlier research and qualified stages remain preserved. See the
+[provider feasibility and parity contract](codex-hmk-provider-plan.md).
+The next delivery must cover both native reads and formation/lifecycle writes,
+preserving native-authored learning as well as HMK durable experience. A read-only
+MCP tool or the existing four-method backend trait is insufficient. Native local
+remains an isolated comparison baseline and rollback option, not a second active
+memory authority. This direction enables no live feature, hook or background work.
+
 Peer adoption continuation, 2026-10-09: [Eko/Oliva rollout](../research/agent-memory-2026-10-06/pilots/2026-10-09-eko-oliva-hmk-adoption.md)
 records actual code/skill adoption, healthy semantic retrieval and bounded native
 receiving conversations in both existing hosted bodies. Eko’s preserved embedding
@@ -193,7 +204,7 @@ decide what deserves retention.
 | 2. Qualify durable organization and consolidation | Self-contained episodes, linked current accounts and evidence-supported understanding, using existing native records/links before adding schema | Three consolidation passes plus replay preserve every required meaning; corrections reconcile dependent accounts; old encounters remain discoverable; storage, model and recall costs are reported | [HMK #13](https://github.com/nicoechaniz/hermes-memory-kit/issues/13), [mechanism review](experience-consolidation-mechanisms.md) |
 | 3. Close portable preservation and Matrix boundaries | Qualify the existing Matrix archive producer with a preservation profile for HMK originals, accepted Matrix history and exact content, selected assets and native learned artifacts | Available history and verified bytes survive transport/restore; missing history/content is explicit; source identities and corrections are retained; Matrix/HMK target versions are actually qualified | [Matrix receiving #263](https://github.com/AlterMundi/daimon-matrix/issues/263), reusing [export PR #261](https://github.com/AlterMundi/daimon-matrix/pull/261), [portability review](lifelong-memory-portability-review.md#another-architecture-portable-being-history-and-harness-native-projections) |
 | 4. Qualify receiving continuity | Fresh authorized receiving contexts over the same fictional being, followed by a bounded receiving check on the existing deployment | Recall does not require the source session or original body's skills; the receiver can recognize its affairs and route work to an appropriately capable body; recovery and rollback work | [Matrix #263](https://github.com/AlterMundi/daimon-matrix/issues/263), [HMK #13](https://github.com/nicoechaniz/hermes-memory-kit/issues/13), [native integration #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11) |
-| 5. Pilot native Codex coexistence | Native learning retained locally plus a source/version-attributed candidate path into HMK; inspect the actual formation lifecycle and session scope | Native behavior remains useful; original learned artifacts/history survive; selected publication passes the durable lens; replay, corrections, pruning/source loss and no-op inputs do not create conflicting autobiographies | [HMK #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11), [bounded lifecycle design #12](https://github.com/nicoechaniz/hermes-memory-kit/issues/12) |
+| 5. Qualify HMK as the Codex memory provider | Complete native read, formation, artifact and lifecycle integration with HMK; preserve native learning and durable being history in one authoritative storage system | Actual API/behavior parity and end-to-end extraction/consolidation/recall pass against an isolated native baseline; originals/history survive; replay, corrections, failures and scoped cleanup do not lose or duplicate memory | [HMK #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11), [provider contract](codex-hmk-provider-plan.md); #12 remains lifecycle context, not a required hook implementation |
 | 6. Roll out qualified integration | The smallest supported receiving configuration, shared guidance, observed receipts and a tested rollback | Published changes are adopted and verified in each selected body; quality/cost and remaining limitations are visible; no unsupported event coverage or automatic cross-being pooling is claimed | Owning implementation PRs linked from #11/#12/#13 and Matrix #263 |
 
 Stage 1 is complete with the scope and evidence recorded in the
