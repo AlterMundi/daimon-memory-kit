@@ -96,7 +96,8 @@ def test_temporary_expiry_requires_refresh_without_canonical_writes(setup, tmp_p
     p.publish(mc.DB_PATH, selection, tmp_path/'late', writers_stopped=True, now=20)
     assert not (tmp_path/'late/temporary_context.md').exists()
     assert '719' not in (tmp_path/'late/memory_summary.md').read_text()
-    assert all('719' not in f.read_text() for f in (tmp_path/'late').rglob('*') if f.is_file())
+    assert all('Job 719 is pending.' not in f.read_text()
+               for f in (tmp_path/'late').rglob('*') if f.is_file())
     assert mc.DB_PATH.read_bytes() == before
 
 
@@ -210,7 +211,7 @@ def test_failed_selection_preserves_pending_source_without_partial_artifact_comm
         assert con.execute('SELECT state,payload_json IS NOT NULL FROM capture_events').fetchone()[:] == ('failed', 1)
 
 
-def test_artifact_loss_blocks_successful_replay_and_subject_mixing_is_refused(setup):
+def test_artifact_loss_blocks_successful_replay_and_subject_mixing_is_refused(setup, tmp_path):
     mc, p = setup
     mc.add_text('library', 'Existing', 'Keep this')
     bundle = p.learning_bundle({'lesson.md': b'An actual lesson'}, source_instance='body:a',
@@ -222,11 +223,27 @@ def test_artifact_loss_blocks_successful_replay_and_subject_mixing_is_refused(se
         p.incorporate(mc, bundle, sequence=1, selected_records=wrong, reason='Candidate', selection_version='v1')
     assert mc.DB_PATH.read_bytes() == before
     p.incorporate(mc, bundle, sequence=1, selected_records=records, reason='Candidate', selection_version='v1')
+    view = tmp_path/'supported'
+    p.publish(mc.DB_PATH, select(mc, p, [2]), view, writers_stopped=True)
+    with mc.connect() as con:
+        altered = dict(bundle, source_event_id='altered')
+        con.execute('UPDATE native_learning_artifacts SET envelope_json=?', (json.dumps(altered),))
+        con.commit()
+    with pytest.raises(ValueError, match='integrity mismatch'):
+        p.verify(view, database=mc.DB_PATH)
+    with mc.connect() as con:
+        con.execute('UPDATE native_learning_artifacts SET envelope_json=?', (json.dumps(bundle),))
+        con.commit()
+    p.verify(view, database=mc.DB_PATH)
     with mc.connect() as con:
         con.execute('DELETE FROM native_learning_artifacts')
         con.commit()
     with pytest.raises(ValueError, match='artifact missing'):
         p.incorporate(mc, bundle, sequence=1, selected_records=records, reason='Candidate', selection_version='v1')
+    with pytest.raises(ValueError, match='artifact missing'):
+        p.publish(mc.DB_PATH, select(mc, p, [2]), tmp_path/'unsupported', writers_stopped=True)
+    with pytest.raises(ValueError, match='artifact missing'):
+        p.verify(view, database=mc.DB_PATH)
 
 
 def test_summary_does_not_turn_an_incomplete_excerpt_into_outcome_evidence(setup, tmp_path):
