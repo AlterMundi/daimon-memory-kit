@@ -66,8 +66,19 @@ its `gpt-6.1-sol` request is rejected while the installed 0.160.0 request succee
 with the same account. The persistent guard therefore uses advertised OpenAI
 Codex `gpt-5.6-sol` low solely for the startup-control witness. This is separate
 from the main Sol 6.1 comparison, not proof of identical model access or performance.
-Memory-write regression checks and fork publication are recorded in the owning
-delivery; do not treat this as a production binary rollout.
+The owning change is published in [Codex fork PR #1](https://github.com/compaii/codex/pull/1)
+and merged at `04269e4e5dd8dfb063cdcebf146c377a6da6eb83` against the qualified
+`34f33e4` baseline. Upstream's contribution policy does not
+accept external code PRs. Schema generation, configuration independence,
+disabled-startup preservation and default-startup regression checks pass; the
+CLI compiles. The memory-write tests use the repository/CI-prescribed
+`RUST_MIN_STACK=8388608`. The first invocation without it compiled but aborted
+with test-thread stack overflow; it remains preserved, and no source or assertion
+change was needed for the targeted retry. Do not treat this as a production
+binary rollout.
+The independent startup seam is proposed upstream as
+[Codex #53041](https://github.com/openai/codex/issues/53041); proposal does not
+establish upstream acceptance.
 
 ## Preservation, costs and continuation
 
@@ -101,3 +112,11 @@ configuration rollback. Do not enable production automatic memory, install hooks
 reconsolidate the valid corpus or resume stopped queues merely because this bounded
 cycle works. Matrix admission and full direct-provider parity retain their own
 contracts.
+
+The coordinator should reuse `codex_projection.py`'s `publish`/`verify`,
+`learning_bundle`/`incorporate` and CaptureLedger's replay receipts. Bind the
+receiving HMK environment before transitive memory imports. Preserve native
+changes before replacing a view, and keep stable source-event IDs and the inherited
+projection manifest so projected recollections cannot become new experiences.
+Start with one selected persistent fictional profile; real-corpus rollout and
+automatic lifecycle coverage require their own receiving scope and evidence.
