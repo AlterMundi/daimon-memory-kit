@@ -45,7 +45,7 @@ needed; the already qualified new note is reused.
 | Transport/content closure | The verified 3,350,528-byte SQLite checkpoint is copied into a clean destination with identical hash `984f3071c6326fc309233525467055d8a4e34825691a4f223a87a36f4a093764`. Integrity passes. Missing native artifact content and an altered envelope are detected, then restored from exact retained bytes. |
 | Actual expiry | The original overlay expires under the unchanged real clock. Rebuilt files and manifest omit its branch/job text. No timer or clock rewrite is used. |
 | Fresh receiving | The reconstructed receiver has 24 selected records and only the restored script asset, not source sessions. It recalls the old encounter and corrected failure, writes a decision-first report under the revised preference, remembers the prior exit2 separately, executes the appropriate limited check, and leaves temporary branch/job state unknown. |
-| Recovery boundary | The new lesson remains accessible through current HMK; the pre-intake backup lacks it and must not replace the current canon for configuration rollback. Older stale views are refused. Native changes are preserved before publishing a fresh view. |
+| Recovery boundary | The new lesson remains accessible through current HMK; the pre-intake backup lacks it and must not replace the current canon for configuration rollback. Effective native configuration rollback disables memory use; current HMK still contains the new lesson and original artifact. Older stale views are refused. Native changes are preserved before publishing a fresh view. |
 
 The available native note bytes and observed resulting file are retained; do not
 claim that the receiving protocol exposes every dedicated-tool invocation.
