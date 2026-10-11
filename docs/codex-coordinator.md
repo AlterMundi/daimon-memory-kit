@@ -111,3 +111,25 @@ it is not a new freshness check. Use a new explicitly selected operation to
 preserve that work and renew the view. Keep startup processing disabled in the
 qualified persistent build. No automatic lifecycle coverage follows from this
 foreground procedure.
+
+## Persistent receiving qualification
+
+The [stage-six receiving report](../research/agent-memory-2026-10-06/pilots/2026-10-11-persistent-codex-coordinator.md)
+qualifies the explicit coordinator with OpenAI Codex Sol6.1 low on the labelled
+`0.160.0-hmk.1` fork. Actual process restart, new note capture, post-commit fault
+and replay, source correction, real expiry, fresh-thread action, clean restoration
+and configuration rollback pass. Production remains manual.
+
+Use an accurate persistent binding: original historical/private sessions are
+absent, but the isolated home's own native session history may remain. Their
+presence grants neither current world-state evidence nor capabilities. Changing
+resume parameters was not sufficient to correct the tested old binding claim;
+start a fresh thread when changing that receiving definition. The rejected
+review is retained separately from the effective correction.
+
+The coordinator requires quiesced writers. It detects drift but does not merge
+concurrent writes or replace immutable pending selections. If canon changes
+while a frozen operation remains pending, preserve both states and reconcile it
+explicitly; automatic replan/cancel and existing-thread context replacement are
+not qualified. Do not start an unverified view as a fallback. An expired overlay
+must be removed by a verified renewal before fresh receiving use.
