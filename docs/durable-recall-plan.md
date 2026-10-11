@@ -56,18 +56,22 @@ proof of absence.
 
 ## Agreed roadmap — 2026-10-07
 
-Direction update, 2026-10-11: first characterize exactly what native Codex memory
-produces, how Codex uses it and which results merit preservation. If that behavior
-is useful to retain, the human prefers HMK as its complete provider rather than a
-second independently maintained native memory surface. Do not commit to a full
-replacement before that value decision. This supersedes coexistence as the default
-stage-five route; earlier research and qualified stages remain preserved. See the
-[provider feasibility and parity contract](codex-hmk-provider-plan.md).
-Any complete provider delivery must cover both native reads and formation/lifecycle writes,
-preserving native-authored learning as well as HMK durable experience. A read-only
-MCP tool or the existing four-method backend trait is insufficient. Native local
-remains an isolated comparison baseline and rollback option, not a second active
-memory authority. This direction enables no live feature, hook or background work.
+Direction update, 2026-10-11: canonical being memory is independent of its storage
+implementation. HMK is the current store/retrieval implementation; a selected
+harness can use a versioned projection into its native memory. Preserve exact
+contents and history with accepted Matrix lanes; existing HMK-native records are
+not silently admitted. Separate body of origin, applicability and current body
+capabilities. Keep clearly temporary context outside durable chapters.
+The next delivery qualifies one real canonical → Codex projection → new learning
+→ canonical incorporation → rebuilt projection cycle with fictional sources.
+Resolve native integration questions through bounded diagnostics, then implement
+the path. A complete external provider remains an optional route, with its full
+read/write/lifecycle parity requirements; it is not the architectural objective.
+See the [projection plan and provider contract](codex-hmk-provider-plan.md).
+No two independently maintained authorities for the same experience, automatic
+admission or live memory activation follows from this direction. Automatic use
+through the native context path belongs initially to an explicitly selected test
+profile; production manual access remains unchanged.
 
 Peer adoption continuation, 2026-10-09: [Eko/Oliva rollout](../research/agent-memory-2026-10-06/pilots/2026-10-09-eko-oliva-hmk-adoption.md)
 records actual code/skill adoption, healthy semantic retrieval and bounded native
@@ -185,10 +189,10 @@ The
 [revision headroom diagnostic](../research/agent-memory-2026-10-06/pilots/2026-10-08-narrative-revision-headroom.md)
 records the final guidance and its observed trigger. Stage two is not complete.
 
-The human selected the next implementation direction: retain HMK as the current
-durable-memory store, bring useful researched mechanisms into it, and then test
-native Codex memory alongside it. Alternative systems remain documented options;
-deploying or benchmarking them is not a prerequisite for these improvements.
+The human selected HMK as the current durable store while preserving an
+implementation-independent canon and qualifying harness-native projections.
+Alternative systems remain documented options; deploying or benchmarking them
+is not a prerequisite for these improvements.
 This section orders the remaining work; the older P0–P6 labels below identify
 components and historical deliveries, not a competing roadmap.
 
@@ -206,7 +210,7 @@ decide what deserves retention.
 | 2. Qualify durable organization and consolidation | Self-contained episodes, linked current accounts and evidence-supported understanding, using existing native records/links before adding schema | Three consolidation passes plus replay preserve every required meaning; corrections reconcile dependent accounts; old encounters remain discoverable; storage, model and recall costs are reported | [HMK #13](https://github.com/nicoechaniz/hermes-memory-kit/issues/13), [mechanism review](experience-consolidation-mechanisms.md) |
 | 3. Close portable preservation and Matrix boundaries | Qualify the existing Matrix archive producer with a preservation profile for HMK originals, accepted Matrix history and exact content, selected assets and native learned artifacts | Available history and verified bytes survive transport/restore; missing history/content is explicit; source identities and corrections are retained; Matrix/HMK target versions are actually qualified | [Matrix receiving #263](https://github.com/AlterMundi/daimon-matrix/issues/263), reusing [export PR #261](https://github.com/AlterMundi/daimon-matrix/pull/261), [portability review](lifelong-memory-portability-review.md#another-architecture-portable-being-history-and-harness-native-projections) |
 | 4. Qualify receiving continuity | Fresh authorized receiving contexts over the same fictional being, followed by a bounded receiving check on the existing deployment | Recall does not require the source session or original body's skills; the receiver can recognize its affairs and route work to an appropriately capable body; recovery and rollback work | [Matrix #263](https://github.com/AlterMundi/daimon-matrix/issues/263), [HMK #13](https://github.com/nicoechaniz/hermes-memory-kit/issues/13), [native integration #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11) |
-| 5. Characterize native memory and qualify justified HMK integration | Observe native formation, use and value first; then qualify a complete HMK provider only if the decision supports it | Native outputs and their behavioral effects are measured; preserve worthwhile original learning. If replacement is selected, actual API/lifecycle parity and end-to-end recall pass without losing existing HMK history or maintaining two active memory authorities | [HMK #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11), [value decision and provider contract](codex-hmk-provider-plan.md); #12 remains lifecycle context, not a required hook implementation |
+| 5. Qualify canonical memory and native projections | Resolve native integration seams, then implement a bounded Codex projection and new-learning return cycle; a complete provider is an optional implementation route | An actual fresh native receiver uses projected memory; new learning retains its origin; correction, replay, expiry, source-free reconstruction and rollback pass without two authorities or loss of canonical originals. Direct-provider parity is claimed only if independently completed | [HMK #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11), [projection plan and optional provider contract](codex-hmk-provider-plan.md); #12 remains lifecycle context, not a required hook implementation |
 | 6. Roll out qualified integration | The smallest supported receiving configuration, shared guidance, observed receipts and a tested rollback | Published changes are adopted and verified in each selected body; quality/cost and remaining limitations are visible; no unsupported event coverage or automatic cross-being pooling is claimed | Owning implementation PRs linked from #11/#12/#13 and Matrix #263 |
 
 Stage 1 is complete with the scope and evidence recorded in the
@@ -395,23 +399,24 @@ a separately tested adapter claim, not a new authority or an established standar
 Preserve unknown destination fields or retain the original sidecar when a
 consumer cannot round-trip them. Inventory already-unavailable history honestly.
 
-For coexistence, native Codex owns its harness-specific learning/working context,
-native session state owns conversation continuity, and HMK provides selected
-durable cross-body recall under the authority boundaries above. Native authored
-learning is also part of the being's delta: retain its originals and available
-history independently of the HMK selection. Promote selected candidates with
-source/event/version links; do not run bidirectional inference loops or let two
-systems independently rewrite the same autobiographical account. Preserve native
-artifacts before any cleanup that would discard them.
+For the selected projection architecture, native session state owns conversation
+continuity and native memory guides action through a versioned view of canonical
+memory. Native authored learning can add to the being's delta: preserve originals
+and available history before cleanup, incorporate eligible new learning with
+source/event/version links and refresh the view. Projection-derived text is not
+a new encounter or independent corroboration. Do not let two systems independently
+rewrite the same autobiographical account. Temporary working context has a
+separate explicit lifecycle and does not automatically become durable memory.
 
 The native pilot begins with the existing fictional corpus and an isolated home
 only to prevent discovery of unrelated private histories. Verify the installed
 Codex version, extraction/consolidation mode, producer controls and actual event
 coverage. A read backend, PostToolUse or PreCompact handler alone is not evidence
-of interception of the native memory writer. Prefer controlled coexistence;
-consider a full backend adapter only for a demonstrated missing behavior that
-justifies maintaining it. Live adoption retains the current manual-access
-boundary unless explicitly changed through the receiving body's instructions.
+of interception of the native memory writer. Qualify supported native projection
+publication or the necessary upstream seam; consider a full backend adapter only
+for a demonstrated requirement that justifies maintaining it. Live adoption
+retains the current manual-access boundary unless explicitly changed through the
+receiving body's instructions.
 
 ### Scope and delivery
 

@@ -1,12 +1,20 @@
-# HMK as the Codex memory provider
+# Canonical being memory and Codex projections
 
 ## Selected direction — 2026-10-11
 
-First understand exactly what native memory does, how Codex uses it and whether
-its products merit preservation or are already adequately served by HMK. The human
-prefers a complete HMK-backed provider if retaining that native behavior proves
-useful. Two independently maintained active memory authorities are not the target,
-and a feature-complete replacement is not yet a committed implementation decision.
+The human clarified the architectural target: preserve a being's canonical
+memory independently of HMK or any harness, then project it into the memory
+implementation selected for an embodiment. HMK is the current durable store and
+retrieval implementation, not the definition of that memory. Codex may use its
+native memory surface as a projection; a complete external provider is one
+possible implementation route, not the required outcome. Two independently
+maintained authorities for the same memory are not the target.
+
+Preferences, procedures, meaningful experiences and failure lessons are valuable
+being memory. Environment knowledge needs an explicit applicability scope, not
+just a body-of-origin label. The next investigation should resolve concrete
+projection and capture decisions, then produce a bounded working path; it should
+not reopen the general value question indefinitely.
 This updates stage five under [issue #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11).
 Stages 1–4 and the Eko/Oliva hosted rollout evidence remain valid.
 
@@ -17,6 +25,65 @@ checkout is `34f33e4ada8f417203d87f3b5858c97add8dad6b`; upstream main was indepe
 fetched at `cc7ba33601286a751477832b01de7b6f8de0dd9c` without replacing that checkout.
 Relevant production read/write/state memory paths are unchanged between those commits;
 the inspected config delta adds a TUI option and no memory provider selector.
+
+## Canonical preservation is not just the ledger
+
+The inspected [DM-034 contract](https://github.com/AlterMundi/daimon-matrix/blob/8874f5cf5599b6531bb0ab62688ab2ea65b34e7e/docs/dm034-memory-projection.md)
+already makes Matrix authoritative for accepted personal-memory lanes and HMK
+their derived retrieval view. This is an existing boundary to reuse, not evidence
+that all current HMK records have been admitted. Its per-embodiment provenance
+names the original assertion's body; that does not establish where a remembered
+environment or skill is applicable or currently available.
+
+The portable canon needs accepted ledger history **and** exact referenced
+contents, available revisions, original learned artifacts, source attribution and
+corrections/retractions. The [qualified preservation procedure](https://github.com/AlterMundi/daimon-matrix/blob/8874f5cf5599b6531bb0ab62688ab2ea65b34e7e/docs/runbooks/memory-preservation.md)
+already preserves these distinct materials together. A ledger/hash without its
+payload cannot reconstruct memory. An embedding or a summary is not its backup.
+
+During transition, existing HMK-native originals/history retain their current
+status. Exporting them does not admit them into Matrix, and an adapter must not
+silently replace their authority or invent signed authorship. Reuse the existing
+admission/source-decision contracts for any later migration; do not build another
+competing ledger. The first projection experiment can use a fictional HMK-native
+canon while retaining accepted Matrix records under their established boundary.
+
+## Projection and working context
+
+| Material | Role and lifecycle |
+|---|---|
+| Selected durable experience and learning | Canonical originals and history; retain meaning, participants, dates, outcomes, uncertainty and evidence. |
+| Harness memory projection | Versioned native summaries, registry, topic files and learned artifacts derived from selected canon. Track source IDs/revisions, projector version and omissions; rebuild without original sessions. |
+| Clearly temporary context | Local working material with explicit lifetime/invalidation and scope. May survive a restart if needed; do not publish it as durable chapters by default. |
+
+A summary is not intrinsically temporary: its lifecycle follows its sources and
+purpose. Canonical correction makes affected derived summaries stale. Expiring a
+temporary overlay or resetting one harness view must not erase canonical memory.
+Publishing an engineering report is distinct from admitting its contents as a
+being's experience.
+
+Keep body of origin separate from applicability: some learning is being-wide,
+some applies to a project, environment, body or capability. Existing HMK-native
+source metadata can name `source_instance`, but is optional and does not itself
+provide a complete applicability contract. Preserve unknown legacy provenance as
+unknown; introduce only a demonstrated versioned extension. Remembering that an
+older body had a skill must not claim that the receiving body can execute it.
+
+The native context contributor could consume a materialized native projection,
+or be routed to a provider returning budgeted HMK context. Both must lead to
+ordinary Codex memory use without an explicit human request to search HMK on each
+task, **in the selected opt-in test profile**. Native summary injection is already
+implemented; reading HMK automatically through an external connector is not.
+Use the harness's actual context path, not an unqualified extra prompt or hook.
+
+Native formation may produce new original learning. Preserve that output and its
+origin before native cleanup, evaluate it for canonical incorporation, then
+refresh the projection. The projection manifest must distinguish inherited
+content from genuinely new output. Re-reading, copying or re-summarizing a
+projection is not another encounter, independent corroboration or new authorship.
+Detect stale/conflicting corrections rather than importing the latest file as
+truth. Exact artifact preservation does not require treating temporary work files
+as lifelong autobiographical chapters.
 
 ## What already exists and what is missing
 
@@ -37,7 +104,12 @@ trait methods or installing an MCP tool would leave these paths unredirected.
 The [official memory controls](https://learn.chatgpt.com/docs/customization/memories)
 describe generation/use and model settings, not a documented external provider.
 
-## Proposed implementation boundary
+## Optional direct-provider implementation boundary
+
+The requirements below apply if the experiment selects direct provider
+replacement. A native projection is another valid route if it meets canonical
+preservation, new-learning capture and receiving-use requirements. Materializing
+files is not itself proof of supported publication, interception or feature parity.
 
 Add a selectable provider boundary in the owning Codex components, retaining the
 existing local implementation as its default. The HMK adapter should initially
@@ -69,9 +141,9 @@ roles within HMK. Preserving a native learning artifact does not automatically
 classify every temporary detail as autobiography; applying the durable lens must
 not silently discard the original artifact either.
 
-## Smallest useful next delivery
+## Smallest useful next delivery: one complete projection cycle
 
-Start with the native behavior/value study, not an adapter. The inspected
+Start with a short native integration diagnostic. The inspected
 [phase-one prompt](https://github.com/openai/codex/blob/cc7ba33601286a751477832b01de7b6f8de0dd9c/codex-rs/memories/write/templates/memories/stage_one_system.md)
 selects user operating preferences, reusable procedures, failure lessons, task maps
 and stable environment knowledge; routine status and low-signal inputs may yield
@@ -80,35 +152,40 @@ inject a summary and guide selective lookup of the registry, learned skills and
 source evidence. These instructions establish intended behavior, not observed
 quality, actual lookup frequency or benefit.
 
-Use a bounded fictional native experiment to observe source eligibility and
-timing, actual extraction/consolidation products, injection, tool/file lookups,
-citations/usage and subsequent pruning. Include a lasting preference, reusable
-failure lesson, ordinary meaningful shared episode and temporary project status.
-Compare fresh-task behavior with and without the generated memory under matching
-conditions: repeated human instructions avoided, useful learned procedures,
-correct attribution, tool work and costs. Preserve the test outputs as evidence;
-do not infer value solely because a summary file exists.
+1. Pin the actual installed/source versions and inspect native publication,
+   writer selection and context call sites. Resolve whether native materialization
+   can meet the contract through supported seams or needs a small upstream change.
+   Observe real injection/lookup and formation; intended prompts alone are not
+   evidence. Stop the diagnostic when that implementation choice is resolved.
+2. Define a versioned projection manifest and use the existing qualified fictional
+   corpus. Include a lasting preference, weak-cue encounter, failure lesson,
+   corrected outcome, body-specific environment/skill and temporary project state.
+   Preserve source IDs/revisions and originals; keep hidden rubrics outside the
+   receiving context. Reuse existing serialization, snapshot and preservation APIs.
+3. Materialize or serve one Codex projection and run a fresh actual native receiver
+   without source sessions. Compare the same tasks with memory disabled. Measure
+   useful action and faithful recall, not just files or citations: ordinary task
+   prompts must demonstrate memory use without instructing it to query HMK.
+4. Obtain one genuinely new native learning artifact, preserve its original,
+   incorporate eligible learning into the fictional canon through the authorized
+   source path and refresh the projection. Replay must not duplicate experience.
+   If native eligibility/formation cannot run under the chosen controls, report
+   the gap and change that component; do not substitute a simulated writer.
+5. Correct a source, rebuild the affected view, remove original sessions/native
+   view and reconstruct from preserved canon. Verify recall, stale-source handling,
+   temporary-context expiry, loss/alteration detection and safe new-writing/
+   rollback without losing legitimate subsequent memories.
 
-Produce an explicit decision: which native products are part of worthwhile being
-learning, which are temporary working context, which are redundant with HMK, and
-which useful behavior would require an actual provider change. The study may
-justify complete replacement, a narrower integration or no native adoption. A
-negative finding must not be manufactured by treating all workflow learning as
-disposable, and feasibility alone does not justify building a complete adapter.
+Record preservation, projection coverage/losses, capture, behavioral fidelity,
+context size, calls, times and known/unknown costs separately. Each diagnostic
+must decide an implementation question; do not repeat valid consolidations or
+open-ended prompt/model sweeps. Publish coherent changes in their owning repository
+and reuse existing extension/state tests. A thin working cycle does not establish
+full direct-provider parity, another harness's compatibility or lifelong recall.
 
-Only if replacement is selected, inventory the remaining owning call sites and
-reuse existing backend, extension, state and artifact tests. Establish the
-versioned provider contract and configurable selection; exercise one actual
-extraction → consolidation → committed HMK artifact → fresh native recall path
-against the native baseline. A read-only milestone remains explicitly incomplete.
-
-Then close the remaining parity rows with focused cases, source loss, aging,
-corrections, replay, failure and copied-store new-writing/rollback witnesses.
-Reuse the qualified fictional corpus; do not repeat valid HMK consolidations.
-Record parity, durable selection, narrative fidelity, preservation and costs
-separately. Propose reusable extension points upstream after a coherent working
-change; acceptance by upstream is not a prerequisite for demonstrating our adapter.
-Evaluate the actual patch size and upgrade burden before claiming a small fork.
+The next delivery should yield measured evidence, working code and an explicit
+route decision. Expand direct-provider parity only if needed; propose reusable
+Codex seams upstream after a working change, and measure actual upgrade burden.
 
 The current request selects and documents this investigation; no runtime is enabled
 here. Production native memory remains disabled. Real-corpus formation, automatic
