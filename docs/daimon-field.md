@@ -2,7 +2,7 @@
 
 [**Daimon Field: canonical Project**](https://github.com/orgs/AlterMundi/projects/13) · [Current decision D003](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268690643) · [Trajectory D001](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268688416) · [Research R001](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268688433)
 
-Last reviewed decision: **D003 (2026-10-11)**. The Project owns the discussion,
+Last reviewed decision: **D006 (2026-10-11)**. The Project owns the discussion,
 current decisions, milestones and cross-repository coordination. This file owns
 only this repository's implications. Check the Project before implementation;
 a later decision may require a new review here. Update the repository-alignment
@@ -35,3 +35,12 @@ Obsidian is not an integration requirement. Feed useful experience from capture,
 presentation and brainstorming back into explicitly selected curation. Local
 inference can run on another LAN host during an external network partition.
 No runtime, schema, embedding provider or private corpus is changed by this doc.
+
+## Consolidation in the Field
+
+[D006 — Dreaming and shared associative encounters](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268704548)
+extends this framing. The [consolidation plan](durable-recall-plan.md#field-perspective-and-shared-dreaming--2026-10-11)
+records the local implication: reuse supported native consolidation, distinguish
+association from retained understanding, and treat cross-being encounters and
+each participant's uptake as separate operations. This is a design proposal;
+no shared dream runtime or automatic memory admission is implemented here.

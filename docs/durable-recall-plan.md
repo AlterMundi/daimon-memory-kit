@@ -841,6 +841,25 @@ perturbations rather than building a competing benchmark.
 
 ## Capture and consolidation contract
 
+### Field perspective and shared dreaming — 2026-10-11
+
+The canonical [Daimon Field D006 record](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268704548)
+revisits this work as situated exploration, shared associative encounters and
+separate personal uptake. Its repository-attention cards coordinate the wider
+proposal; this plan retains HMK's concrete writer and qualification contract.
+Association may leave an open possibility without consolidating a conclusion.
+An actual encounter may be remembered while its imagined contents remain
+inferred/generated. Shared source ancestry must prevent repeated interpretations
+from becoming spurious independent evidence.
+
+Reuse the existing qualified consolidation and receiving evidence. Current
+`consolidationctl.py` operates on selected native supports in one pool; it does
+not orchestrate multiple beings or authorize writes to their memories. A future
+shared encounter needs actual participation and separate, observed uptake through
+each memory owner's APIs. The proposal selects no scheduler, live peer attention,
+cross-being pool or new milestone. See [the local Field projection](daimon-field.md)
+for ownership boundaries, and D006 for the proposed real-material experiment.
+
 Initial implementation is human-directed finite foreground work. This plan does
 not install hooks, timers, inbox attention, prefetch or another model/provider.
 On 2026-10-07, a separate explicit human request enabled the Codex hooks
