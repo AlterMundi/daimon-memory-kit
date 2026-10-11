@@ -18,9 +18,9 @@ not reopen the general value question indefinitely.
 This updates stage five under [issue #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11).
 Stages 1–4 and the Eko/Oliva hosted rollout evidence remain valid.
 
-Feasibility is supported by accessible source and separable read/formation paths;
-implementation, feature parity, maintenance cost and upstream acceptance are not
-yet demonstrated. The installed CLI checked today is 0.160.0. The existing source
+The bounded implementation and receiving evidence are linked below. Full feature
+parity, upgrade cost and upstream acceptance remain unqualified. The installed CLI
+checked today is 0.160.0. The existing source
 checkout is `34f33e4ada8f417203d87f3b5858c97add8dad6b`; upstream main was independently
 fetched at `cc7ba33601286a751477832b01de7b6f8de0dd9c` without replacing that checkout.
 Relevant production read/write/state memory paths are unchanged between those commits;
@@ -195,8 +195,18 @@ admission remain outside an adapter's authority.
 
 ## Actual native formation diagnostic — 2026-10-11
 
-The [native formation diagnostic](../research/agent-memory-2026-10-06/pilots/2026-10-11-codex-native-formation-diagnostic.md) now observes real extraction and consolidation after the unchanged one-hour source idle threshold. App-server startup processing requires the first turn; thread creation alone was not a trigger. Generated learning retains failed attempts and the argument-only limit of the local pass. Exact outputs, available history and original fictional source bytes are preserved separately from receiving projections. The source predates projection use, so this is not yet the closed return cycle. Finish the owning Codex startup-control checks and the prepared comparable receivers, then qualify actual new-learning intake and reconstruction. Production automatic memory remains off.
+The [native formation diagnostic](../research/agent-memory-2026-10-06/pilots/2026-10-11-codex-native-formation-diagnostic.md) observes real extraction and consolidation after the unchanged one-hour source idle threshold. App-server startup processing requires the first turn; thread creation alone was not a trigger. Generated learning retains failed attempts and the argument-only limit of the local pass. Exact outputs, available history and original fictional source bytes are preserved separately from receiving projections. This independent source predates projection use; the subsequent closed return cycle below supplies that separate evidence. Production automatic memory remains off.
 
 ## Bounded cycle evidence — 2026-10-11
 
-The [first native projection cycle](../research/agent-memory-2026-10-06/pilots/2026-10-11-native-projection-cycle.md) completes actual installed-Codex use, new native-note capture/replay, source correction, real expiry, verified transport and fresh receiving use without original sessions. The initial current-human/historical-reporter substitution is preserved as a failure; explicit source/binding separation passes a bounded diagnostic and final matched tasks. Original records and exact native artifacts remain canonical. The receiving route is stock ephemeral Codex with native context/filesystem retrieval; persistent startup control is separately witnessed on the owning build with its advertised Sol5.6 model, not claimed to have the installed Sol6.1 access. Configuration rollback is observed with native use disabled and new canonical learning retained; finish the owning checks/publication before closing the delivery. Production remains manual. Stage6 is a later resumable coordinator/rollout, not activation by this report.
+The [first native projection cycle](../research/agent-memory-2026-10-06/pilots/2026-10-11-native-projection-cycle.md) completes actual installed-Codex use, new native-note capture/replay, source correction, real expiry, verified transport and fresh receiving use without original sessions. The initial current-human/historical-reporter substitution is preserved as a failure; explicit source/binding separation passes a bounded diagnostic and final matched tasks. Original records and exact native artifacts remain canonical. The receiving route is stock ephemeral Codex with native context/filesystem retrieval; persistent startup control is separately witnessed on the owning build with its advertised Sol5.6 model, not claimed to have the installed Sol6.1 access. Configuration rollback is observed with native use disabled and new canonical learning retained. Owning schema/configuration and disabled/default-startup tests pass; [Codex fork PR #1](https://github.com/compaii/codex/pull/1) is merged at `04269e4`. The first memory-write test omitted the repository's prescribed 8 MiB stack and aborted; the targeted retry with that setting passes without changing source or assertions. Production remains manual. Stage 5's bounded delivery is complete; stage 6 is a later resumable coordinator/rollout, not activation by this report.
+
+Exact continuation: qualify one persistent fictional receiving profile, then a
+source-qualified coordinator using `codex_projection.py`'s `publish`/`verify` and
+`learning_bundle`/`incorporate` with stable event IDs, inherited manifests and
+CaptureLedger replay. Preserve native changes before replacing views. Resolve the
+compiled release's Sol 6.1 access before adopting it in that profile. Real-corpus
+rollout, automatic lifecycle coverage, full provider parity and Matrix admission
+are not implied by this result. The upstream seam proposal is
+[Codex #53041](https://github.com/openai/codex/issues/53041), without an acceptance
+claim. Reuse the qualified corpus and prior stages rather than rerunning them.

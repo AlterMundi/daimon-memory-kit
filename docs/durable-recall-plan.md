@@ -62,16 +62,41 @@ harness can use a versioned projection into its native memory. Preserve exact
 contents and history with accepted Matrix lanes; existing HMK-native records are
 not silently admitted. Separate body of origin, applicability and current body
 capabilities. Keep clearly temporary context outside durable chapters.
-The next delivery qualifies one real canonical → Codex projection → new learning
-→ canonical incorporation → rebuilt projection cycle with fictional sources.
-Resolve native integration questions through bounded diagnostics, then implement
-the path. A complete external provider remains an optional route, with its full
-read/write/lifecycle parity requirements; it is not the architectural objective.
+The [bounded native cycle](../research/agent-memory-2026-10-06/pilots/2026-10-11-native-projection-cycle.md)
+now qualifies real canonical → Codex projection → new learning → canonical
+incorporation → rebuilt projection behavior with fictional sources. Stage 5's
+bounded exit is complete, with owning checks and merged deliveries. A complete
+external provider remains an optional route, with its full read/write/lifecycle
+parity requirements; it is not the architectural objective.
 See the [projection plan and provider contract](codex-hmk-provider-plan.md).
 No two independently maintained authorities for the same experience, automatic
 admission or live memory activation follows from this direction. Automatic use
 through the native context path belongs initially to an explicitly selected test
 profile; production manual access remains unchanged.
+
+Stage-five bounded exit, 2026-10-11: the installed Codex 0.160.0 receiver
+uses native memory context and file retrieval without an explicit HMK request.
+The comparable final Sol 6.1 low tasks preserve old participants, corrected
+outcomes and current capability limits; the rejected initial reporter substitution
+remains preserved. One actual new native note is captured with exact originals
+and replay, followed by a source correction, stale refusal, real-clock expiry,
+verified clean transport, dependency loss/alteration recovery and fresh receiving
+action. Configuration rollback keeps subsequent canonical learning. Existing
+Matrix authority is unchanged. HMK [projection PR #89](https://github.com/nicoechaniz/hermes-memory-kit/pull/89),
+[receiving correction PR #93](https://github.com/nicoechaniz/hermes-memory-kit/pull/93)
+and [Codex fork PR #1](https://github.com/compaii/codex/pull/1) own the deliveries;
+the independent startup seam is proposed in
+[upstream #53041](https://github.com/openai/codex/issues/53041).
+
+Next scope is stage 6: qualify one resumable persistent fictional profile and a
+source-qualified capture/projection coordinator before proposing real-corpus
+rollout. Reuse `codex_projection.py` publication/verification and artifact intake
+with CaptureLedger receipts. Preserve native changes before renewing a view;
+stable source-event IDs and inherited projection manifests must prevent feedback
+as new experience. Resolve the compiled release's Sol 6.1 access before adopting
+it: the isolated startup guard uses advertised Sol 5.6 low, separate from the
+installed Sol 6.1 comparison. Production memory remains manual; no hooks, timers,
+old queues or consolidation reruns follow from this bounded result.
 
 Peer adoption continuation, 2026-10-09: [Eko/Oliva rollout](../research/agent-memory-2026-10-06/pilots/2026-10-09-eko-oliva-hmk-adoption.md)
 records actual code/skill adoption, healthy semantic retrieval and bounded native
