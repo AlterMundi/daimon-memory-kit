@@ -71,7 +71,7 @@ def load_sources(database, selection):
                     or uid in seen or type(revision) is not int or revision < 1):
                 raise ValueError('duplicate record or invalid revision')
             seen.add(uid)
-            row = con.execute('SELECT c.*,b.source_kind,b.title AS book_title,s.name AS shelf '
+            row = con.execute('SELECT c.*,b.source_kind,b.source_path,b.title AS book_title,s.name AS shelf '
                               'FROM chapters c JOIN books b ON b.id=c.book_id '
                               'JOIN shelves s ON s.id=b.shelf_id WHERE c.record_uid=?', (uid,)).fetchone()
             if row is None or row['revision'] != revision:
@@ -82,8 +82,15 @@ def load_sources(database, selection):
             if currency['status'] != 'current':
                 raise ValueError('canonical support needs reconciliation')
             record = {k: row[k] for k in row.keys() if k not in VOLATILE_COLUMNS}
+            relations = [dict(r) for r in con.execute(
+                'SELECT l.*,src.record_uid AS source_record_uid,src.revision AS source_revision,'
+                'dst.record_uid AS target_record_uid,dst.revision AS target_revision '
+                'FROM chapter_links l JOIN chapters src ON src.id=l.src_chapter_id '
+                'JOIN chapters dst ON dst.id=l.dst_chapter_id '
+                'WHERE l.src_chapter_id=? OR l.dst_chapter_id=? '
+                'ORDER BY l.src_chapter_id,l.dst_chapter_id,l.link_type', (row['id'], row['id']))]
             rows.append(dict(original=record, applicability=scope(entry['applicability']),
-                             selection_original=entry))
+                             relationships=relations, selection_original=entry))
         return rows
     finally:
         con.close()
@@ -102,7 +109,9 @@ def render(database, selection, *, now=None):
                f"Receiving body: {selection['body_ref']}\n",
                'Use MEMORY.md for source-backed prior experiences, relationships, '
                'projects and lessons. Its linked originals retain meaning and uncertainty. '
-               'Environment and skill applicability must be checked against this body.\n']
+               'This summary is navigation, not evidence for outcomes: consult full originals '
+               'including corrections before making factual claims. Environment and skill '
+               'applicability must be checked against this body.\n']
     dependencies = []
     for item in rows:
         row = item['original']
@@ -115,6 +124,7 @@ def render(database, selection, *, now=None):
                        source=source, applicability=item['applicability'])
         files[name] = (f'# {title}\n\nCanonical reference: mem:{uid}@{revision}\n'
                        f'Attribution and applicability: {wire(details)}\n\n'
+                       f'Retained relationships: {wire(item["relationships"])}\n\n'
                        '## Retained original\n\n'+row['raw']+'\n').encode()
         # Keep unrecognized source/selection fields in an inert original sidecar.
         files[f'originals/{uid}-r{revision}.json'] = wire(item).encode()
@@ -122,7 +132,9 @@ def render(database, selection, *, now=None):
         registry.append(f'\n## {title}\n- Reference: mem:{uid}@{revision}\n'
                         f'- Original: {name}\n- Applicability: {wire(item["applicability"])}\n'
                         f'- Navigation excerpt (may be incomplete): {snippet}\n')
-        summary.append(f'- {title}: {snippet[:160]}\n')
+        # A cropped factual recap can omit a later correction or negate a
+        # source's uncertainty. Initial context carries navigation only.
+        summary.append(f'- {title} ({row["engram_type"]}) → {name}\n')
         dependencies.append(dict(record_uid=uid, revision=revision,
                                  source_sha256=digest(item), member=name))
     temporary = selection.get('temporary_context', [])
