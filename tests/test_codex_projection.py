@@ -271,3 +271,19 @@ def test_relationship_identity_and_source_pointer_survive_and_detect_changed_tar
     mc.update_chapter(target, content='Rollout paused.')
     with pytest.raises(ValueError, match='source content drift'):
         p.verify(tmp_path/'view', database=mc.DB_PATH)
+
+
+def test_current_binding_does_not_resolve_an_unnamed_historical_reporter(setup, tmp_path):
+    mc, p = setup
+    raw = 'Human report: I tested the relay with two human collaborators. The being did not attend.'
+    cid = mc.add_text('episodes', 'Trial', raw, metadata=dict(mode='reported', source_instance='body:old'))
+    selection = select(mc, p, [cid])
+    selection['current_human'] = 'Tavi'  # Binding metadata is not missing source attribution.
+    root = tmp_path/'view'
+    p.publish(mc.DB_PATH, selection, root, writers_stopped=True)
+    original = json.loads(next((root/'originals').glob('*.json')).read_text())['original']
+    assert original['actor'] is None and original['raw'] == raw
+    summary = (root/'memory_summary.md').read_text()
+    assert 'current human/body binding is not evidence for historical participants' in summary
+    assert 'retain unknown attribution unless the original names or identifies them' in summary
+    assert 'Tavi' not in summary
