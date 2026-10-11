@@ -96,6 +96,7 @@ def test_temporary_expiry_requires_refresh_without_canonical_writes(setup, tmp_p
     p.publish(mc.DB_PATH, selection, tmp_path/'late', writers_stopped=True, now=20)
     assert not (tmp_path/'late/temporary_context.md').exists()
     assert '719' not in (tmp_path/'late/memory_summary.md').read_text()
+    assert all('719' not in f.read_text() for f in (tmp_path/'late').rglob('*') if f.is_file())
     assert mc.DB_PATH.read_bytes() == before
 
 
@@ -226,3 +227,30 @@ def test_artifact_loss_blocks_successful_replay_and_subject_mixing_is_refused(se
         con.commit()
     with pytest.raises(ValueError, match='artifact missing'):
         p.incorporate(mc, bundle, sequence=1, selected_records=records, reason='Candidate', selection_version='v1')
+
+
+def test_summary_does_not_turn_an_incomplete_excerpt_into_outcome_evidence(setup, tmp_path):
+    mc, p = setup
+    text = 'All three nodes recovered. '+('Details from the first report. '*12)+'Correction: only two recovered.'
+    cid = mc.add_text('episodes', 'Corrected trial', text)
+    p.publish(mc.DB_PATH, select(mc, p, [cid]), tmp_path/'view', writers_stopped=True)
+    summary = (tmp_path/'view/memory_summary.md').read_text()
+    assert 'navigation, not evidence for outcomes' in summary
+    assert 'All three nodes recovered' not in summary
+    assert 'Correction: only two recovered' in next((tmp_path/'view/rollout_summaries').glob('*.md')).read_text()
+
+
+def test_relationship_identity_and_source_pointer_survive_and_detect_changed_target(setup, tmp_path):
+    mc, p = setup
+    source = mc.add_text('episodes', 'Mara proposal', 'A replay proposal.', source_path='https://example.invalid/issue/47')
+    target = mc.add_text('library', 'Project', 'We agreed to prototype.')
+    mc.add_link(source, target, 'contributes_to', note='Proposal led to this project.')
+    selection = select(mc, p, [source])
+    p.publish(mc.DB_PATH, selection, tmp_path/'view', writers_stopped=True)
+    original = json.loads(next((tmp_path/'view/originals').glob('*.json')).read_text())
+    assert original['original']['source_path'] == 'https://example.invalid/issue/47'
+    assert original['relationships'][0]['target_record_uid'] == mc._read_chapter(target)['record_uid']
+    assert original['relationships'][0]['note'] == 'Proposal led to this project.'
+    mc.update_chapter(target, content='Rollout paused.')
+    with pytest.raises(ValueError, match='source content drift'):
+        p.verify(tmp_path/'view', database=mc.DB_PATH)
