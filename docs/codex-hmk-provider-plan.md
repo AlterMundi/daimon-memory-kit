@@ -210,3 +210,9 @@ rollout, automatic lifecycle coverage, full provider parity and Matrix admission
 are not implied by this result. The upstream seam proposal is
 [Codex #53041](https://github.com/openai/codex/issues/53041), without an acceptance
 claim. Reuse the qualified corpus and prior stages rather than rerunning them.
+
+## Stage-six persistent delivery — 2026-10-11
+
+The [persistent receiver and coordinator qualification](../research/agent-memory-2026-10-06/pilots/2026-10-11-persistent-codex-coordinator.md) completes the next bounded delivery: explicit same-home renewal using existing APIs, actual OpenAI Codex Sol6.1 low on the labelled fork, process restart, source-qualified new learning, uncertain-commit replay without duplicates, correction/history, real expiry, fresh-thread action, clean reconstruction and configuration rollback preserving later memory. [HMK PR #95](https://github.com/nicoechaniz/hermes-memory-kit/pull/95) owns the coordinator; [Codex fork PR #2](https://github.com/compaii/codex/pull/2) owns version compatibility. The erroneous inherited ephemeral binding and ineffective resumed review remain rejected evidence; a corrected fresh binding and clean receiver pass. Prior stage evidence is reused.
+
+This delivery is complete; the broader stage-six rollout remains pending. Exact next scope is a separately authorized first real-corpus adoption with explicit bindings, ownership/selection, launch freshness gates and rollback, followed by qualification in that actual environment. Do not activate production by implication. An explicit launcher, concurrent-source reconciliation and existing-thread context replacement remain unqualified extensions; no automatic lifecycle, hooks, timers, old queues, provider parity or Matrix authority change is claimed. Production remains manual.
