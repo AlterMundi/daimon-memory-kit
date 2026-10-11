@@ -192,3 +192,7 @@ here. Production native memory remains disabled. Real-corpus formation, automati
 injection and any new background work require an explicit receiving scope under
 the next implementation goal. Private sessions, other beings and signed Matrix
 admission remain outside an adapter's authority.
+
+## Actual native formation diagnostic — 2026-10-11
+
+The [native formation diagnostic](../research/agent-memory-2026-10-06/pilots/2026-10-11-codex-native-formation-diagnostic.md) now observes real extraction and consolidation after the unchanged one-hour source idle threshold. App-server startup processing requires the first turn; thread creation alone was not a trigger. Generated learning retains failed attempts and the argument-only limit of the local pass. Exact outputs, available history and original fictional source bytes are preserved separately from receiving projections. The source predates projection use, so this is not yet the closed return cycle. Finish the owning Codex startup-control checks and the prepared comparable receivers, then qualify actual new-learning intake and reconstruction. Production automatic memory remains off.
