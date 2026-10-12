@@ -1,6 +1,23 @@
 # Canonical being memory and Codex projections
 
-## Current continuation — contextual recall adopted, 2026-10-12
+## Current continuation — native producer diagnosis, 2026-10-12
+
+The human requested a concrete diagnosis before choosing an implementation goal.
+The [pinned 0.162.1 investigation](codex-native-producer-diagnostic.md) identifies
+the phase-one transaction as a feasible delivery seam, but no ready hook or
+working adapter. Its executable upstream-SQL probe demonstrates that polling
+mutable output cannot preserve all generated revisions. The earlier fork's
+startup-processing switch is not present in the inspected official release.
+
+Next proposed goal: qualify actual native extraction on a few fictional
+experiences before investing in durable delivery. If its meaning and provenance
+are adequate, implement extraction-only production and replayable intake through
+existing HMK APIs. If not, document the measured loss and choose a bounded policy
+change or an HMK-owned producer. The linked diagnosis defines both outcomes and
+the exact next tests. No new goal, native generation or production change is
+activated by this plan; the adopted foreground reader below stays in place.
+
+## Adopted contextual recall — 2026-10-12
 
 Human-authorized adoption now exposes owner-bound live HMK pools through Codex's
 native MCP facility for CompAII, Eko and Oliva. This chooses the everyday-client

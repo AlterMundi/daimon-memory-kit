@@ -12,6 +12,12 @@ and all stage evidence. See the [current continuation](codex-hmk-provider-plan.m
 and HMK #11: investigate a demonstrated everyday retrieval/capture gap next,
 without reopening valid comparisons or Telecodex's separate `/merge` work.
 
+Follow-up diagnosis, 2026-10-12: [native extraction into HMK](codex-native-producer-diagnostic.md)
+has a concrete transaction seam, but no established hook or working automatic
+adapter. The next proposed goal tests actual fictional extraction quality first;
+reliable delivery is conditional on useful results. Production learning remains
+off, and publishing that plan does not start a goal.
+
 The goal is selected, retrievable life history that survives loss of original
 sessions. Ten years after an interesting proposal in a project issue, another
 body should be able to recover the participant's known name/account, what they
