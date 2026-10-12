@@ -1,12 +1,16 @@
 # Durable recall across a being's bodies
 
-Current delivery, 2026-10-12: [bounded native context → deep HMK recall](../research/agent-memory-2026-10-06/pilots/2026-10-12-codex-deep-recall.md)
-is qualified in an isolated persistent Codex receiver. The optional read-only
-route retrieves decisive evidence outside its initial projection, preserves
-corrections and capability boundaries, and survives process restart. No native
-learning generation or production activation follows. See the
-[current continuation](codex-hmk-provider-plan.md) and HMK #11; retain all earlier
-stage evidence and keep Telecodex `/merge` separate.
+Current delivery, 2026-10-12: [contextual HMK recall is adopted](../research/agent-memory-2026-10-06/pilots/2026-10-12-live-mcp-adoption.md)
+for CompAII, Eko and Oliva through native MCP over their own live pools. All three
+used it in ordinary native questions; later records and Eko's two stores remain
+accessible. Backups, unchanged databases and rollback on copies are verified.
+Codex's separate native memory store and learner remain disabled. This route is
+bounded lexical retrieval; existing manual hybrid retrieval and curation remain.
+
+Reuse the earlier [isolated deep-recall qualification](../research/agent-memory-2026-10-06/pilots/2026-10-12-codex-deep-recall.md)
+and all stage evidence. See the [current continuation](codex-hmk-provider-plan.md)
+and HMK #11: investigate a demonstrated everyday retrieval/capture gap next,
+without reopening valid comparisons or Telecodex's separate `/merge` work.
 
 The goal is selected, retrievable life history that survives loss of original
 sessions. Ten years after an interesting proposal in a project issue, another

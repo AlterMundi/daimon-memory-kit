@@ -1,0 +1,190 @@
+{
+  "schema": "hmk.live-mcp-adoption.measurements/v1",
+  "date": "2026-10-12",
+  "scope": "Three owner-directed native probes; no private prompts, sources or transcripts published.",
+  "receivers": [
+    {
+      "name": "compaii",
+      "release": "431072ecd568b3f95bacd69767f7d16c7ba16d05",
+      "native_memory_disabled": true,
+      "pools": [
+        {
+          "name": "main",
+          "chapters": 262,
+          "logical_equal_to_pre_activation_backup": true
+        }
+      ],
+      "rollback_on_copies_preserves_later_data_and_edits": true,
+      "native_turn_completed": true,
+      "model": "gpt-6.1-sol",
+      "native_hmk_calls": [
+        {
+          "tool": "hmk_recall",
+          "action": "search",
+          "pool": null,
+          "status": "completed"
+        },
+        {
+          "tool": "hmk_recall",
+          "action": "read",
+          "pool": "main",
+          "status": "completed"
+        }
+      ],
+      "usage": [
+        {
+          "total": {
+            "totalTokens": 106193,
+            "inputTokens": 105883,
+            "cachedInputTokens": 89344,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 310,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 28408,
+            "inputTokens": 28284,
+            "cachedInputTokens": 26880,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 124,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 475000
+        }
+      ],
+      "mcp_sdk": "1.28.1",
+      "native_daemon_version": "0.162.1",
+      "hmk_call_ms": [
+        421,
+        35
+      ],
+      "billing_usd": null
+    },
+    {
+      "name": "eko",
+      "release": "431072ecd568b3f95bacd69767f7d16c7ba16d05",
+      "native_memory_disabled": true,
+      "pools": [
+        {
+          "name": "store-001",
+          "chapters": 10,
+          "logical_equal_to_pre_activation_backup": true
+        },
+        {
+          "name": "store-002",
+          "chapters": 18,
+          "logical_equal_to_pre_activation_backup": true
+        }
+      ],
+      "rollback_on_copies_preserves_later_data_and_edits": true,
+      "native_turn_completed": true,
+      "model": "gpt-6.1-sol",
+      "native_hmk_calls": [
+        {
+          "tool": "hmk_recall",
+          "action": "search",
+          "pool": null,
+          "status": "completed"
+        },
+        {
+          "tool": "hmk_recall",
+          "action": "read",
+          "pool": "store-001",
+          "status": "completed"
+        },
+        {
+          "tool": "hmk_recall",
+          "action": "read",
+          "pool": "store-002",
+          "status": "completed"
+        }
+      ],
+      "usage": [
+        {
+          "total": {
+            "totalTokens": 93234,
+            "inputTokens": 92736,
+            "cachedInputTokens": 68224,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 498,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 27377,
+            "inputTokens": 27156,
+            "cachedInputTokens": 24064,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 221,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 475000
+        }
+      ],
+      "mcp_sdk": "1.28.1",
+      "native_daemon_version": "0.162.1",
+      "hmk_call_ms": [
+        215,
+        27,
+        25
+      ],
+      "billing_usd": null
+    },
+    {
+      "name": "oliva",
+      "release": "431072ecd568b3f95bacd69767f7d16c7ba16d05",
+      "native_memory_disabled": true,
+      "pools": [
+        {
+          "name": "store-001",
+          "chapters": 22,
+          "logical_equal_to_pre_activation_backup": true
+        }
+      ],
+      "rollback_on_copies_preserves_later_data_and_edits": true,
+      "native_turn_completed": true,
+      "model": "gpt-6.1-sol",
+      "native_hmk_calls": [
+        {
+          "tool": "hmk_recall",
+          "action": "search",
+          "pool": null,
+          "status": "completed"
+        },
+        {
+          "tool": "hmk_recall",
+          "action": "read",
+          "pool": "store-001",
+          "status": "completed"
+        }
+      ],
+      "usage": [
+        {
+          "total": {
+            "totalTokens": 92919,
+            "inputTokens": 92580,
+            "cachedInputTokens": 78592,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 339,
+            "reasoningOutputTokens": 7
+          },
+          "last": {
+            "totalTokens": 25764,
+            "inputTokens": 25657,
+            "cachedInputTokens": 23680,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 107,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 475000
+        }
+      ],
+      "mcp_sdk": "1.28.1",
+      "native_daemon_version": "0.162.1",
+      "hmk_call_ms": [
+        105,
+        17
+      ],
+      "billing_usd": null
+    }
+  ]
+}

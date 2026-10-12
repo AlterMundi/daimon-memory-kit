@@ -1,6 +1,29 @@
 # Canonical being memory and Codex projections
 
-## Current continuation — bounded context to deep recall, 2026-10-12
+## Current continuation — contextual recall adopted, 2026-10-12
+
+Human-authorized adoption now exposes owner-bound live HMK pools through Codex's
+native MCP facility for CompAII, Eko and Oliva. This chooses the everyday-client
+entry proposed below. The [contract](live-mcp-recall.md) and
+[adoption evidence](../research/agent-memory-2026-10-06/pilots/2026-10-12-live-mcp-adoption.md)
+distinguish observed native discovery, spontaneous foreground reads, preservation
+and rollback from unqualified general recall. Eko retains both live stores;
+later memories remain visible. Existing sessions receive an MCP configuration
+refresh without restarting their daemon or Telegram listener.
+
+HMK remains the durable surface. Codex native memory use and generation stay off;
+this transport has no learner, capture loop or automatic prefetch. It does not
+deploy the experimental native file projection. Existing manual hybrid retrieval
+and curation remain available; this bounded MCP route uses lexical search.
+
+Next: assess concrete misses and useful uptake during ordinary work, then choose
+one demonstrated retrieval or capture gap. Semantic recall parity, automatic
+formation, full native provider replacement and cross-harness return capture are
+not established by this adoption. Keep one learning owner and the qualified
+stages; do not restart broad comparisons or old queues. HMK #11 remains the entry
+point, and Telecodex `/merge` retains its own integration work.
+
+## Previous continuation — bounded context to deep recall, 2026-10-12
 
 The [deep-recall qualification](../research/agent-memory-2026-10-06/pilots/2026-10-12-codex-deep-recall.md)
 adds one reversible App Server dynamic read tool, advertised by optional native
