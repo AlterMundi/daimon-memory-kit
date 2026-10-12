@@ -30,6 +30,7 @@ class Native:
         memory_version="v1",
         max_rollouts=1,
         startup_switch_supported=True,
+        extraction_only=False,
     ):
         selected = [
             m
@@ -108,6 +109,8 @@ class Native:
             "include_apps_instructions": False,
             "shell_environment_policy.inherit": "core",
         }
+        if extraction_only:
+            config["memories.extraction_only"] = True
         if not startup_switch_supported:
             config.pop("memories.startup_processing")
         argv = [
