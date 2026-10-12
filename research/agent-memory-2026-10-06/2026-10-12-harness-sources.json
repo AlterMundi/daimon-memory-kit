@@ -1,0 +1,206 @@
+{
+  "schema": "hmk.research-sources/v1",
+  "access_date": "2026-10-12",
+  "method": "Official documentation and pinned source inspection; no new receiving tests.",
+  "pinned_downloads": [
+    {
+      "path": "docs/concepts/memory.md",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/docs/concepts/memory.md",
+      "bytes": 17990,
+      "sha256": "a9c089511fd7dda98158f80739f74396214ea71a8fcc0b09edaa8e9539984bf5"
+    },
+    {
+      "path": "docs/concepts/memory-architecture.md",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/docs/concepts/memory-architecture.md",
+      "bytes": 26488,
+      "sha256": "9df7e34d6d39285a138640c9a24e4bb55c4e2a5040ca01a73e295910b8bcbbeb"
+    },
+    {
+      "path": "docs/concepts/memory-provenance.md",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/docs/concepts/memory-provenance.md",
+      "bytes": 15637,
+      "sha256": "1cf30746bfa667cb5d8d29fdc3b8ae2cd0a1ee6851aff6dab935b21bddb815a4"
+    },
+    {
+      "path": "docs/plugins/sdk-overview/memory-and-context.md",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/docs/plugins/sdk-overview/memory-and-context.md",
+      "bytes": 26631,
+      "sha256": "d97657f79d8585867f11b6a5db02def5843333444e877e11ffcc2195f04f4507"
+    },
+    {
+      "path": "docs/concepts/active-memory.md",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/docs/concepts/active-memory.md",
+      "bytes": 7276,
+      "sha256": "952852086ed130ec9a5bc7256c8b2fe6a59bcb890b1a0d90da864fb16618fb82"
+    },
+    {
+      "path": "docs/plugins/hooks/prompt-and-session.md",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/docs/plugins/hooks/prompt-and-session.md",
+      "bytes": 20142,
+      "sha256": "c61c0ac719acffa89967595d345643d6504dc59b78a5a9f674c31a987d04e0ed"
+    },
+    {
+      "path": "packages/coding-agent/README.md",
+      "url": "https://raw.githubusercontent.com/earendil-works/pi/4270522473e677ddba7b093caa0064a3df51d459/packages/coding-agent/README.md",
+      "bytes": 4080,
+      "sha256": "fbc7abec7d0829ac8bc4b217e950794e1ba4d8d1b3e0850f970da318ad72e863"
+    },
+    {
+      "path": "packages/coding-agent/docs/extensions.md",
+      "url": "https://raw.githubusercontent.com/earendil-works/pi/4270522473e677ddba7b093caa0064a3df51d459/packages/coding-agent/docs/extensions.md",
+      "bytes": 20085,
+      "sha256": "bd2ed1f728173c1defc035e90c3894c308ae153fa08575c12b4a9988e11f8108"
+    },
+    {
+      "path": "documentation/docs/mcp/memory-mcp.md",
+      "url": "https://raw.githubusercontent.com/aaif-goose/goose/4617040c7b650b37d599bdaa08d3790572c19ae8/documentation/docs/mcp/memory-mcp.md",
+      "bytes": 7306,
+      "sha256": "dc2ebdb1af2e809bb539d63938b1bf0e8efcba513287b1293e0f37e8f53596e7"
+    },
+    {
+      "path": "crates/goose-mcp/src/memory/mod.rs",
+      "url": "https://raw.githubusercontent.com/aaif-goose/goose/4617040c7b650b37d599bdaa08d3790572c19ae8/crates/goose-mcp/src/memory/mod.rs",
+      "bytes": 27479,
+      "sha256": "a28ae07a149b2498dba265eee5f5bbad34340a49fdead4aeeeab801dbeaddad5"
+    },
+    {
+      "path": "documentation/docs/guides/context-engineering/hooks.md",
+      "url": "https://raw.githubusercontent.com/aaif-goose/goose/4617040c7b650b37d599bdaa08d3790572c19ae8/documentation/docs/guides/context-engineering/hooks.md",
+      "bytes": 25027,
+      "sha256": "6d9b62f75529f877799e3efae6fd5552605070c18bfc8b1bc32a6ddad940be39"
+    },
+    {
+      "path": "src/plugins/memory-provider-types.ts",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/src/plugins/memory-provider-types.ts",
+      "bytes": 4472,
+      "sha256": "9d3ef5a4fb9b37c9e60207c9ac3c795773f37e32c3e43a127bee2c3b15f7601c"
+    },
+    {
+      "path": "src/plugin-sdk/memory-host-core.ts",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/src/plugin-sdk/memory-host-core.ts",
+      "bytes": 16145,
+      "sha256": "26f70c6ad9012ef65e29f1bd369a5040d3d0f5f6875ca6f10070ded985dfb2ac"
+    },
+    {
+      "path": "extensions/memory-core/index.ts",
+      "url": "https://raw.githubusercontent.com/openclaw/openclaw/2f034e8b5a7995f4b1fa1c7e977e09a6841b5920/extensions/memory-core/index.ts",
+      "bytes": 16132,
+      "sha256": "f4be4d41f0d3be3348a6fb67e42319bca407b07b68bec4b6e2a8e023f54c3b9c"
+    },
+    {
+      "path": "packages/coding-agent/src/core/extensions/types.ts",
+      "url": "https://raw.githubusercontent.com/earendil-works/pi/4270522473e677ddba7b093caa0064a3df51d459/packages/coding-agent/src/core/extensions/types.ts",
+      "bytes": 83476,
+      "sha256": "d9a24065cc9830dc8bdc8d2e41299ad6ce125b3d156a0de1674faeabcb439122"
+    },
+    {
+      "path": "packages/coding-agent/docs/sessions.md",
+      "url": "https://raw.githubusercontent.com/earendil-works/pi/4270522473e677ddba7b093caa0064a3df51d459/packages/coding-agent/docs/sessions.md",
+      "bytes": 4692,
+      "sha256": "5ad5bda19caaa0794bb44f86c85c8e66be6f493c52bb5e6a4d127b58cd8c2c1e"
+    }
+  ],
+  "official_pages": [
+    {
+      "url": "https://code.claude.com/docs/en/memory",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/hooks",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/build/features/hooks",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/build/features/project-rules",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/build/features/sessions",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/build/features/mcp-servers",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/grok-bot/overview",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/grok-bot/bots",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.x.ai/grok-bot/skills-routines-and-automations",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://learn.chatgpt.com/docs/dots/tasks-and-memory",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://learn.chatgpt.com/docs/dots/computers-and-apps",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.openclaw.ai/concepts/memory",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://geminicli.com/docs/tools/memory/",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://geminicli.com/docs/cli/auto-memory/",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://geminicli.com/docs/hooks/reference/",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.opencode.ai/docs/plugins/",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://cursor.com/docs/rules",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://cursor.com/docs/hooks",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://cursor.com/docs/cloud-agent/automations",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.letta.com/concepts/memfs",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.letta.com/configuration/memory",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.letta.com/configuration/mods",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://docs.letta.com/self-hosting/app-server/protocol-lifecycle",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    },
+    {
+      "url": "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory-providers",
+      "evidence": "opened and inspected; no immutable page version asserted"
+    }
+  ],
+  "limits": [
+    "Repository main snapshots are not proof of released or installed API availability.",
+    "No product-account tests or comparative model benchmarks were run.",
+    "Prior Codex receiving evidence is linked separately in the report."
+  ]
+}
