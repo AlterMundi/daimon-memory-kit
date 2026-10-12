@@ -581,3 +581,10 @@ And if you change behavior around the continuity plugin, test it against a real 
 ## License
 
 [MIT](LICENSE)
+
+## Daimon Field coordination
+
+Cross-repository decisions and repository-specific implications are indexed in
+[the Daimon Field projection](docs/daimon-field.md). The existing private
+[AlterMundi Project 13](https://github.com/orgs/AlterMundi/projects/13) is the canonical decision and roadmap surface;
+repository access and Project access are separate.
