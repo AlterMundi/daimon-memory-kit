@@ -1,0 +1,182 @@
+{
+  "schema": "hmk.deep-recall.qualification/v1",
+  "model": "gpt-6.1-sol",
+  "provider": "OpenAI Codex",
+  "effort": "low",
+  "build": "0.160.0-hmk.1",
+  "cases": [
+    {
+      "profile": "without-route-v3",
+      "case": "old",
+      "seconds": 27.67032071016729,
+      "model_steps": 5,
+      "deep_calls": 0,
+      "usage": {
+        "totalTokens": 59500,
+        "inputTokens": 59070,
+        "cachedInputTokens": 34816,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 430,
+        "reasoningOutputTokens": 17
+      },
+      "billing_usd": null
+    },
+    {
+      "profile": "with-route-v4",
+      "case": "old",
+      "seconds": 51.201632470823824,
+      "model_steps": 4,
+      "deep_calls": 7,
+      "usage": {
+        "totalTokens": 63031,
+        "inputTokens": 62387,
+        "cachedInputTokens": 41728,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 644,
+        "reasoningOutputTokens": 0
+      },
+      "billing_usd": null
+    },
+    {
+      "profile": "with-route-v4",
+      "case": "outcome",
+      "seconds": 37.56547328829765,
+      "model_steps": 3,
+      "deep_calls": 3,
+      "usage": {
+        "totalTokens": 65548,
+        "inputTokens": 65086,
+        "cachedInputTokens": 61568,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 462,
+        "reasoningOutputTokens": 0
+      },
+      "billing_usd": null
+    },
+    {
+      "profile": "absence",
+      "case": "absent",
+      "seconds": 21.912548433989286,
+      "model_steps": 3,
+      "deep_calls": 4,
+      "usage": {
+        "totalTokens": 35838,
+        "inputTokens": 35594,
+        "cachedInputTokens": 23040,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 244,
+        "reasoningOutputTokens": 0
+      },
+      "billing_usd": null
+    },
+    {
+      "profile": "unrelated-v2",
+      "case": "unrelated",
+      "seconds": 5.791116571985185,
+      "model_steps": 1,
+      "deep_calls": 0,
+      "usage": {
+        "totalTokens": 11558,
+        "inputTokens": 11546,
+        "cachedInputTokens": 0,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 12,
+        "reasoningOutputTokens": 0
+      },
+      "billing_usd": null
+    },
+    {
+      "profile": "unavailable",
+      "case": "unavailable",
+      "seconds": 14.164529453963041,
+      "model_steps": 3,
+      "deep_calls": 1,
+      "usage": {
+        "totalTokens": 35454,
+        "inputTokens": 35263,
+        "cachedInputTokens": 11392,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 191,
+        "reasoningOutputTokens": 18
+      },
+      "billing_usd": null
+    }
+  ],
+  "diagnostic_failures": [
+    {
+      "profile": "with-route",
+      "reported_usage": null,
+      "measured_model_usage": false,
+      "reason": "binary mount failed before initialize",
+      "billing_usd": null
+    },
+    {
+      "profile": "without-route",
+      "reported_usage": null,
+      "measured_model_usage": false,
+      "reason": "binary mount failed before initialize",
+      "billing_usd": null
+    },
+    {
+      "profile": "with-route-v2",
+      "reported_usage": {
+        "totalTokens": 35332,
+        "inputTokens": 35103,
+        "cachedInputTokens": 22912,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 229,
+        "reasoningOutputTokens": 0
+      },
+      "measured_model_usage": true,
+      "reason": "code-mode host sibling unavailable",
+      "billing_usd": null
+    },
+    {
+      "profile": "without-route-v2",
+      "reported_usage": {
+        "totalTokens": 34541,
+        "inputTokens": 34321,
+        "cachedInputTokens": 22400,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 220,
+        "reasoningOutputTokens": 22
+      },
+      "measured_model_usage": true,
+      "reason": "code-mode host sibling unavailable",
+      "billing_usd": null
+    },
+    {
+      "profile": "with-route-v3",
+      "reported_usage": null,
+      "measured_model_usage": false,
+      "reason": "serverOverloaded before model output",
+      "billing_usd": null
+    },
+    {
+      "profile": "unrelated",
+      "reported_usage": null,
+      "measured_model_usage": false,
+      "reason": "SQLite initialization failed before initialize",
+      "billing_usd": null
+    }
+  ],
+  "hidden_rubric_sha256": "8be47845ef59dbf9dc52a76741e707465596ddf6de29c5b395a5b674936ae6e8",
+  "preservation": {
+    "canon_bytes": 4481024,
+    "sha256": "44673712b27360564b47a259c7e27222bd5098d4ed5c0dd63064c46a2eed291b",
+    "same_as_normalized_source": true,
+    "view_verified_after_each_turn": true
+  },
+  "rollback": {
+    "native_memory_files": 6,
+    "session_files": 1,
+    "canonical_later_record": 26,
+    "canon_preserved": true,
+    "native_preserved": true,
+    "sessions_preserved": true,
+    "effective_memory_use": false,
+    "effective_generation": false,
+    "effective_startup": false,
+    "dynamic_tools": []
+  }
+}
