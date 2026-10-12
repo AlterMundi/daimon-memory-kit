@@ -2,6 +2,12 @@
 
 ## Current continuation after Nexus/HMK convergence — 2026-10-12
 
+The [actual-exchange revisit qualification](../research/agent-memory-2026-10-06/pilots/2026-10-12-revisit-understanding-qualification.md)
+completes the bounded API/receiving diagnostic described below. Reuse its result
+when mapping `/merge` delivery, context receipt and personal uptake in the owning
+Telecodex work. Automatic intake and the actual product flow remain unqualified;
+the result does not activate production memory or require another native learner.
+
 [Field D010](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268957326)
 and the [local convergence note](field-memory-convergence.md) refine the next
 proposed work: use existing APIs to distinguish an original experience, a later
