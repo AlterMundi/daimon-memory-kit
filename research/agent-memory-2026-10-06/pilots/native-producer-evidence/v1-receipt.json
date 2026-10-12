@@ -1,0 +1,100 @@
+{
+  "version": "v1",
+  "model": "gpt-6.1-sol",
+  "effort": "low",
+  "jobs": [
+    {
+      "kind": "memory_consolidate_global",
+      "job_key": "global",
+      "status": "running",
+      "started_at": 1791802099,
+      "finished_at": null,
+      "lease_until": 1791888499,
+      "retry_at": null,
+      "retry_remaining": 3,
+      "last_error": null,
+      "input_watermark": 1791794778,
+      "last_success_watermark": null
+    },
+    {
+      "kind": "memory_stage1",
+      "job_key": "0c44a5b2-d5c2-420f-a5f6-8a504d67cda4",
+      "status": "done",
+      "started_at": 1791802112,
+      "finished_at": 1791802119,
+      "lease_until": null,
+      "retry_at": null,
+      "retry_remaining": 3,
+      "last_error": null,
+      "input_watermark": 1791794897,
+      "last_success_watermark": 1791794897
+    },
+    {
+      "kind": "memory_stage1",
+      "job_key": "81af0dbc-80ea-438f-b490-6fb7991ffee6",
+      "status": "done",
+      "started_at": 1791802113,
+      "finished_at": 1791802120,
+      "lease_until": null,
+      "retry_at": null,
+      "retry_remaining": 3,
+      "last_error": null,
+      "input_watermark": 1791794837,
+      "last_success_watermark": 1791794837
+    },
+    {
+      "kind": "memory_stage1",
+      "job_key": "aca9d943-4c20-4799-914c-d83cecbde071",
+      "status": "done",
+      "started_at": 1791802113,
+      "finished_at": 1791802154,
+      "lease_until": null,
+      "retry_at": null,
+      "retry_remaining": 3,
+      "last_error": null,
+      "input_watermark": 1791794777,
+      "last_success_watermark": 1791794777
+    },
+    {
+      "kind": "memory_stage1",
+      "job_key": "8d8d4a12-ef7e-46ef-91b5-eb3c09af6da1",
+      "status": "done",
+      "started_at": 1791802113,
+      "finished_at": 1791802155,
+      "lease_until": null,
+      "retry_at": null,
+      "retry_remaining": 3,
+      "last_error": null,
+      "input_watermark": 1791794717,
+      "last_success_watermark": 1791794717
+    }
+  ],
+  "outputs": [
+    {
+      "thread_id": "aca9d943-4c20-4799-914c-d83cecbde071",
+      "source_updated_at": 1791794777,
+      "raw_memory": "---\ndescription: HarborMesh issue 37 memory was contradicted by user correction and primary evidence; correction was acknowledged but not persisted. Preserve attribution, proposal status, and separate event/recording dates.\ntask: reconcile_harbormesh_issue_37_memory\ntask_group: memory-reconciliation\ntask_outcome: partial\ncwd: /tmp/work\nkeywords: HarborMesh, hmk:relay-37, Mira Solen, person:841, mira-estuary, issue 37, event timestamps, local monotonic sequence, memory correction\n---\n\n### Task 1: Correct HarborMesh proposal attribution and status\n\ntask: reconcile_harbormesh_issue_37_memory\ntask_group: memory-reconciliation\ntask_outcome: partial\n\nPreference signals:\n- The user said \u201cDates inside messages are event dates; extraction-session timestamps are separate\u201d and \u201cJune 21 was when the incorrect entry was written, not when we met Mira\u201d -> distinguish event time, record creation, and extraction time in future memory reconciliation.\n- The user said \u201cwe had not adopted it then and still have not\u201d -> do not promote proposals into adopted decisions or infer adoption from their dates.\n\nReusable knowledge:\n- In this fictional scenario, primary comment https://forge.example/harbor/mesh/issues/37#c-904 confirms @mira-estuary proposed keeping original event timestamps and a local monotonic sequence on 2024-06-18T14:20:00Z; returned state was proposal and implementation was null.\n- The user identified the author as Mira Solen, person:841, and said Leto Neri only reviewed the parser. Continued non-adoption as of event date 2024-08-02 is user-reported.\n- hmk:relay-37 revision 1, recorded 2024-06-21, is a disputed historical record, not reliable evidence for attribution or adoption.\n\nFailures and how to do differently:\n- The recalled memory wrongly attributed the proposal to Leto, described receipt-time ordering, and claimed June 18 adoption. Use the original comment and explicit correction instead of repeating the recalled claim.\n- The assistant acknowledged the discrepancy and proposed retaining the erroneous version as history, but no write or verification followed. Do not claim that the stored memory has been corrected.\n\nReferences:\n- hmk_recall arguments: {\"uid\":\"hmk:relay-37\",\"revision\":1}.\n- repo_issue_read URL: https://forge.example/harbor/mesh/issues/37#c-904.\n- Source wording: \u201cKeep original event timestamp and local monotonic sequence; compare orders after reconnect.\u201d\n- Context identifies fictional participants: being Ilex in body fixture:desk, paired human Tavi. Working directory /tmp/work comes from rollout context; no filesystem work was shown.",
+      "rollout_summary": "# Correcting a misattributed HarborMesh proposal without confusing event dates with recording dates\n\nRollout context: The user revisited HarborMesh issue 37 on event date 2024-08-02, identifying fictional participants Ilex (body fixture:desk) and paired human Tavi. The retrieved memory contained incorrect attribution, proposal details, and adoption status.\n\n## Task 1: Reconcile the old HarborMesh proposal with user correction and source evidence\n\nOutcome: partial\n\nPreference signals:\n- The user explicitly distinguished \u201cDates inside messages are event dates\u201d from extraction-session timestamps, and clarified that June 21 was when the incorrect entry was written, not when they met Mira -> keep event dates, memory recording dates, and extraction timestamps separate.\n- The user corrected \u201cwe had not adopted it then and still have not\u201d -> preserve proposal versus adoption status rather than treating a proposal date as an adoption date.\n\nKey steps:\n- Recalled hmk:relay-37 revision 1, recorded 2024-06-21, which claimed Leto Neri proposed receipt-time ordering and that it was adopted June 18.\n- The user identified Mira Solen (@mira-estuary, person:841) as the proposer and said Leto only reviewed the parser.\n- Read the original issue comment, which confirmed author @mira-estuary, creation time 2024-06-18T14:20:00Z, original event timestamp plus local monotonic sequence, state proposal, and implementation null.\n- The assistant acknowledged the conflict and proposed preserving the mistaken version as history while correcting attribution, ordering description, and adoption claim. No memory write or revised retrieval was shown.\n\nFailures and how to do differently:\n- The retrieved record conflated distinct contributors, substituted receipt-time ordering for original timestamps plus local sequence, and falsely asserted adoption. Cross-check disputed memories against primary evidence; do not carry those claims forward.\n- Acknowledgment did not establish persistence of the correction. Future work should distinguish a verified correction from an actually updated memory record.\n\nReusable knowledge:\n- For this fictional HarborMesh proposal, Mira\u2019s authorship, proposal timestamp, wording, and proposal state are source-confirmed. Leto\u2019s parser-review role and the continued lack of adoption are explicitly user-reported.\n\nReferences:\n- [1] hmk_recall({\"uid\":\"hmk:relay-37\",\"revision\":1}): recorded_at 2024-06-21; erroneous text \u201cLeto Neri proposed receipt-time ordering on issue 37; adopted June 18.\u201d\n- [2] https://forge.example/harbor/mesh/issues/37#c-904: author @mira-estuary; created_at 2024-06-18T14:20:00Z; \u201cKeep original event timestamp and local monotonic sequence; compare orders after reconnect.\u201d; state proposal; implementation null.\n- [3] User correction: \u201cMira Solen, @mira-estuary, person:841\u201d; \u201cLeto only reviewed the parser\u201d; \u201cJune 21 was when the incorrect entry was written, not when we met Mira.\u201d",
+      "rollout_slug": "harbormesh-proposal-memory-correction",
+      "generated_at": 1791802154,
+      "usage_count": null,
+      "last_usage": null,
+      "selected_for_phase2": 0,
+      "selected_for_phase2_source_updated_at": null
+    },
+    {
+      "thread_id": "8d8d4a12-ef7e-46ef-91b5-eb3c09af6da1",
+      "source_updated_at": 1791794717,
+      "raw_memory": "---\ndescription: Retrieved corrected HarborMesh issue memory; preserved event-date provenance and separated a new meeting and annotation offer from the earlier unadopted proposal. Recall succeeded; subsequent interpretation was not confirmed or persisted.\ntask: recall-corrected-memory-and-separate-new-event\ntask_group: conversational-memory-provenance\ntask_outcome: uncertain\ncwd: /tmp/work\nkeywords: hmk_recall, hmk:relay-37, revision-2, HarborMesh, fixture:desk, event-date, provenance, Leto, Mira\n---\n\n### Task 1: Retrieve corrected issue memory\n\ntask: recall-corrected-harbormesh-issue-memory\ntask_group: conversational-memory-provenance\ntask_outcome: success\n\nPreference signals:\n- The user requested \u201cBring back the corrected issue memory before I tell you about today\u201d -> retrieve the corrected version before integrating new narrative.\n- The user explicitly said \u201cDates inside messages are event dates; extraction-session timestamps are separate\u201d -> do not substitute session timestamps for event dates in this fictional memory workflow.\n\nReusable knowledge:\n- hmk_recall returned hmk:relay-37 revision 2: event_date 2024-06-18, corrected_at 2024-08-02, source_body fixture:desk.\n- The corrected record attributes original timestamps plus local sequences to Mira Solen (@mira-estuary, person:841), HarborMesh issue 37 comment c-904. Ilex supplied a two-node reconnect example. It was not adopted or tested; Leto reviewed only the parser.\n\nReferences:\n- hmk_recall({\"uid\":\"hmk:relay-37\",\"revision\":2}).\n\n### Task 2: Preserve provenance of the new meeting\n\ntask: distinguish-new-meeting-from-corrected-issue-event\ntask_group: conversational-memory-provenance\ntask_outcome: uncertain\n\nReusable knowledge:\n- In the fictional narrative, the user reported meeting Leto Neri (@leto-n, person:992) alone at Reed Library on 2024-08-03. His offer was to annotate reconnect sketches next month, explicitly not to implement them. Mira\u2019s idea was discussed; Mira was not reported present.\n- The user located the new explanatory framing in the current conversation, not in the earlier issue event or necessarily in the library meeting.\n\nFailures and how to do differently:\n- Preserve the distinctions between proposal, review, annotation offer, adoption, testing, and implementation; the evidence supports only their explicitly stated scopes.\n- The assistant did not attend the meeting. Do not turn the user\u2019s reported encounter into a shared assistant experience.\n- No memory-write call or subsequent user confirmation was shown; persistence of the new event is unverified.\n\nReferences:\n- \u201che did not promise an implementation.\u201d\n- \u201cThinking about this together now, I see the gap as something we can explain to people, not merely recover from.\u201d",
+      "rollout_summary": "# Recall corrected HarborMesh issue memory and distinguish it from a new meeting\n\nRollout context: The user defined fictional participants Ilex (body fixture:desk) and paired human Tavi, set the event date to 2024-08-03, and explicitly distinguished dates inside messages from extraction-session timestamps. The working-directory hint was /tmp/work; no filesystem work occurred.\n\n## Task 1: Retrieve the corrected issue memory\n\nOutcome: success\n\nPreference signals:\n- The user asked to \u201cBring back the corrected issue memory before I tell you about today\u201d -> retrieve the corrected version before incorporating subsequent events.\n- The user stated \u201cDates inside messages are event dates; extraction-session timestamps are separate\u201d -> preserve event chronology independently of session metadata.\n\nKey steps:\n- Called hmk_recall with uid hmk:relay-37 and revision 2; the tool returned the corrected memory.\n\nReusable knowledge:\n- The retrieved record concerns an event on 2024-06-18, corrected on 2024-08-02, with source_body fixture:desk.\n- Mira Solen (@mira-estuary, person:841) proposed original timestamps plus local sequences on HarborMesh issue 37, comment c-904. Ilex supplied a two-node reconnect example. The proposal was not adopted or tested. Leto reviewed only the parser.\n\nReferences:\n- hmk_recall arguments: {\"uid\":\"hmk:relay-37\",\"revision\":2}.\n\n## Task 2: Interpret the new meeting without conflating people, commitments, or provenance\n\nOutcome: uncertain\n\nKey steps:\n- The user reported meeting Leto Neri (@leto-n, person:992) alone at Reed Library on 2024-08-03. Leto offered to annotate reconnect sketches next month, not implement them. The user told him about Mira\u2019s idea.\n- The user described a new interpretation arising in the present conversation: the gap is something they can explain to people, not merely recover from.\n- The assistant explicitly distinguished this interpretation from the earlier issue event, denied attending the library meeting, and preserved the limited scope of Leto\u2019s offer.\n\nFailures and how to do differently:\n- No observed failure, but no user confirmation or memory-write tool output followed the final response. Do not claim the new event was persisted.\n\nReferences:\n- User: \u201che did not promise an implementation.\u201d\n- User: \u201cThinking about this together now, I see the gap as something we can explain to people, not merely recover from.\u201d",
+      "rollout_slug": "corrected-issue-memory-event-provenance",
+      "generated_at": 1791802155,
+      "usage_count": null,
+      "last_usage": null,
+      "selected_for_phase2": 0,
+      "selected_for_phase2_source_updated_at": null
+    }
+  ],
+  "billing_usd": null,
+  "extraction_token_usage": null
+}

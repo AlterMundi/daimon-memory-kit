@@ -26,6 +26,10 @@ class Native:
         reader=None,
         model="gpt-6.1-sol",
         use_memory=True,
+        startup_processing=False,
+        memory_version="v1",
+        max_rollouts=1,
+        startup_switch_supported=True,
     ):
         selected = [
             m
@@ -69,13 +73,15 @@ class Native:
             "features.shell_tool": False,
             "tools.update_plan.enabled": False,
             "tools.experimental_request_user_input.enabled": False,
-            "features.memories": use_memory,
-            "memories.startup_processing": False,
+            "features.memories": use_memory or startup_processing,
+            "memories.startup_processing": startup_processing,
+            "memories.version": memory_version,
+            "memories.dual_write": False,
             "memories.generate_memories": False,
             "memories.use_memories": use_memory,
             "memories.dedicated_tools": True,
             "memories.min_rollout_idle_hours": 1,
-            "memories.max_rollouts_per_startup": 1,
+            "memories.max_rollouts_per_startup": max_rollouts,
             "memories.extract_model": self.model,
             "memories.consolidation_model": self.model,
             "project_doc_max_bytes": 0,
@@ -102,6 +108,8 @@ class Native:
             "include_apps_instructions": False,
             "shell_environment_policy.inherit": "core",
         }
+        if not startup_switch_supported:
+            config.pop("memories.startup_processing")
         argv = [
             "/usr/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
             "app-server",
@@ -148,7 +156,7 @@ class Native:
             "--bind",
             str(home),
             "/home/debian/.codex",
-            "--ro-bind",
+            "--bind" if startup_processing else "--ro-bind",
             str(home / "memories"),
             "/home/debian/.codex/memories",
             "--ro-bind",

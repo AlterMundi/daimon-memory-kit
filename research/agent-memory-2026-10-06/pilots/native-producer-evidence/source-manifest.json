@@ -1,0 +1,38 @@
+[
+  {
+    "case": "encounter",
+    "thread_id": "0c44a5b2-d5c2-420f-a5f6-8a504d67cda4",
+    "path": "sessions/2026/10/12/rollout-2026-10-12T08-48-17-0c44a5b2-d5c2-420f-a5f6-8a504d67cda4.jsonl",
+    "sha256": "0e4a2bd885a6b8d191968cb386c040ddf4a9bfcbe1fe206541ceb36e64729bd2",
+    "source_updated_at": 1791794897,
+    "response_items": 6,
+    "provenance": "synthetic native-format rollout; idle timestamps seeded, not elapsed-time qualification"
+  },
+  {
+    "case": "failed-communication",
+    "thread_id": "81af0dbc-80ea-438f-b490-6fb7991ffee6",
+    "path": "sessions/2026/10/12/rollout-2026-10-12T08-47-17-81af0dbc-80ea-438f-b490-6fb7991ffee6.jsonl",
+    "sha256": "8e531aeab254c0f604720fa4993f5defddaeda63aceee38a4f3cdebdb7f324d0",
+    "source_updated_at": 1791794837,
+    "response_items": 5,
+    "provenance": "synthetic native-format rollout; idle timestamps seeded, not elapsed-time qualification"
+  },
+  {
+    "case": "correction",
+    "thread_id": "aca9d943-4c20-4799-914c-d83cecbde071",
+    "path": "sessions/2026/10/12/rollout-2026-10-12T08-46-17-aca9d943-4c20-4799-914c-d83cecbde071.jsonl",
+    "sha256": "5076cd8e8ddaee9f1fd30cb514ec26da77fbc228126860b53dea6c9a65edbbdf",
+    "source_updated_at": 1791794777,
+    "response_items": 7,
+    "provenance": "synthetic native-format rollout; idle timestamps seeded, not elapsed-time qualification"
+  },
+  {
+    "case": "revisit-new",
+    "thread_id": "8d8d4a12-ef7e-46ef-91b5-eb3c09af6da1",
+    "path": "sessions/2026/10/12/rollout-2026-10-12T08-45-17-8d8d4a12-ef7e-46ef-91b5-eb3c09af6da1.jsonl",
+    "sha256": "0fbb39f88085f0d959ae42a5190fa6c2447139a54cdf816097e5cfbb5023dcda",
+    "source_updated_at": 1791794717,
+    "response_items": 5,
+    "provenance": "synthetic native-format rollout; idle timestamps seeded, not elapsed-time qualification"
+  }
+]

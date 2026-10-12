@@ -1,7 +1,8 @@
 # Native Codex extraction into HMK: bounded diagnostic
 
-Date: 2026-10-12. Status: feasible implementation seam identified; **no working
-automatic producer adapter or useful extraction quality demonstrated here**.
+Date: 2026-10-12. Initial diagnostic: feasible implementation seam identified.
+Follow-up: [real V1/V2 extraction gate](../research/agent-memory-2026-10-06/pilots/2026-10-12-native-producer-qualification.md) found V1 loses two required episodes and V2 preserves all four tested cases.
+**V2 warrants delivery implementation; no working automatic adapter is qualified yet.**
 The human requested this diagnosis before choosing a new implementation goal.
 Production CompAII/Eko/Oliva configuration and memory remain unchanged.
 
