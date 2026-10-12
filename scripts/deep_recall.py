@@ -87,6 +87,25 @@ class Reader:
         self.entries = {r["record_uid"]: r for r in self.selection["records"]}
         self.max_bytes = max_bytes
 
+    @classmethod
+    def live_pool(cls, database, *, being_ref, body_ref, max_bytes=12000):
+        """One request against an owner-selected live pool, including later writes.
+
+        Applicability stays unknown unless retained explicitly. Matrix rows keep
+        their projection origin and do not become HMK-native canonical records.
+        """
+        if type(max_bytes) is not int or not 2000 <= max_bytes <= 32000:
+            raise ValueError("max_bytes must be 2000..32000")
+        if not all(isinstance(x, str) and x for x in (being_ref, body_ref)):
+            raise ValueError("explicit owner/body binding required")
+        result = cls.__new__(cls)
+        result.database = database
+        result.selection = dict(being_ref=being_ref, body_ref=body_ref)
+        result.entries = {}
+        result.max_bytes = max_bytes
+        result.live = True
+        return result
+
     def _result(self, status, **fields):
         return dict(
             schema=RESULT,
@@ -94,7 +113,9 @@ class Reader:
             being_ref=self.selection["being_ref"],
             body_ref=self.selection["body_ref"],
             retrieval="lexical",
-            coverage="host-selected-records-only",
+            coverage="owner-selected-live-pool"
+            if getattr(self, "live", False)
+            else "host-selected-records-only",
             **fields,
         )
 
@@ -124,6 +145,20 @@ class Reader:
                 raise ValueError("invalid read request")
             with memory.read_scope(self.database):
                 con = memory.connect()
+                if getattr(self, "live", False):
+                    self.entries = {}
+                    for row in con.execute(
+                        "SELECT c.record_uid,c.revision,c.source_metadata_json FROM chapters c "
+                        "LEFT JOIN daimon_projections p ON p.chapter_id=c.id "
+                        "WHERE p.active IS NULL OR p.active=1"
+                    ):
+                        metadata = json.loads(row["source_metadata_json"] or "{}")
+                        self.entries[row["record_uid"]] = dict(
+                            revision=row["revision"],
+                            applicability=metadata.get(
+                                "applicability", {"kind": "unknown", "targets": []}
+                            ),
+                        )
                 # Fail closed on a changed binding instead of serving an old head.
                 ids = {}
                 for uid, entry in self.entries.items():
@@ -165,12 +200,19 @@ class Reader:
                     if uid not in ids:
                         return self._result("not_in_selection")
                     current = memory._read_chapter(ids[uid])
-                    if current["origin"]["kind"] == "daimon-projection":
+                    projected = current["origin"]["kind"] == "daimon-projection"
+                    if projected and not getattr(self, "live", False):
                         return self._result(
                             "unavailable",
                             detail="Requires the verified owning Matrix adapter.",
                         )
                     if action == "history":
+                        if projected:
+                            return self._result(
+                                "external_history",
+                                origin=current["origin"],
+                                detail="Accepted Matrix history belongs to its owning adapter; no native preimages or ledger freshness are asserted.",
+                            )
                         history = memory.history(ids[uid])
                         index = arguments["offset"]
                         if index >= len(history):
@@ -213,6 +255,10 @@ class Reader:
                             next_offset=None,
                             complete=offset == 0,
                         )
+                        if projected:
+                            result["authority_note"] = (
+                                "Existing Matrix retrieval projection; origin retained, no ledger freshness verification or new admission."
+                            )
                         while (
                             len(json.dumps(result, ensure_ascii=False).encode())
                             > self.max_bytes - 200
