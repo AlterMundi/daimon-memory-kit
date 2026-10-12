@@ -1,5 +1,24 @@
 # Canonical being memory and Codex projections
 
+## Current continuation after Nexus/HMK convergence — 2026-10-12
+
+[Field D010](https://github.com/orgs/AlterMundi/projects/13?pane=issue&itemId=268957326)
+and the [local convergence note](field-memory-convergence.md) refine the next
+proposed work: use existing APIs to distinguish an original experience, a later
+revisit and changes in each participant's understanding. A revisit may confirm,
+question or leave something open; neither transformation nor agreement is
+required. Prevent feedback duplication without discarding meaningful later
+encounters with the same source.
+
+First diagnose that contract on a selected case from the actual context exchange.
+Reuse qualified preservation, consolidation and Codex/Hermes continuity. Natural
+portable-memory integration remains the direction; an additional native learner
+needs a demonstrated useful role and return path. Generic cross-harness retesting,
+a new-provider pilot and production native adoption are not prerequisites for
+this question. This supersedes the immediate experiment proposed below without
+invalidating its source research. HMK #11 remains the local continuation; no new
+implementation goal or runtime activation is created by this update.
+
 ## Cross-harness assessment — 2026-10-12
 
 The [thirteen-case portability investigation](../research/agent-memory-2026-10-06/2026-10-12-harness-portability.md)
@@ -10,12 +29,13 @@ projection-only fallback must report return-capture and usability gaps rather
 than assume native inferiority or complete continuity. This is a research
 recommendation, not a production activation or a new completed stage.
 
-Reuse the qualified Codex coordinator and Hermes integration. The next proposed
+Reuse the qualified Codex coordinator and Hermes integration. The earlier proposed
 delivery extracts the shared adapter contract and diagnoses OpenClaw's provider
 slot (Pi's extension if the required released API is unavailable), then qualifies
 the bounded Codex/canon/Hermes return path. The report specifies ownership,
 source evidence, losses, and tests; [issue #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11)
-remains the continuation point. Preserve all existing stage evidence.
+remains the continuation point. Preserve all existing stage evidence. The current
+continuation above takes precedence over this earlier experiment selection.
 
 ## Selected direction — 2026-10-11
 
