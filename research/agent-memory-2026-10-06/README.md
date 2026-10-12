@@ -81,4 +81,13 @@ views may contain current work; 66 selected memory research files matched by has
 This additive review preserves the five original raw reports and
 does not change the public-source scope of the closed October investigation.
 
-Latest implementation continuation: [stage-four receiving qualification](pilots/2026-10-09-stage-four-receiving-qualification.md) closes the bounded existing-deployment gate, with fictional/public evidence and private aggregate assessment. Stage five native coexistence is next; native memory remains disabled.
+Historical milestone: [stage-four receiving qualification](pilots/2026-10-09-stage-four-receiving-qualification.md)
+closed the bounded existing-deployment gate, with fictional/public evidence and
+private aggregate assessment. The later [persistent Codex qualification](pilots/2026-10-11-persistent-codex-coordinator.md)
+records the isolated native projection/capture cycle. Production remains manual.
+
+The [2026-10-12 cross-harness investigation](2026-10-12-harness-portability.md)
+compares thirteen runtime/product cases, recommends a portable default with
+explicit native-component ownership, and defines the next bounded adapter work.
+It includes a [source manifest](2026-10-12-harness-sources.json), preserves the
+original research archive, and claims no new receiving tests or live adoption.

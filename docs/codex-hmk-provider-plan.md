@@ -1,5 +1,22 @@
 # Canonical being memory and Codex projections
 
+## Cross-harness assessment — 2026-10-12
+
+The [thirteen-case portability investigation](../research/agent-memory-2026-10-06/2026-10-12-harness-portability.md)
+recommends portable being-memory services as the default, integrated through
+native provider/plugin/context facilities. Qualified native components can own
+specific functions; two independent autobiographies are not the target. A
+projection-only fallback must report return-capture and usability gaps rather
+than assume native inferiority or complete continuity. This is a research
+recommendation, not a production activation or a new completed stage.
+
+Reuse the qualified Codex coordinator and Hermes integration. The next proposed
+delivery extracts the shared adapter contract and diagnoses OpenClaw's provider
+slot (Pi's extension if the required released API is unavailable), then qualifies
+the bounded Codex/canon/Hermes return path. The report specifies ownership,
+source evidence, losses, and tests; [issue #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11)
+remains the continuation point. Preserve all existing stage evidence.
+
 ## Selected direction — 2026-10-11
 
 The human clarified the architectural target: preserve a being's canonical
