@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+from contextlib import contextmanager
+from contextvars import ContextVar
 import fcntl
 import hashlib
 import importlib.util
@@ -254,7 +256,46 @@ def load_bootstrap_docs():
     return docs
 
 
+_READ_CONNECTION = ContextVar('hmk_read_connection', default=None)
+
+
+class _ReadConnection:
+    """Borrow one read transaction across existing helpers that call close()."""
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __getattr__(self, name):
+        return getattr(self.connection, name)
+
+    def close(self):
+        pass
+
+
+@contextmanager
+def read_scope(database):
+    """Read an existing initialized canon consistently, without migration/touches.
+
+    Call non-touching APIs inside this scope. Accidental writes fail in SQLite;
+    configuration and callers outside this scope retain their normal connections.
+    """
+    path = Path(database)
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('read scope needs an existing regular SQLite file')
+    con = sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True)
+    con.row_factory = sqlite3.Row
+    con.execute('PRAGMA query_only=ON')
+    con.execute('BEGIN')
+    token = _READ_CONNECTION.set(_ReadConnection(con))
+    try:
+        yield
+    finally:
+        _READ_CONNECTION.reset(token)
+        con.close()
+
+
 def connect():
+    if _READ_CONNECTION.get() is not None:
+        return _READ_CONNECTION.get()
     _require_config("opening the library DB")
     ensure_dirs()
     con = sqlite3.connect(DB_PATH, timeout=30)
@@ -429,6 +470,8 @@ def migrate_daimon_projection(con, fault_hook=None):
 
 
 def init_db():
+    if _READ_CONNECTION.get() is not None:
+        return  # Explicit readers require an already initialized schema.
     _require_config("initializing the library DB")
     con = connect()
     columns = {r[1] for r in con.execute('PRAGMA table_info(chapters)')}

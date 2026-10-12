@@ -140,6 +140,9 @@ def render(database, selection, *, now=None):
                'human/body: retain unknown attribution unless the original names or identifies them. '
                'Quoted I/me/we belongs to its source speaker. Keep occurrence dates distinct from '
                'receipt/correction dates, without inferring missing years.\n']
+    if 'deep_recall' in selection:
+        from deep_recall import navigation
+        summary.append(navigation(selection['deep_recall']))
     dependencies = []
     for item in rows:
         row = item['original']

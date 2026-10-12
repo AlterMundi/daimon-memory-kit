@@ -1,5 +1,13 @@
 # Durable recall across a being's bodies
 
+Current delivery, 2026-10-12: [bounded native context → deep HMK recall](../research/agent-memory-2026-10-06/pilots/2026-10-12-codex-deep-recall.md)
+is qualified in an isolated persistent Codex receiver. The optional read-only
+route retrieves decisive evidence outside its initial projection, preserves
+corrections and capability boundaries, and survives process restart. No native
+learning generation or production activation follows. See the
+[current continuation](codex-hmk-provider-plan.md) and HMK #11; retain all earlier
+stage evidence and keep Telecodex `/merge` separate.
+
 The goal is selected, retrievable life history that survives loss of original
 sessions. Ten years after an interesting proposal in a project issue, another
 body should be able to recover the participant's known name/account, what they

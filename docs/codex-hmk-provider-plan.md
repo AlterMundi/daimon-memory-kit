@@ -1,5 +1,26 @@
 # Canonical being memory and Codex projections
 
+## Current continuation — bounded context to deep recall, 2026-10-12
+
+The [deep-recall qualification](../research/agent-memory-2026-10-06/pilots/2026-10-12-codex-deep-recall.md)
+adds one reversible App Server dynamic read tool, advertised by optional native
+projection navigation. A real isolated persistent Sol 6.1 low receiver chose to
+retrieve evidence outside its initial view, preserved the corrected outcome and
+body-capability boundary, and retained the route after restart. The comparable
+view-only receiver could not recover that evidence. Absence, unavailable canon,
+unrelated-task skipping, source freshness and rollback are separately recorded.
+
+Use the [adapter contract](deep-recall.md) and existing coordinator. Native learning
+generation remains off; production stays manual. This is a qualified experimental
+App Server route, not full provider replacement, semantic-search qualification or
+production activation. Next proposed work: choose the owning interactive client
+and package its opt-in launch/resume freshness and reader binding. Keep one
+learning owner; do not repeat qualified consolidation or revive old queues.
+Telecodex `/merge` remains an independent track. HMK #11 carries delivery status.
+
+Earlier convergence notes below preserve their history; this section is the
+current continuation.
+
 ## Current continuation after Nexus/HMK convergence — 2026-10-12
 
 The [actual-exchange revisit qualification](../research/agent-memory-2026-10-06/pilots/2026-10-12-revisit-understanding-qualification.md)
