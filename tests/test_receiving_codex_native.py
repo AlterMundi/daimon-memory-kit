@@ -123,6 +123,31 @@ def test_unsupported_model_or_tool_capable_catalog_never_dispatches(native, tmp_
         native.dispatch(path, tmp_path, catalog, lambda *_a, **_k: pytest.fail('dispatched'))
 
 
+def test_selected_context_requires_explicit_scope_and_keeps_isolation(native, tmp_path):
+    _path, request, catalog = inputs(native, tmp_path)
+    request['format'] = 'hmk-selected-receiving-request/v1'
+    with pytest.raises(ValueError, match='explicit isolated'):
+        native.command(request, catalog, tmp_path, tmp_path)
+    request['source_scope'] = 'human-authorized-selected-context'
+    request['messages'][1]['content'] = 'Selected authorized evidence only.'
+    path = tmp_path/(native.exchange.pilot.digest(request)+'.json')
+    native.exchange.pilot.save(path, request)
+    credential = tmp_path/'fixture-auth.json'; credential.write_text('{}')
+    def runner(argv, **kwargs):
+        assert '--ephemeral' in argv and '--ignore-user-config' in argv
+        assert kwargs['input'] == 'Selected authorized evidence only.'
+        events = [dict(type='item.completed', item=dict(type='agent_message', text='{}')),
+                  dict(type='turn.completed', usage=dict(input_tokens=10, output_tokens=2))]
+        return SimpleNamespace(returncode=0, stdout='\n'.join(map(json.dumps, events)), stderr='')
+    receipt = native.dispatch(path, tmp_path, catalog, runner, credential)
+    data = json.loads(receipt.read_text())
+    assert data['source_scope'] == 'human-authorized-selected-context'
+    assert not data['native_memory_allowed'] and not data['tools_allowed']
+    request['format'] = 'hmk-fictional-receiving-request/v1'
+    with pytest.raises(ValueError, match='explicit isolated'):
+        native.command(request, catalog, tmp_path, tmp_path)
+
+
 def test_native_interruption_records_failed_attempt_and_closes_credential_fd(native,tmp_path):
     import os
     path,_request,catalog=inputs(native,tmp_path)

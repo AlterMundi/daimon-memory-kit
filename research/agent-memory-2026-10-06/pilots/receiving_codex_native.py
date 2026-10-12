@@ -1,4 +1,4 @@
-"""Explicit isolated fictional narrator/reviewer through native OpenAI Codex.
+"""Explicit isolated selected-evidence narrator/reviewer through native Codex.
 
 No API credential is read by this adapter: the supported CLI uses its existing
 ChatGPT authentication. Per-invocation controls suppress private instructions,
@@ -24,7 +24,12 @@ DISABLED = ('shell_tool', 'unified_exec', 'apps', 'plugins', 'remote_plugin',
 
 
 def command(request, catalog, empty_cwd, logs):
-    if (request.get('format') != 'hmk-fictional-receiving-request/v1'
+    scope = request.get('source_scope')
+    valid_source = (request.get('format') == 'hmk-fictional-receiving-request/v1'
+                    and scope in (None, 'fictional')) or (
+        request.get('format') == 'hmk-selected-receiving-request/v1'
+        and scope == 'human-authorized-selected-context')
+    if (not valid_source
             or request.get('model') != 'gpt-6.1-sol'
             or request.get('phase') not in {'narrative_generation', 'narrative_revision', 'narrative_review'}
             or request.get('reasoning_effort') not in {'low', 'medium'}
@@ -104,6 +109,7 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
     # credentials are copied, no environment home is repurposed and other
     # sessions' instructions, history, config and native memory remain untouched.
     receipt = dict(state='started', provider='openai-codex-native',
+        source_scope=request.get('source_scope', 'fictional'),
         requested_model='gpt-6.1-sol', actual_response_model=None,
         request_sha256=d, reasoning_effort=request['reasoning_effort'], catalog_sha256=exchange.checksum(catalog),
         command=argv, native_memory_allowed=False, tools_allowed=False,

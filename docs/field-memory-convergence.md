@@ -6,6 +6,14 @@ following the human-directed exchange of the current Nexus and HMK explorations.
 The Project owns the shared direction; this note owns HMK's continuation.
 It records a converged proposal, not a completed feature or production activation.
 
+Qualification update, 2026-10-12: the [bounded actual-exchange qualification](../research/agent-memory-2026-10-06/pilots/2026-10-12-revisit-understanding-qualification.md)
+now demonstrates the selected meaning through existing APIs and two isolated
+receiving answers. It preserves prior understanding, correction/history, replay
+and a distinct interpretation awaiting support review. Explicit links and bounded
+navigation matter; a context-free cue remains an observed retrieval limit.
+No core schema or production memory mechanism changed. Automatic capture and an
+actual Nexus/Telecodex `/merge` flow remain unqualified.
+
 ## What changed
 
 Portable memory must support returning to a context and recognizing how that
@@ -50,7 +58,15 @@ question without replacing that horizon or blocking Nexus's selected M1.
 
 ## Exact continuation
 
-Under [HMK #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11), inspect
+The memory qualification below is complete within its recorded scope. The next
+integration-specific continuation is to map actual `/merge` delivery/acceptance
+to received context, selected uptake and changed understanding, using the owning
+Telecodex implementation. Provide source-version references and navigable links;
+delivery alone must not claim incorporation. Qualify one return through that real
+flow rather than repeating this memory test. Production stays manual.
+
+Preserved qualification contract under
+[HMK #11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11): inspect
 the existing capture, revision, support and projection APIs against one selected
 case from the actual context exchange. Keep source material private; publish only
 selected general design and qualification findings.
