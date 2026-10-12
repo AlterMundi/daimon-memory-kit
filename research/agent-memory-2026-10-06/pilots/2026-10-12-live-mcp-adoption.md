@@ -72,7 +72,8 @@ copies for each body. Removal retained an unrelated later config edit, later
 instructions and a later SQLite witness; reactivation retained them as well.
 Production connectors were not interrupted merely to test removal. Rollback
 means removing this connector/instruction block and refreshing MCP, never
-restoring an old memory snapshot over later work. The local rollback scripts,+pinned code and private receipts remain available.
+restoring an old memory snapshot over later work. The local rollback scripts,
+pinned code and private receipts remain available.
 
 ## Verification, costs and limits
 
