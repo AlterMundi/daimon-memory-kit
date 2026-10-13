@@ -28,7 +28,8 @@ def run(packet_root, out, *, api_key, references=(), max_calls=12, workers=3):
         packets_sha256=source['packets_sha256'],
         dispatcher_sha256=api.exchange.checksum(Path(api.__file__)),
         diagnostic_sha256=api.exchange.checksum(Path(__file__)),
-        narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)))
+        narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)),
+        assertion_review_sha256=api.exchange.checksum(Path(api.exchange.narrative.review_shape.__code__.co_filename)))
     out.mkdir(mode=0o700, parents=True, exist_ok=True)
     frozen = out/'conditions.json'
     if frozen.exists() and json.loads(frozen.read_text()) != conditions:

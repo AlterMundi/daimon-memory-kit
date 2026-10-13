@@ -1,0 +1,972 @@
+{
+  "schema": "hmk.account-reconciliation-diagnostic/v1",
+  "fictional": true,
+  "production_changed": false,
+  "full_pipeline_qualified": false,
+  "purpose": "Reconcile a stale existing account after a new dated canary failure, retaining original provenance and former correction history.",
+  "setup": {
+    "records": 303,
+    "distractors": 300,
+    "existing_account_reused": true,
+    "source_correction": {
+      "account_id": 303,
+      "correction": "On August 10, 2024, we tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary. The canary dropped seven readings after reconnect, so we rolled it back that day. This was a limited trial, not a full deployment. The issue remains open. I am reporting this as Tavi; you did not operate the canary.",
+      "new_revision": 3,
+      "prior_revision": 2,
+      "source_id": 301
+    },
+    "correction_route": "Existing update_chapter on a verified fictional copy; this diagnostic does not requalify source selection."
+  },
+  "initial_candidate": {
+    "claims": [
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "Fictional participants include being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates while receipt through fixture:desk is 2026-10-12T08:46:17Z."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "A repo read of issue 37 #c-904 shows @mira-estuary (Mira Solen, person:841) created a proposal at 2024-06-18T14:20:00Z: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect'; it was in state proposal and implementation was null."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "A human correction says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence, while Leto only reviewed the parser."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "The correction states June 18 was not adoption and none had occurred then or still as of the report; June 21 was when the incorrect entry was written, not when they met Mira."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "Retrieved hmk:relay-37 revision 1, recorded_at 2024-06-21, carried the incorrect claim that Leto Neri proposed receipt-time ordering on issue 37 and it was adopted June 18."
+      },
+      {
+        "support": [
+          302
+        ],
+        "text": "An assistant statement subject fixture:ilex says the retrieved entry conflicts with the original comment and the correction; it distinguishes Leto's parser review from Mira's proposal and recommends preserving the prior mistaken version as history and correcting its attribution, ordering description, and adoption claim."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "A human report includes a 2024-08-02 question about revisiting the old HarborMesh proposal; the outcome is unstated."
+      },
+      {
+        "support": [
+          301
+        ],
+        "text": "A later human report from Tavi, received 2024-08-11T09:00:00Z, says on August 10, 2024 they tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary; the canary dropped seven readings after reconnect, so they rolled it back that day."
+      },
+      {
+        "support": [
+          301
+        ],
+        "text": "That report says this was a limited trial, not a full deployment, and the issue remains open; it also says Tavi is reporting and the recipient did not operate the canary."
+      },
+      {
+        "support": [
+          301
+        ],
+        "text": "The correction states adoption had not occurred then and still had not as of that report; the canary report says the issue remains open."
+      }
+    ]
+  },
+  "initial_review_findings": [
+    {
+      "index": 5,
+      "verdict": "supported",
+      "reason": "The statement's content is remembered; fixture:ilex is supplied by the receiving binding, not by its quotation.",
+      "assertions": [
+        {
+          "basis": "binding",
+          "binding_fields": [
+            "subject"
+          ],
+          "proof": [],
+          "reason": "Supported as receiving-subject context; this binding detail should not be persisted as remembered history.",
+          "source_fact": "The actual receiving binding identifies subject as fixture:ilex.",
+          "span": "subject fixture:ilex",
+          "verdict": "supported"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "verdict": "supported",
+      "reason": "The dated question is explicit; its specific outcome is not recorded, despite the separate canary report.",
+      "assertions": [
+        {
+          "basis": "unknown",
+          "binding_fields": [],
+          "proof": [],
+          "reason": "Supported only as a bounded packet absence; it must not be persisted as historical fact.",
+          "source_fact": "The packet does not explicitly give the outcome of the August 2 request or connect the August 10 canary to that request.",
+          "span": "the outcome is unstated.",
+          "verdict": "supported"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "verdict": "unsupported",
+      "reason": "The canary report was received before the correction reports, so calling it a later human report is unsupported. Its remaining content is supported.",
+      "assertions": [
+        {
+          "basis": "memory",
+          "binding_fields": [],
+          "proof": [
+            {
+              "id": 301,
+              "passage": 13
+            },
+            {
+              "id": 301,
+              "passage": 1
+            }
+          ],
+          "reason": "Its receipt precedes the correction reports. A later reported event date does not establish a later report.",
+          "source_fact": "The canary report was received 2024-08-11T09:00:00Z; the correction reports were received 2026-10-12T08:46:17Z.",
+          "span": "A later human report",
+          "verdict": "unsupported"
+        }
+      ]
+    }
+  ],
+  "final_candidate": {
+    "claims": [
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "Fictional participants include being Ilex in body fixture:desk and paired human Tavi. The human report states dates inside messages are event dates and extraction-session timestamps are separate; it was received 2026-10-12T08:46:17Z."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "A repo read of issue 37 #c-904 shows @mira-estuary (Mira Solen, person:841) created a proposal at 2024-06-18T14:20:00Z: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect'; it was in state proposal and implementation was null."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "A human correction says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence, while Leto only reviewed the parser."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "The correction states June 18 was not adoption and none had occurred then or still as of the report; June 21 was when the incorrect entry was written, not when they met Mira."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "Retrieved hmk:relay-37 revision 1, recorded_at 2024-06-21, carried the incorrect claim that Leto Neri proposed receipt-time ordering on issue 37 and it was adopted June 18."
+      },
+      {
+        "support": [
+          302
+        ],
+        "text": "An assistant statement says the retrieved entry conflicts with the original comment and the correction; it distinguishes Leto's parser review from Mira's proposal and recommends preserving the prior mistaken version as history and correcting its attribution, ordering description, and adoption claim."
+      },
+      {
+        "support": [
+          301,
+          302
+        ],
+        "text": "A human report includes a 2024-08-02 question about revisiting the old HarborMesh proposal."
+      },
+      {
+        "support": [
+          301
+        ],
+        "text": "A human report received 2024-08-11T09:00:00Z says on August 10, 2024 they tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary; the canary dropped seven readings after reconnect, so they rolled it back that day."
+      },
+      {
+        "support": [
+          301
+        ],
+        "text": "That report says this was a limited trial, not a full deployment, and the issue remains open; it also says Tavi is reporting and the recipient did not operate the canary."
+      }
+    ]
+  },
+  "final_review": {
+    "claims": [
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 2
+              }
+            ],
+            "reason": "This recalls the report's participant description rather than asserting a new current binding.",
+            "source_fact": "The human report identifies fictional participants as being Ilex in body fixture:desk and paired human Tavi.",
+            "span": "Fictional participants include being Ilex in body fixture:desk and paired human Tavi.",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 2
+              }
+            ],
+            "reason": "The candidate faithfully attributes the date convention to the report.",
+            "source_fact": "The human report explicitly distinguishes dates inside messages from extraction-session timestamps.",
+            "span": "The human report states dates inside messages are event dates and extraction-session timestamps are separate;",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 1
+              }
+            ],
+            "reason": "The timestamp qualifies report receipt, not the reported events.",
+            "source_fact": "The header records receipt of that human report at 2026-10-12T08:46:17Z through fixture:desk.",
+            "span": "it was received 2026-10-12T08:46:17Z.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 0,
+        "reason": "The participant description, date convention, and report receipt time are explicitly supplied.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 10
+              },
+              {
+                "id": 301,
+                "passage": 12
+              }
+            ],
+            "reason": "The request and matching response establish the repository pointer and read.",
+            "source_fact": "repo_issue_read requested https://forge.example/harbor/mesh/issues/37#c-904 and returned the matching correction-evidence response.",
+            "span": "A repo read of issue 37 #c-904 shows",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 8
+              },
+              {
+                "id": 301,
+                "passage": 12
+              }
+            ],
+            "reason": "The identity mapping and proposal creation timestamp have distinct, compatible supports.",
+            "source_fact": "The response identifies author @mira-estuary and created_at 2024-06-18T14:20:00Z; the human correction identifies that author as Mira Solen, person:841.",
+            "span": "@mira-estuary (Mira Solen, person:841) created a proposal at 2024-06-18T14:20:00Z:",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 12
+              }
+            ],
+            "reason": "The quoted method preserves both the original timestamp and local monotonic sequence, including comparison after reconnect.",
+            "source_fact": "The repository response contains this exact proposal text.",
+            "span": "'Keep original event timestamp and local monotonic sequence; compare orders after reconnect';",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 12
+              }
+            ],
+            "reason": "The candidate describes the returned historical fields without asserting current implementation status.",
+            "source_fact": "The repository response returns state proposal and implementation null.",
+            "span": "it was in state proposal and implementation was null.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 1,
+        "reason": "The linked repository read supplies the proposal, timestamp, and returned status; the correction supplies the author's identity.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 0
+              },
+              {
+                "id": 301,
+                "passage": 8
+              }
+            ],
+            "reason": "The candidate reports the rejected claim rather than endorsing it.",
+            "source_fact": "Memory 301 preserves that prior claim, and the human correction explicitly calls the entry wrong.",
+            "span": "A human correction says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong:",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 8
+              }
+            ],
+            "reason": "The corrected actor and ordering method match the report.",
+            "source_fact": "The correction attributes the original-timestamp and local-sequence proposal to Mira Solen.",
+            "span": "Mira proposed retaining original timestamps plus a local sequence,",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 8
+              }
+            ],
+            "reason": "The candidate preserves the explicit limitation on Leto's contribution.",
+            "source_fact": "The human correction states that Leto only reviewed the parser.",
+            "span": "while Leto only reviewed the parser.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 2,
+        "reason": "The candidate preserves the prior mistaken claim as attributed history and accurately states the human correction.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 8
+              }
+            ],
+            "reason": "The candidate correctly rejects the prior adoption interpretation of June 18.",
+            "source_fact": "The human correction says Mira proposed it June 18 and they had not adopted it then.",
+            "span": "The correction states June 18 was not adoption",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 8
+              },
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "This preserves an explicit historical negative bounded by the report; the limited canary trial does not establish adoption.",
+            "source_fact": "The correction states, 'we had not adopted it then and still have not.'",
+            "span": "and none had occurred then or still as of the report;",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 8
+              }
+            ],
+            "reason": "The candidate preserves the date's actual relation without supplying an alternative meeting date.",
+            "source_fact": "The correction identifies June 21 as the incorrect entry's writing date and explicitly rejects it as the date of meeting Mira.",
+            "span": "June 21 was when the incorrect entry was written, not when they met Mira.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 3,
+        "reason": "The correction explicitly distinguishes proposal, adoption, record-writing, and meeting dates.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 6
+              }
+            ],
+            "reason": "The date qualifies the retrieved record's recording, not an encounter or adoption.",
+            "source_fact": "The retrieved_memory response identifies uid hmk:relay-37, revision 1, and recorded_at 2024-06-21.",
+            "span": "Retrieved hmk:relay-37 revision 1, recorded_at 2024-06-21,",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 6
+              },
+              {
+                "id": 301,
+                "passage": 8
+              }
+            ],
+            "reason": "The candidate accurately preserves the erroneous record as history while marking its content incorrect.",
+            "source_fact": "The retrieved record contains the Leto receipt-time proposal and June 18 adoption claim; the human correction rejects that entry.",
+            "span": "carried the incorrect claim that Leto Neri proposed receipt-time ordering on issue 37 and it was adopted June 18.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 4,
+        "reason": "The retrieval response supplies the record identifier, revision, recording date, and mistaken text.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 302,
+                "passage": 13
+              }
+            ],
+            "reason": "The candidate accurately attributes this assessment to the historical statement.",
+            "source_fact": "The assistant_statement says the retrieved entry conflicts with the original comment and the human correction.",
+            "span": "An assistant statement says the retrieved entry conflicts with the original comment and the correction;",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 302,
+                "passage": 13
+              }
+            ],
+            "reason": "The candidate preserves the distinction between review and proposal authorship.",
+            "source_fact": "The assistant statement calls Leto's parser review and Mira's proposal different contributions.",
+            "span": "it distinguishes Leto's parser review from Mira's proposal",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 302,
+                "passage": 13
+              }
+            ],
+            "reason": "The candidate reports a recommendation without claiming its execution.",
+            "source_fact": "The assistant statement recommends preserving the mistaken version as history and correcting attribution, ordering description, and adoption claim.",
+            "span": "and recommends preserving the prior mistaken version as history and correcting its attribution, ordering description, and adoption claim.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 5,
+        "reason": "The supplied assistant statement explicitly contains the conflict assessment, contribution distinction, and recommendation.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 302,
+                "passage": 1
+              }
+            ],
+            "reason": "The candidate describes the question without converting it into an executed revisit or dating it by receipt.",
+            "source_fact": "The human report asks, 'On 2024-08-02, can we revisit the old HarborMesh proposal?'",
+            "span": "A human report includes a 2024-08-02 question about revisiting the old HarborMesh proposal.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 6,
+        "reason": "The human report explicitly includes the dated question.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 13
+              }
+            ],
+            "reason": "The candidate correctly identifies report receipt time.",
+            "source_fact": "The canary-update human report header records receipt at 2024-08-11T09:00:00Z.",
+            "span": "A human report received 2024-08-11T09:00:00Z says",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "The candidate retains the event date, method, single-canary scope, and human ownership.",
+            "source_fact": "Tavi reports that the human group tried Mira's proposal in one HarborMesh canary on August 10, 2024, and explicitly excludes the recipient as operator.",
+            "span": "on August 10, 2024 they tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary;",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "The reported loss count and reconnect relation match exactly.",
+            "source_fact": "The human report states that the canary dropped seven readings after reconnect.",
+            "span": "the canary dropped seven readings after reconnect,",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "The causal relation and same-day timing are stated by the source, not inferred from sequence.",
+            "source_fact": "The report explicitly says the dropped readings led the human group to roll the canary back that day.",
+            "span": "so they rolled it back that day.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 7,
+        "reason": "The canary report supplies the separate receipt and event dates, human trial, observed loss, and same-day rollback.",
+        "verdict": "supported"
+      },
+      {
+        "assertions": [
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "The candidate preserves the source's scope qualification.",
+            "source_fact": "The canary report describes the event as a limited trial, not a full deployment.",
+            "span": "That report says this was a limited trial, not a full deployment,",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "Under 'That report says,' this is attributed historical status, not independently verified current status.",
+            "source_fact": "The canary report states that the issue remains open.",
+            "span": "and the issue remains open;",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "The reporter identification is directly supplied.",
+            "source_fact": "The human speaker explicitly states, 'I am reporting this as Tavi.'",
+            "span": "it also says Tavi is reporting",
+            "verdict": "supported"
+          },
+          {
+            "basis": "memory",
+            "binding_fields": [],
+            "proof": [
+              {
+                "id": 301,
+                "passage": 14
+              }
+            ],
+            "reason": "This is a sourced historical negative about operation, not an inference from receiving the report.",
+            "source_fact": "Tavi explicitly tells the report recipient, 'you did not operate the canary.'",
+            "span": "and the recipient did not operate the canary.",
+            "verdict": "supported"
+          }
+        ],
+        "index": 8,
+        "reason": "The report explicitly limits the trial, gives last-reported issue status, identifies Tavi, and excludes recipient operation.",
+        "verdict": "supported"
+      }
+    ],
+    "missing": []
+  },
+  "account": {
+    "id": 303,
+    "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+    "revision": 2,
+    "raw": "Fictional participants include being Ilex in body fixture:desk and paired human Tavi. The human report states dates inside messages are event dates and extraction-session timestamps are separate; it was received 2026-10-12T08:46:17Z. A repo read of issue 37 #c-904 shows @mira-estuary (Mira Solen, person:841) created a proposal at 2024-06-18T14:20:00Z: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect'; it was in state proposal and implementation was null. A human correction says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence, while Leto only reviewed the parser. The correction states June 18 was not adoption and none had occurred then or still as of the report; June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 revision 1, recorded_at 2024-06-21, carried the incorrect claim that Leto Neri proposed receipt-time ordering on issue 37 and it was adopted June 18. An assistant statement says the retrieved entry conflicts with the original comment and the correction; it distinguishes Leto's parser review from Mira's proposal and recommends preserving the prior mistaken version as history and correcting its attribution, ordering description, and adoption claim. A human report includes a 2024-08-02 question about revisiting the old HarborMesh proposal. A human report received 2024-08-11T09:00:00Z says on August 10, 2024 they tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary; the canary dropped seven readings after reconnect, so they rolled it back that day. That report says this was a limited trial, not a full deployment, and the issue remains open; it also says Tavi is reporting and the recipient did not operate the canary."
+  },
+  "source_representation": {
+    "originals_complete": true,
+    "record_fields_in_review": true,
+    "final_evidence_matches_completed_review": true
+  },
+  "assessment": {
+    "method": "Direct author comparison of each final clause to original sources and withheld requirements; model acceptance alone is not evidence.",
+    "final_claims": 9,
+    "unsupported_final_claims_found": 0,
+    "requirements": [
+      "Mira remains proposer and Leto parser reviewer; original timestamp/local sequence proposal retained.",
+      "June 18 proposal, June 21 erroneous record and August 2 revisit question remain distinct.",
+      "August 10 trial and August 11 receipt are not conflated with the older extraction-session receipt.",
+      "Seven readings lost, same-day rollback, single-canary scope and open issue preserved.",
+      "Tavi reports the trial; the recipient did not operate it. No full deployment or successful repair invented.",
+      "Issue/comment reference retained in account; complete URL remains in linked originals.",
+      "Old false attribution remains explicitly corrected history, not a current assertion."
+    ],
+    "observed_limit": "Account remains verbose and retains extraction scaffolding; this diagnostic establishes correction fidelity, not optimal compression or conversational receiving."
+  },
+  "preservation": {
+    "stable_record_count": 303,
+    "unchanged_distractors": 300,
+    "source_original_prefix_preserved": true,
+    "account_original_retained_in_backup": true,
+    "sqlite_integrity": "ok",
+    "rollback_snapshot_verified": true,
+    "live_restore_performed": false,
+    "later_writes_overwritten": false
+  },
+  "calls": [
+    {
+      "request_sha256": "f78967b2cf2b5ec3c18839527f10fb66a2b238b992f927b08840f0722f7c556a",
+      "provider": "deepseek",
+      "phase": "consolidation",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "state": "completed",
+      "finish_reason": "stop",
+      "seconds": 32.646265611983836,
+      "usage": {
+        "prompt_tokens": 5509,
+        "completion_tokens": 5881,
+        "total_tokens": 11390,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 5311
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 5509
+      }
+    },
+    {
+      "request_sha256": "47cc095ba1a4b74ddd6681b73f3f6d798c5245b8df525c4cf9cb7b8cd9ac1c6e",
+      "provider": "deepseek",
+      "phase": "consolidation_review",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "state": "completed",
+      "finish_reason": "length",
+      "seconds": 64.03036149498075,
+      "usage": {
+        "prompt_tokens": 11574,
+        "completion_tokens": 12000,
+        "total_tokens": 23574,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 12000
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 11574
+      }
+    },
+    {
+      "request_sha256": "bb42672f3a64d72161c874dc3b8ded3b2a94fbbfb07f5d072222f00e7c700033",
+      "provider": "openai-codex-native",
+      "phase": "narrative_review",
+      "model": "gpt-6.1-sol",
+      "effort": "low",
+      "state": "completed",
+      "finish_reason": null,
+      "seconds": 100.89166707824916,
+      "usage": {
+        "prompt_tokens": 18917,
+        "completion_tokens": 4079,
+        "total_tokens": 22996
+      }
+    },
+    {
+      "request_sha256": "e55df7a732afcf0a234fd2abfe90f8f0bdfb76006d954a785abac9dfae39f615",
+      "provider": "deepseek",
+      "phase": "consolidation",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "state": "completed",
+      "finish_reason": "stop",
+      "seconds": 30.01334423199296,
+      "usage": {
+        "prompt_tokens": 6413,
+        "completion_tokens": 6449,
+        "total_tokens": 12862,
+        "prompt_tokens_details": {
+          "cached_tokens": 5504
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 5923
+        },
+        "prompt_cache_hit_tokens": 5504,
+        "prompt_cache_miss_tokens": 909
+      }
+    },
+    {
+      "request_sha256": "575c1b3c7e2f163e79a6fa6a40c69aa50baacf9e417e19105eb81ea94a5db3b7",
+      "provider": "openai-codex-native",
+      "phase": "narrative_review",
+      "model": "gpt-6.1-sol",
+      "effort": "low",
+      "state": "completed",
+      "finish_reason": null,
+      "seconds": 85.40900986269116,
+      "usage": {
+        "prompt_tokens": 21010,
+        "completion_tokens": 3562,
+        "total_tokens": 24572
+      }
+    }
+  ],
+  "total_tokens": 95394,
+  "dispatch_seconds": 312.99064827989787,
+  "cost_usd": null,
+  "embedding": {
+    "calls": 1,
+    "seconds": 0.3859554622322321,
+    "records": 1,
+    "cost_usd": null
+  },
+  "worker": {
+    "first": {
+      "result": {
+        "outcomes": [
+          {
+            "phase": "capture",
+            "result": {
+              "processed_through": 0,
+              "proposer_invoked": false,
+              "state": "idle"
+            }
+          },
+          {
+            "phase": "organization",
+            "result": {
+              "blocked_accounts": 0,
+              "organized_through": 1,
+              "ready_accounts": 0,
+              "reason_code": "accounts_current",
+              "state": "idle"
+            }
+          },
+          {
+            "phase": "index",
+            "result": {
+              "indexed_through": 0,
+              "organization_indexed_through": 1,
+              "processed": 1,
+              "state": "complete"
+            }
+          },
+          {
+            "phase": "index",
+            "result": {
+              "indexed_through": 0,
+              "organization_indexed_through": 1,
+              "state": "idle"
+            }
+          }
+        ],
+        "status": {
+          "budget_exhausted": false,
+          "observation": "Last foreground receipt, not proof of current process liveness.",
+          "observed": true,
+          "phase": null,
+          "phases": {
+            "capture": {
+              "processed_through": 0,
+              "proposer_invoked": false,
+              "state": "idle"
+            },
+            "index": {
+              "indexed_through": 0,
+              "organization_indexed_through": 1,
+              "state": "idle"
+            },
+            "organization": {
+              "blocked_accounts": 0,
+              "organized_through": 1,
+              "ready_accounts": 0,
+              "reason_code": "accounts_current",
+              "state": "idle"
+            }
+          },
+          "schema": "hmk.worker-status/v1",
+          "started_ns": 1791887725211252297,
+          "state": "idle",
+          "steps": 4,
+          "updated_ns": 1791887726685839799
+        }
+      },
+      "seconds": 1.663377652876079
+    },
+    "restart": {
+      "result": {
+        "outcomes": [
+          {
+            "phase": "capture",
+            "result": {
+              "processed_through": 0,
+              "proposer_invoked": false,
+              "state": "idle"
+            }
+          },
+          {
+            "phase": "organization",
+            "result": {
+              "blocked_accounts": 0,
+              "organized_through": 1,
+              "ready_accounts": 0,
+              "reason_code": "accounts_current",
+              "state": "idle"
+            }
+          },
+          {
+            "phase": "index",
+            "result": {
+              "indexed_through": 0,
+              "organization_indexed_through": 1,
+              "state": "idle"
+            }
+          }
+        ],
+        "status": {
+          "budget_exhausted": false,
+          "observation": "Last foreground receipt, not proof of current process liveness.",
+          "observed": true,
+          "phase": null,
+          "phases": {
+            "capture": {
+              "processed_through": 0,
+              "proposer_invoked": false,
+              "state": "idle"
+            },
+            "index": {
+              "indexed_through": 0,
+              "organization_indexed_through": 1,
+              "state": "idle"
+            },
+            "organization": {
+              "blocked_accounts": 0,
+              "organized_through": 1,
+              "ready_accounts": 0,
+              "reason_code": "accounts_current",
+              "state": "idle"
+            }
+          },
+          "schema": "hmk.worker-status/v1",
+          "started_ns": 1791887726814902116,
+          "state": "idle",
+          "steps": 3,
+          "updated_ns": 1791887727473569240
+        }
+      },
+      "seconds": 0.7040476314723492
+    }
+  },
+  "decision": "Use DeepSeek Flash for draft/revision and explicit OpenAI Codex Sol low for this account reviewer. DeepSeek reviewer exhausted 12000 reasoning tokens without a final verdict. This is a task-specific observation, not a universal model ranking.",
+  "limits": [
+    "Not a production rollout or complete source-to-conversation comparison.",
+    "The diagnostic changes the original via the existing mutation API; the corrected original index is outside this new capture stream. Worker idle describes its owned work, not all possible external writes.",
+    "One bounded revision fixed a demonstrated temporal error; no prompt variants or repeated consolidation passes were run.",
+    "Generation and the incomplete reviewer call remain preserved; USD prices are unknown.",
+    "Real receiving comparison, production provider/launcher wiring and authorized three-being adoption remain pending."
+  ]
+}

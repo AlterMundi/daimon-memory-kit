@@ -269,14 +269,52 @@ pending state. Nine focused discovery/consolidation/currency checks passed;
 the worker integration also passed its ten affected checks. These validate work
 discovery and ordering, not semantic generation or automatic application.
 
+### Account reconciliation, review and organization indexing
+
+The organization adapter now updates an existing stale inferred account through
+`consolidationctl`, preserving its identity, revision history and exact supports.
+It reuses the qualified assertion reviewer in `scripts/assertion_review.py`;
+current pilot receipts also pin that shared implementation. No historical frozen
+artifact was modified. A single bounded evidence-guided revision may follow a
+rejection; the final candidate is reviewed again. Rejected or incomplete work
+remains pending. Complete source fields now accompany raw prose in review,
+avoiding a generation/review evidence mismatch. Canonical conflicts retain prior
+attempts, and a committed account is not regenerated after process interruption.
+
+The [new fictional correction diagnostic](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-reconciliation-receipt.json)
+used a verified copy of the existing 303-record corpus and its account. A new
+human report describes an August 10 limited canary, seven dropped readings and
+same-day rollback. DeepSeek drafted the account, but its review exhausted 12,000
+reasoning tokens without a final answer. The identical candidate was then reviewed
+by isolated OpenAI Codex Sol 6.1 low, which caught a report/event chronology error
+and inappropriate binding/packet boilerplate. One DeepSeek revision fixed these;
+Sol reviewed the final nine clauses. Direct source comparison found no unsupported
+final assertion. The account advanced to revision 2; prior history and all 300
+distractors remain intact. The account is still verbose; compression and full
+conversational receiving are not claimed from this result.
+
+Five model calls, including the failed reviewer: 95,394 reported tokens and 312.99
+seconds of dispatch time. These include Codex harness context; USD is unknown.
+One current-provider embedding indexed the updated account (0.39 seconds HTTP).
+The worker then reached idle on its owned streams and a second explicit invocation
+used no model or embedding calls (0.70 seconds). The source correction was applied
+through the existing mutation API on the isolated copy, so this diagnostic does
+not establish new capture selection or indexing of unrelated external writes.
+
+145 affected checks passed across reconciliation, worker/index, shared narrative
+review and pilot contracts; 69 targeted checks then passed after the explicit
+native-review CLI and source-envelope adjustments. The real final review evidence
+matches the final source adapter byte-for-byte. Production is unchanged.
+
 Next uncertainties and required work:
 
-1. Implement the useful dependent-account organization adapter through existing
-   support-currency/consolidation APIs, with retained semantic assessment and
-   indexing of its committed receipts. Prioritize invalidated existing accounts;
-   do not create redundant summaries to make the phase appear active. The finite
-   capture/index worker and source windows are qualified; reuse that evidence.
-   Production invocation/provider wiring and receiving supervision remain pending.
+1. Finish the production provider/launcher wiring using the now-connected capture,
+   reviewed account reconciliation and dual-stream index APIs. Reuse completed
+   capture, source-window, organization/replay and index evidence. The isolated
+   CLI supports the chosen split (Flash draft/revision, native Sol low review);
+   do not mistake that diagnostic adapter for installed receiving supervision.
+   Include meaningful current-source-to-conversation acceptance before rollout,
+   rather than repeating already-valid consolidations or model comparisons.
 2. Expose durable processing status to the receiving adapter described in
    Telecodex #82. Telegram delivery, Sessions presentation and independent
    processor/stale-status observation belong to Telecodex. No HMK transport work

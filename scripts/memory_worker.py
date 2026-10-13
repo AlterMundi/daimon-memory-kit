@@ -122,6 +122,12 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                 else:
                     result=maintain_index_once(memory,inbox,state_dir,limit=index_limit,
                                                notice_sender=notice_sender)
+                    if result['state']=='idle':
+                        capture_cursor=result.get('indexed_through')
+                        result=maintain_index_once(memory,inbox,state_dir,limit=index_limit,
+                            notice_sender=notice_sender,kind='organization')
+                        result=dict(result,organization_indexed_through=result.get('indexed_through'),
+                                    indexed_through=capture_cursor)
                 if not isinstance(result,dict) or result.get('state') not in {'idle','complete','pending','deferred'}:
                     raise ValueError('phase returned an unsupported progress receipt')
             except ProviderProblem as failure:
@@ -140,7 +146,7 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
             safe={k:result[k] for k in ('state','reason_code','error_type','alert_id',
                 'processed_through','indexed_through','source_group_complete',
                 'minimum_required_bytes','processed','proposer_invoked',
-                'ready_accounts','blocked_accounts') if k in result}
+                'ready_accounts','blocked_accounts','organized_through','organization_indexed_through') if k in result}
             problem=result.get('provider_problem',{})
             code=problem.get('code') or result.get('reason_code')
             if code in ACTIONS:

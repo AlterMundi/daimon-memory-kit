@@ -18,9 +18,27 @@ return `idle`, `complete`, `pending` or `deferred`, own its stable consolidation
 receipts, preserve source/current-revision checks and perform the qualified
 semantic assessment before applying generated prose. Missing configuration is
 explicitly pending; do not substitute an always-idle adapter for a real account
-backlog. This API is not yet a complete production organization adapter. The
-current selected-index implementation consumes portable capture receipts;
-indexing organization receipts remains part of that integration work.
+backlog. `account_reconciliation.process_once` now supplies this adapter for
+existing inferred native accounts. It uses a complete current manifest and target,
+a retained model draft, the shared assertion reviewer and `consolidationctl.apply`.
+Current source fields accompany the prose in review; source metadata is memory
+provenance, not current body authority. Plain/mixed originals remain quotable.
+
+An unsupported draft can receive at most one source-grounded revision, whose final
+text is reviewed afresh. The next rejection remains pending. Successful dispatches,
+failed reviews and prior candidates are retained; explicit `reprepare_review`
+can select a different reviewer without reissuing the completed generation.
+This never bypasses staged-event ownership. A proven concurrent source change
+supersedes an uncommitted proposal while retaining its artifacts; after a failed
+staged application, its ledger event is explicitly omitted before a fresh attempt.
+Already committed work replays without model calls. A verified snapshot precedes
+account mutation; no new summary is generated merely because a phase runs.
+
+Index maintenance now consumes both owner-bound capture and organization streams
+with separate checkpoints. Existing capture cursors retain their meaning;
+`organization_indexed_through` reports the other stream. Neither cursor proves
+that unrelated external writes have been indexed. Production provider/launcher
+wiring and whole-flow receiving qualification remain pending.
 
 `consolidationctl.py reconcile-plan --limit 32` discovers stale existing inferred
 native accounts directly from the canonical support graph. It returns separate
@@ -64,8 +82,13 @@ through the Mini App.
 
 The existing `portable_producer_trial.py` accepts `--worker-steps N` with its
 explicit fictional-profile/source bindings. It exits 2 while work or an adapter
-remains pending. This entrypoint cannot yet qualify full organization or enable
-production. Its existing `--index-only` remains independently usable.
+remains pending. Add `--reconcile-accounts` to invoke account reconciliation.
+`--reviewer codex-sol-low --review-catalog PATH` explicitly selects the existing
+isolated native OpenAI reviewer; it retains DeepSeek Flash generation/revision.
+The catalog must disable tools, and native memory remains off. Without that
+selection, the reviewer stays DeepSeek; there is no implicit provider fallback.
+This is a fictional qualification entrypoint, not production activation.
+Its existing `--index-only` remains independently usable.
 
 Reinvocation resumes retained phase work. Configuration rollback preserves the
 capture inbox, canonical database, phase checkpoints and diagnostic evidence;

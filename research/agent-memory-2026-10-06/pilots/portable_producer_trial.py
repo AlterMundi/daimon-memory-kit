@@ -21,6 +21,34 @@ from portable_producer import process_once, reprepare_pending, maintain_index_on
 from provider_status import ProviderProblem
 import receiving_text_api as api
 import memory_worker
+import account_reconciliation
+import receiving_codex_native as native
+
+
+def codex_reviewer(catalog):
+    def review(request,directory):
+        if request.get('phase')!='consolidation_review':
+            raise ValueError('native adapter is selected only for account review')
+        value=dict(format='hmk-fictional-receiving-request/v1',source_scope='fictional',
+            phase='narrative_review',model='gpt-6.1-sol',reasoning_effort='low',
+            fresh_context=True,tools_allowed=False,native_memory_allowed=False,
+            messages=request['messages'],response_schema=request['response_schema'])
+        key=digest(value)
+        path=directory/'requests'/f'{key}.json'
+        path.parent.mkdir(exist_ok=True)
+        if not path.exists():
+            checkpoint(path,value)
+        receipt_path=directory/'dispatches'/path.name
+        if not receipt_path.exists():
+            try:
+                native.dispatch(path,directory,catalog)
+            except Exception:
+                raise ProviderProblem('openai-codex-native',key,{'code':'dispatch_unresolved'}) from None
+        receipt=json.loads(receipt_path.read_text())
+        if receipt.get('state')!='completed' or receipt.get('tool_calls_observed'):
+            raise ProviderProblem('openai-codex-native',key,{'code':'dispatch_unresolved'})
+        return dict(selection=json.loads(receipt['content']),dispatch=receipt)
+    return review
 
 
 def proposer(api_key, *, output_limit=6000, retry_of=None):
@@ -33,7 +61,7 @@ def proposer(api_key, *, output_limit=6000, retry_of=None):
             directory = directory/('retry-of-'+retry_of)
             directory.mkdir(exist_ok=True)
         request = dict(format='hmk-fictional-memory-operation/v1',fictional=True,
-            model='deepseek-flash',phase='capture',reasoning_effort='low',
+            model='deepseek-flash',phase=request.get('phase','capture'),reasoning_effort='low',
             messages=request['messages'],response_schema=request['response_schema'],
             fresh_context=True,tools_allowed=False,native_memory_allowed=False,
             output_token_limit=output_limit)
@@ -74,6 +102,9 @@ def main():
     p.add_argument('--source-budget-bytes',type=int,default=64000,
         help='Per-invocation source context budget; full sources remain in the inbox')
     p.add_argument('--worker-steps',type=int,help='Run this many foreground phases; missing organization adapter remains explicitly pending')
+    p.add_argument('--reconcile-accounts',action='store_true',help='Explicitly qualify current-source reconciliation in the isolated worker')
+    p.add_argument('--reviewer',choices=['deepseek','codex-sol-low'],default='deepseek')
+    p.add_argument('--review-catalog',type=Path,help='Tool-disabled native Codex catalog required for codex-sol-low')
     p.add_argument('--index-only',action='store_true',help='Maintain committed selected records without selection or a narrator credential')
     p.add_argument('--output-token-limit',type=int,default=6000)
     p.add_argument('--reprepare-reason')
@@ -84,6 +115,10 @@ def main():
         p.error('capture inbox must already exist')
     if a.worker_steps is not None and (a.worker_steps < 1 or a.index_only or a.reprepare_reason):
         p.error('worker-steps must be positive and cannot combine with index-only or reprepare')
+    if a.reconcile_accounts and (a.worker_steps is None or a.retry_of):
+        p.error('reconcile-accounts requires worker-steps and cannot reuse a capture retry override')
+    if a.reviewer=='codex-sol-low' and (not a.reconcile_accounts or not a.review_catalog or not a.review_catalog.is_file()):
+        p.error('codex-sol-low requires reconcile-accounts and an existing isolated review catalog')
     if a.index_only and (a.reprepare_reason or a.retry_of):
         p.error('index-only cannot reprepare selection or retry narrator requests')
     memory=load_memory(a.canon)
@@ -98,9 +133,19 @@ def main():
     if a.reprepare_reason:
         reprepare_pending(memory,inbox,a.state_dir,a.reprepare_reason)
     if a.worker_steps is not None:
+        model=proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of)
+        context=json.loads(a.context.read_text())
+        reviewer=codex_reviewer(a.review_catalog) if a.reviewer=='codex-sol-low' else model
+        def organization_model(request,directory):
+            return (reviewer if request.get('phase')=='consolidation_review' else model)(request,directory)
+        def organize():
+            return account_reconciliation.process_once(memory,inbox,a.state_dir,organization_model,context,
+                model_policy=dict(generation=dict(provider='deepseek',model='deepseek-flash',effort='low',output_limit=a.output_token_limit),
+                                  review=dict(provider='openai-codex-native',model='gpt-6.1-sol',effort='low')
+                                  if a.reviewer=='codex-sol-low' else dict(provider='deepseek',model='deepseek-flash',effort='low',output_limit=a.output_token_limit)),
+                source_budget_bytes=a.source_budget_bytes)
         result=memory_worker.run(memory,inbox,a.state_dir,
-            proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of),
-            json.loads(a.context.read_text()),max_steps=a.worker_steps,
+            model,context,max_steps=a.worker_steps,organize=organize if a.reconcile_accounts else None,
             source_budget_bytes=a.source_budget_bytes,capture_limit=a.limit,index_limit=a.limit)
         print(json.dumps(result['status']))
         return 0 if result['status']['state']=='idle' else 2

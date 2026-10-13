@@ -48,3 +48,19 @@ def test_worker_cli_keeps_pending_visible_and_forwards_phase_budgets(tmp_path,mo
     assert json.loads(capsys.readouterr().out)['state']=='pending'
     assert calls[0]['capture_limit']==calls[0]['index_limit']==7
     assert calls[0]['max_steps']==5
+
+
+def test_native_account_reviewer_reuses_the_exact_completed_dispatch(tmp_path,monkeypatch):
+    calls=[]
+    def dispatch(path,root,catalog):
+        calls.append(json.loads(path.read_text()))
+        directory=root/'dispatches'
+        directory.mkdir()
+        (directory/path.name).write_text(json.dumps(dict(state='completed',content='{"claims":[],"missing":[]}',tool_calls_observed=[])))
+    monkeypatch.setattr(trial.native,'dispatch',dispatch)
+    request=dict(phase='consolidation_review',messages=[dict(role='system',content='Review fictional sources only.'),
+        dict(role='user',content='{}')],response_schema={'type':'object'})
+    review=trial.codex_reviewer(tmp_path/'catalog.json')
+    assert review(request,tmp_path)==review(request,tmp_path)
+    assert len(calls)==1 and calls[0]['model']=='gpt-6.1-sol'
+    assert calls[0]['tools_allowed'] is calls[0]['native_memory_allowed'] is False

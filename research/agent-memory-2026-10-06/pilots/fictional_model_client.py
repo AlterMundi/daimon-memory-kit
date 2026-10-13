@@ -42,6 +42,7 @@ class Client:
             api_sha256=api.exchange.checksum(Path(api.__file__)),
             native_sha256=api.exchange.checksum(Path(native.__file__)),
             narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)),
+            assertion_review_sha256=api.exchange.checksum(Path(api.exchange.narrative.review_shape.__code__.co_filename)),
             catalog_sha256=api.exchange.checksum(self.catalog),tools_allowed=False,native_memory_allowed=False)
         if operation_output_limit is not None:
             frozen['operation_output_limit'] = operation_output_limit

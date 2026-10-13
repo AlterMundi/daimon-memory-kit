@@ -326,7 +326,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 'source_progress':window['progress'] if window else None}
 
 
-def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, notice_sender=None, _fault=None):
+def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, notice_sender=None, _fault=None, kind='capture'):
     """Explicit bounded index work from committed capture receipts, independently resumable.
 
     This cannot acknowledge capture or invoke selection. The receiving launcher
@@ -334,6 +334,8 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
     """
     if type(limit) is not int or limit < 1:
         raise ValueError('positive index work budget required')
+    if kind not in {'capture','organization'}:
+        raise ValueError('index only owner-bound capture or organization receipts')
     state_dir = Path(state_dir).absolute()
     if any(p.is_symlink() for p in [state_dir,*state_dir.parents]):
         raise ValueError('producer state directory cannot contain symlinks')
@@ -349,7 +351,7 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
                 or owner.get('capture_binding') != digest(json.loads(inbox.binding))):
             raise ValueError('index work binding differs')
         cfg = memory.embeddings_runtime_config()
-        path = state_dir/'embedding-index.json'
+        path = state_dir/('embedding-index.json' if kind=='capture' else 'embedding-organization-index.json')
         state = json.loads(path.read_text()) if path.exists() else dict(owner=owner,space=cfg,after=0)
         if state['owner'] != owner or state['space'] != cfg:
             raise ValueError('index space or binding changed; explicit migration required')
@@ -359,7 +361,7 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
             if not con.execute("SELECT 1 FROM sqlite_master WHERE name='capture_events'").fetchone():
                 return dict(state='idle',indexed_through=state['after'],space=cfg)
             row = con.execute("SELECT sequence,state,receipt_json FROM capture_events WHERE stream_id=? AND sequence>? ORDER BY sequence LIMIT 1",
-                ('portable:'+digest(owner),state['after'])).fetchone()
+                (('portable:' if kind=='capture' else 'organization:')+digest(owner),state['after'])).fetchone()
         if row is None:
             return dict(state='idle',indexed_through=state['after'],space=cfg)
         if row['state'] not in {'applied','omitted'}:
@@ -370,13 +372,15 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
             found = {r[0] for r in con.execute('SELECT record_uid FROM chapters WHERE record_uid IN (SELECT value FROM json_each(?))',(wire(uids),))}
         if found != set(uids):
             return dict(state='pending',reason='committed records missing',indexed_through=state['after'])
-        operation = 'embedding:'+digest([owner,row['sequence'],cfg])
+        operation = 'embedding:'+digest([owner,row['sequence'],cfg] if kind=='capture'
+                                        else [owner,kind,row['sequence'],cfg])
         if not path.exists():
             checkpoint(path,state)  # Pin the space before any paid work, including failures.
         pending = memory.embedding_candidates(provider=cfg['provider'],model=cfg['model'],record_uids=uids,limit=limit)
         processed = 0
         if pending:
-            backup = state_dir/f"embedding-{row['sequence']}-before.sqlite"
+            prefix='embedding' if kind=='capture' else 'embedding-organization'
+            backup = state_dir/f"{prefix}-{row['sequence']}-before.sqlite"
             if not backup.exists():
                 verified_snapshot(memory.DB_PATH,backup)
             try:

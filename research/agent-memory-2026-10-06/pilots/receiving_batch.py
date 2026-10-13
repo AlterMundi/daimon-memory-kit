@@ -59,6 +59,7 @@ def run(packet_root, out, *, api_key, generation_effort='low', review_effort='lo
         dispatcher_sha256=api.exchange.checksum(Path(api.__file__)),
         exchange_sha256=api.exchange.checksum(Path(api.exchange.__file__)),
         narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)),
+        assertion_review_sha256=api.exchange.checksum(Path(api.exchange.narrative.review_shape.__code__.co_filename)),
         independent_grading_required=True, source_access=False, tools_allowed=False,
         native_memory_allowed=False)
     if native_roles:
