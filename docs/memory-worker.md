@@ -22,6 +22,16 @@ backlog. This API is not yet a complete production organization adapter. The
 current selected-index implementation consumes portable capture receipts;
 indexing organization receipts remains part of that integration work.
 
+`consolidationctl.py reconcile-plan --limit 32` discovers stale existing inferred
+native accounts directly from the canonical support graph. It returns separate
+ready and blocked hints/counts. Current child support must be reconciled before
+its dependents; missing, cyclic or separately owned support stays blocked.
+The result budget does not hide ready work behind earlier blocked accounts or
+limit corpus discovery. This is read-only navigation, not a second queue or a
+semantic verdict. Application still requires complete current originals and the
+existing consolidation revision checks. Without an organization adapter, worker
+status includes these two counts but remains pending even if both are zero.
+
 Provider clients must reuse completed dispatch receipts and retain uncertain
 requests. The worker never silently changes provider or resubmits a failed paid
 request. `ProviderProblem` from organization enters the same durable incident

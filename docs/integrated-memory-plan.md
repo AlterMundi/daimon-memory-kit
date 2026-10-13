@@ -260,6 +260,15 @@ projection. Existing internal `embedding` incidents now project as receiving
 compatibility gap with the newly supplied Alerts exporter. Notification delivery
 remains owned by Telecodex #82. Native memory and production remain unchanged.
 
+Existing-account discovery is also implemented in `consolidationctl.reconcile-plan`.
+It reads the canonical revision graph, returns ready accounts separately from
+missing/cyclic/protected-support blockers, and allows a dependent only after its
+current sources are reconciled. It does not create summaries, a second queue or
+model calls. Worker status exposes counts while retaining the unconfigured-adapter
+pending state. Nine focused discovery/consolidation/currency checks passed;
+the worker integration also passed its ten affected checks. These validate work
+discovery and ordering, not semantic generation or automatic application.
+
 Next uncertainties and required work:
 
 1. Implement the useful dependent-account organization adapter through existing

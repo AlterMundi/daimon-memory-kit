@@ -40,6 +40,8 @@ def test_unconfigured_organization_is_not_healthy_or_a_repeated_model_loop(setup
     result=run(memory,inbox,state,propose,binding,max_steps=100)
     assert result['status']['state']=='pending' and len(calls)==1
     assert result['status']['phases']['organization']['reason_code']=='organization_adapter_unconfigured'
+    assert result['status']['phases']['organization']['ready_accounts']==0
+    assert result['status']['phases']['organization']['blocked_accounts']==0
     assert len([s for s in result['outcomes'] if s['phase']=='organization'])==1
     assert result['status']['steps']<100
 

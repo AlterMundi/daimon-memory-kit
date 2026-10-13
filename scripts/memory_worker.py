@@ -13,6 +13,7 @@ import time
 
 from capturectl import digest
 from codex_coordinator import checkpoint
+from consolidationctl import reconciliation_plan
 from portable_producer import process_once, maintain_index_once
 from provider_status import ACTIONS, Alerts, ProviderProblem
 from sqlite_snapshot import verified_snapshot
@@ -112,8 +113,12 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                         navigation_steps=navigation_steps,retrieval=retrieval,
                         source_budget_bytes=source_budget_bytes,notice_sender=notice_sender)
                 elif phase=='organization':
-                    result=(organize() if organize else
-                            dict(state='pending',reason_code='organization_adapter_unconfigured'))
+                    if organize:
+                        result=organize()
+                    else:
+                        backlog=reconciliation_plan(memory,limit=1)
+                        result=dict(state='pending',reason_code='organization_adapter_unconfigured',
+                                    ready_accounts=backlog['ready_count'],blocked_accounts=backlog['blocked_count'])
                 else:
                     result=maintain_index_once(memory,inbox,state_dir,limit=index_limit,
                                                notice_sender=notice_sender)
@@ -134,7 +139,8 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
             outcomes.append(dict(phase=phase,result=result))
             safe={k:result[k] for k in ('state','reason_code','error_type','alert_id',
                 'processed_through','indexed_through','source_group_complete',
-                'minimum_required_bytes','processed','proposer_invoked') if k in result}
+                'minimum_required_bytes','processed','proposer_invoked',
+                'ready_accounts','blocked_accounts') if k in result}
             problem=result.get('provider_problem',{})
             code=problem.get('code') or result.get('reason_code')
             if code in ACTIONS:
