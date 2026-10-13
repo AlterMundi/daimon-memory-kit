@@ -48,20 +48,73 @@ is unverified. The target remains revision 1 and the capture cursor did not move
 This demonstrates useful navigation mechanics, not completed learning or receiving
 acceptance. The failed proposals are retained and no factual repair was inserted.
 
+### Resumable correction and provider visibility
+
+The two failed diagnostic attempts above remain evidence of the original
+implementation. A bounded schema-feedback step now retains those proposals and
+all successful lookups. Resuming the second attempt required one additional
+DeepSeek Flash low call (6,853 tokens, 5.79 seconds HTTP time). Intake committed
+revision 2 of target 301 and one source-attributed lesson, retaining revision 1.
+The redundant proposed correction episode was coalesced. Total diagnostic cost:
+seven calls, 39,200 tokens, 56.39 seconds HTTP time; USD price remains unverified.
+Embeddings are still pending. This proves resumed intake, not narrative utility
+or the complete operational pipeline.
+
+Concurrent canonical updates now invalidate the uncommitted selection while
+preserving the source event, earlier decisions and successful calls. Focused
+checks cover resuming with fresh revisions, interruption before staging and
+replay after commit without duplicate canonical entries. Schema corrections have
+a persistent budget; repeated invalid output halts visibly rather than looping.
+
+Provider failures now have safe categories and durable incidents in the capture
+journal. Payment, quota, authentication, throttling and availability failures
+leave the source pending. Delivery receipts and resolution are separate: sending
+an alert does not repair processing. The prototype preserves uncertain delivery
+and reports an unhealthy state. These are local mechanisms tested with injected
+failures, not evidence that a production human has received an alert. The current
+worker integrates selection errors; full consolidation/index/launcher coverage
+remains required.
+
+### Infrastructure boundary for operational alerts
+
+The human explicitly requires failed processing (including exhausted provider
+credit) to become actionable rather than silently skipped. Use the receiving
+infrastructure catalog and its maintained operational sources before selecting a
+notification transport. HMK owns pending work and processing state; the receiving
+supervisor/monitoring and notification infrastructure own observation and delivery.
+Do not couple HMK to Telecodex or build another monitoring service by default.
+The preliminary Telegram-specific adapter was removed; the launcher adapter
+boundary is retained without assuming a destination or transport.
+
+The 2026-10-13 lookup found an existing estate monitoring stack, but its maintained
+observability and team-communications sources explicitly retain historical
+notification failures and incomplete routing. Those dated records do not establish
+current availability or this receiver's access. No matching loaded monitoring
+systemd units were found locally; this narrow observation does not rule out other
+collectors or prove the host is unmonitored. Confirm the actual current route and
+permission holder before adoption. Shared/private topology and credentials stay
+in the infrastructure's owning records, not this public project.
+
+Activation requires evidence for: provider payment/availability failure reaching
+the selected human destination; pending work surviving the failure and resuming
+without duplication; notification failure remaining visible; and an independent
+check detecting a dead/stalled processor or stale status. A worker cannot report
+its own absence. Missing observations must not become a healthy/zero-backlog
+status. Reuse existing monitoring where applicable and qualify the receiving
+route once, including recovery; no timers or services were installed by this work.
+
 Next uncertainties and required work:
 
-1. Add bounded, resumable structural-validation feedback: give the selector
-   its precise schema error without a rubric or factual edits, preserve every
-   attempt, and reuse successful lookup work. Do not rerun discovery or launch a
-   broad comparison to retry an invalid final shape. Then qualify actual intake
-   and current hybrid embeddings separately from the lexical-only diagnostic.
-2. Reconcile a context revision conflict after CaptureLedger staging. The
-   transaction rejects overwrites, but current pre-stage reprepare deliberately
-   cannot replace staged work. Preserve stable source events and earlier
-   decision artifacts while allowing a fresh decision on uncommitted input.
-3. Integrate bounded source-delta context, selected index maintenance and useful
+1. Qualify current hybrid embeddings separately from the lexical diagnostic and
+   meaningful receiving use of the corrected record/lesson. Intake alone is not
+   demonstrated improvement in recall.
+2. Integrate bounded source-delta context, selected index maintenance and useful
    dependent-account consolidation through existing APIs. Define launcher
-   ownership and backlog handling before enabling automatic processing.
+   ownership, batching and backlog handling before automatic processing.
+3. Finish infrastructure-bound observation and actionable delivery for every
+   processing phase. Verify real delivery, processor absence and recovery using
+   the receiving infrastructure; do not infer delivery from a local incident or
+   a configured contact point.
 4. Compare meaningful receiving behavior with the current installation, complete
    the operational fault cases, and publish a coordinated reviewed delivery.
    Then adopt on each authorized receiver with backup, rollback and live evidence.

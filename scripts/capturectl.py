@@ -173,7 +173,8 @@ class CaptureLedger:
             # exceptions, which can contain private source/endpoint material.
             if 'row' in locals() and row and row['state'] not in {'applied','omitted'}:
                 code = 'native_revision_conflict' if isinstance(exc, SystemExit) and 'revision conflict' in str(exc) else type(exc).__name__
-                con.execute("UPDATE capture_events SET state='failed',reason=?,updated_at=? WHERE event_key=?", (code, self.mc.now_ts(), key))
+                con.execute("UPDATE capture_events SET state='failed',reason=?,decision_hash=?,updated_at=? WHERE event_key=?",
+                            (code, digest(decision), self.mc.now_ts(), key))
                 con.commit()
             raise
         finally:

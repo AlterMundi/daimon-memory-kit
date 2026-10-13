@@ -162,17 +162,37 @@ def block_messages(sources, canon, binding):
 
 def selected_decision(value, sources, canon):
     if (not isinstance(value, dict) or set(value) - {'outcome','reason','records','links'}
-            or not isinstance(value.get('records'), list)):
+            or not isinstance(value.get('records'), list) or not isinstance(value.get('links'),list)
+            or value.get('outcome') not in {'applied','omitted','deferred'}
+            or not isinstance(value.get('reason'),str) or not value['reason'].strip()):
         raise ValueError('closed block-selection decision required')
+    if ((value['outcome'] != 'applied' and (value['records'] or value['links']))
+            or (value['outcome'] == 'applied' and not (value['records'] or value['links']))):
+        raise ValueError('only applied outcomes may contain records or links; applied needs selected work')
     fields = {'key','operation','title','source_ids','shelf','chapter_id','expected_revision','engram_type'}
     value = json.loads(json.dumps(value))
     available = {s['id']: s for s in sources}
     allowed = {s['id'] for s in sources if s.get('status') == 'new'}
     current = {r['id']: r for r in canon}
-    for record in value.get('records', []):
-        if set(record) - fields or record.get('operation') not in {'add','update'}:
+    for index, record in enumerate(value.get('records', [])):
+        if not isinstance(record,dict):
+            raise ValueError(f'records[{index}] must be an object')
+        if set(record) - fields:
+            raise ValueError(f'closed block records[{index}] has unsupported fields: {", ".join(sorted(set(record)-fields))}; use only the supplied schema')
+        if record.get('operation') not in {'add','update'}:
             raise ValueError('closed block-selection record with explicit operation required')
+        if any(not isinstance(record.get(k),str) or not record[k].strip() for k in ('key','title')):
+            raise ValueError(f'records[{index}] requires nonempty key and title')
+        if (not isinstance(record.get('source_ids'),list) or not record['source_ids']
+                or any(not isinstance(ref,str) for ref in record['source_ids'])):
+            raise ValueError(f'records[{index}] requires a nonempty array of string source_ids')
+        if record.get('engram_type','episodic') not in {'episodic','semantic','procedural'}:
+            raise ValueError(f'records[{index}] has an unsupported engram_type')
+        if record['operation'] == 'add' and (not isinstance(record.get('shelf'),str) or not record['shelf'].strip()):
+            raise ValueError(f'records[{index}] add requires a shelf')
         if record['operation'] == 'update':
+            if type(record.get('chapter_id')) is not int or type(record.get('expected_revision')) is not int:
+                raise ValueError(f'records[{index}] update requires integer chapter_id and expected_revision')
             original = current.get(record.get('chapter_id'))
             if original is None or record.get('expected_revision') != original['revision']:
                 raise ValueError('update requires a completely read current canonical record')
@@ -181,9 +201,17 @@ def selected_decision(value, sources, canon):
         if not allowed.intersection(record.get('source_ids', [])):
             raise ValueError('a selected record needs genuinely new source bytes')
     for link in value.get('links', []):
+        if (not isinstance(link,dict) or set(link)-{'source','target','link_type','weight','note'}
+                or not isinstance(link.get('link_type'),str) or not link['link_type'].strip()
+                or any(type(link.get(k)) not in {str,int} for k in ('source','target'))
+                or ('weight' in link and type(link['weight']) not in {int,float})
+                or ('note' in link and link['note'] is not None and not isinstance(link['note'],str))):
+            raise ValueError('link requires source, target and link_type in the supplied closed schema')
         for endpoint in ('source','target'):
             if type(link.get(endpoint)) is int and link[endpoint] not in current:
                 raise ValueError('link requires a completely read canonical endpoint')
+            if type(link[endpoint]) is str and link[endpoint] not in {r['key'] for r in value['records']}:
+                raise ValueError('string link endpoint must be a selected record key')
     # Validate proposed titles and references before adding causal context.
     source_decision(value, sources, canon)
     ordering = {s['id']: i for i, s in enumerate(sources)}

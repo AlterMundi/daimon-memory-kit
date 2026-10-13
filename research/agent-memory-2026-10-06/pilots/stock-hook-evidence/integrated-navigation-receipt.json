@@ -470,5 +470,126 @@
     "target_raw": "Leto Neri proposed receipt-time ordering on issue 37; adopted June 18."
   },
   "cursor_advanced": false,
-  "conclusion": "Focused discovery and full reads worked beyond 256; intake remains unqualified. Add bounded resumable structural-validation feedback before another model comparison."
+  "conclusion": "Navigation and resumed intake demonstrated beyond 256 records. Both earlier failed attempts remain unchanged above; the original preserved_canon and cursor_advanced fields describe their pre-repair state. Current continuation committed a correction with retained history. Hybrid index maintenance and meaningful receiving utility remain unqualified.",
+  "continuation": {
+    "basis": "Resume second retained attempt with structural feedback; no lookup rerun or factual repair",
+    "model": "deepseek-flash",
+    "reasoning_effort": "low",
+    "new_model_calls": 1,
+    "usage": {
+      "prompt_tokens": 5690,
+      "completion_tokens": 1163,
+      "total_tokens": 6853,
+      "prompt_tokens_details": {
+        "cached_tokens": 4736
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 356
+      },
+      "prompt_cache_hit_tokens": 4736,
+      "prompt_cache_miss_tokens": 954
+    },
+    "api_seconds": 5.787758154794574,
+    "request_sha256": "3a898b29ae911554a4aeab0390199b6193a108fa7879d8a1ee1e55739f0b4658",
+    "final_proposal": {
+      "links": [
+        {
+          "link_type": "corrects",
+          "note": "human report and repo comment correct the attribution, ordering description and adoption claim of the retained account",
+          "source": "harbormesh-37-mira-proposal",
+          "target": 301,
+          "weight": 1
+        },
+        {
+          "link_type": "lesson_from",
+          "note": "Lesson drawn from the corrected HarborMesh issue 37 episode",
+          "source": "attribution-drift-harbormesh-37",
+          "target": "harbormesh-37-mira-proposal",
+          "weight": 0.8
+        }
+      ],
+      "outcome": "applied",
+      "reason": "The existing HarborMesh issue 37 episode (chapter 301, revision 1) is decisively contradicted by Tavi's human report and by the repository issue comment: Mira Solen (@mira-estuary, person:841) proposed retaining original timestamps plus a local monotonic sequence on 2024-06-18, Leto Neri only reviewed the parser, and the proposal was never adopted. The prior mistaken version is referenced via memory:301 so the older supported meaning is preserved. Retrieved-context and recalled material are not selected as new evidence; the earlier recall output is context only. A new episode records the corrected encounter and the still-unadopted proposal, and a semantic library record retains the attribution lesson (separate contributions from separate people; adoption status must not be asserted from a mistaken memory).",
+      "records": [
+        {
+          "chapter_id": 301,
+          "engram_type": "episodic",
+          "expected_revision": 1,
+          "key": "harbormesh-37-receipt-ordering",
+          "operation": "update",
+          "source_ids": [
+            "memory:301",
+            "fixture:correction:1341:e952dde436c5702e511e4b9ade4873751c4f9c0167e241f6909752740fc1161f",
+            "fixture:correction:2040:16d6ca7152f820d26f59e1e2563ba9fcd2485f8c8a991dce804c072e93a3b69d"
+          ],
+          "title": "That entry is wrong"
+        },
+        {
+          "engram_type": "episodic",
+          "key": "harbormesh-37-mira-proposal",
+          "operation": "add",
+          "shelf": "episodes",
+          "source_ids": [
+            "fixture:correction:415:60c05423e5b654055a030bb83420577d25a834f7a6fecc691fff4216db72130c",
+            "fixture:correction:1341:e952dde436c5702e511e4b9ade4873751c4f9c0167e241f6909752740fc1161f",
+            "fixture:correction:2040:16d6ca7152f820d26f59e1e2563ba9fcd2485f8c8a991dce804c072e93a3b69d"
+          ],
+          "title": "we had not adopted it then and still have not"
+        },
+        {
+          "engram_type": "semantic",
+          "key": "attribution-drift-harbormesh-37",
+          "operation": "add",
+          "shelf": "library",
+          "source_ids": [
+            "fixture:correction:1341:e952dde436c5702e511e4b9ade4873751c4f9c0167e241f6909752740fc1161f",
+            "fixture:correction:2040:16d6ca7152f820d26f59e1e2563ba9fcd2485f8c8a991dce804c072e93a3b69d",
+            "fixture:correction:2427:34b93999c04b00a683c2be6cb15ea1744b712bed58161c79e060690ad73e5473"
+          ],
+          "title": "Leto only reviewed the parser"
+        }
+      ]
+    },
+    "result": {
+      "artifact_id": "cbcc4d2ec319e8eca0697bb5cafe7fca10fa9caf226fd3f16fa6a7e1821bbf50",
+      "processed_through": 1,
+      "proposer_invoked": true,
+      "receipt": {
+        "event_key": "dade39044bb2c6e9b400ef4fbb36cf643aadef0c93c908533c5e0331e2616131",
+        "processed_through": 1,
+        "reason": "The existing HarborMesh issue 37 episode (chapter 301, revision 1) is decisively contradicted by Tavi's human report and by the repository issue comment: Mira Solen (@mira-estuary, person:841) proposed retaining original timestamps plus a local monotonic sequence on 2024-06-18, Leto Neri only reviewed the parser, and the proposal was never adopted. The prior mistaken version is referenced via memory:301 so the older supported meaning is preserved. Retrieved-context and recalled material are not selected as new evidence; the earlier recall output is context only. A new episode records the corrected encounter and the still-unadopted proposal, and a semantic library record retains the attribution lesson (separate contributions from separate people; adoption status must not be asserted from a mistaken memory).",
+        "records": {
+          "attribution-drift-harbormesh-37": {
+            "chapter_id": 302,
+            "embedding_status": "pending",
+            "lexical_ready": true,
+            "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+            "revision": 1
+          },
+          "harbormesh-37-receipt-ordering": {
+            "chapter_id": 301,
+            "embedding_status": "pending",
+            "lexical_ready": true,
+            "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+            "revision": 2
+          }
+        },
+        "selection_version": "hmk-portable-blocks/v1:31ff502d4d9cb100a7ca7f7b1a358dcd5682c5bebe991804be6cd748401938de",
+        "state": "applied"
+      },
+      "state": "complete"
+    },
+    "cursor_advanced": true,
+    "target_revision": 2,
+    "prior_revision_retained": true,
+    "embeddings": "pending",
+    "receiving_utility": "not yet evaluated",
+    "cost_usd": null
+  },
+  "total_diagnostic": {
+    "model_calls": 7,
+    "tokens": 39200,
+    "api_seconds": 56.39171690028161,
+    "cost_usd": null
+  }
 }

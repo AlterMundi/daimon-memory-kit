@@ -109,7 +109,8 @@ def test_explicit_reprepare_preserves_invalid_proposal_without_advancing(setup):
     from portable_producer import reprepare_pending
     memory,inbox,state,propose,binding,calls,raw=setup
     def invalid(request,path):return {'selection':dict(outcome='applied',reason='bad',records=[{}],links=[])}
-    with pytest.raises(ValueError):process_once(memory,inbox,state,invalid,binding)
+    pending=process_once(memory,inbox,state,invalid,binding)
+    assert pending['state']=='pending' and 'two corrections' in pending['reason']
     result=reprepare_pending(memory,inbox,state,'Fix invalid selection representation')
     assert Path(result['preserved_job']).is_file() and not result['cursor_advanced']
     assert run(setup)['state']=='complete'

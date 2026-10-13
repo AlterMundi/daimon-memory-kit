@@ -18,6 +18,7 @@ from capturectl import digest
 from codex_coordinator import checkpoint
 from native_producer_delivery import load_memory
 from portable_producer import process_once, reprepare_pending
+from provider_status import ProviderProblem
 import receiving_text_api as api
 
 
@@ -45,11 +46,18 @@ def proposer(api_key, *, output_limit=6000, retry_of=None):
             checkpoint(request_path,request)
         receipt_path = directory/'dispatches'/f'{key}.json'
         if not receipt_path.exists():
-            api.dispatch(request_path,directory,api_key,'deepseek')
+            try:
+                api.dispatch(request_path,directory,api_key,'deepseek')
+            except Exception:
+                if receipt_path.exists():
+                    receipt=json.loads(receipt_path.read_text())
+                    raise ProviderProblem('deepseek',key,receipt.get('problem',{'code':'dispatch_unresolved'})) from None
+                raise
         receipt = json.loads(receipt_path.read_text())
         if (receipt.get('state') != 'completed' or receipt.get('finish_reason') != 'stop'
                 or receipt.get('tool_calls_observed')):
-            raise ValueError('dispatch unresolved or incomplete; retain and reconcile explicitly')
+            raise ProviderProblem('deepseek',key,receipt.get('problem',{'code':
+                'response_incomplete' if receipt.get('state')=='completed' else 'dispatch_unresolved'}))
         return dict(selection=json.loads(receipt['content']),dispatch=receipt)
     return propose
 
@@ -79,6 +87,8 @@ def main():
     result=process_once(memory,inbox,a.state_dir,proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of),
         json.loads(a.context.read_text()),limit=a.limit)
     print(json.dumps(result))
+    if result['state'] not in {'complete','idle'}:
+        raise SystemExit(2)
 
 
 if __name__=='__main__':

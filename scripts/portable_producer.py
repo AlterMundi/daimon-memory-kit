@@ -16,13 +16,53 @@ from codex_coordinator import checkpoint, sync_directory
 import codex_projection as artifacts
 import portable_capture as selection
 import selection_navigation
+from provider_status import Alerts, ProviderProblem
 from sqlite_snapshot import verified_snapshot
 
 SCHEMA = 'hmk.portable-producer/v1'
 
 
+class CanonicalContextChanged(ValueError):
+    """A concurrent canonical write invalidated the selection's read evidence."""
+
+
+def _code_hash():
+    return digest([Path(selection.__file__).read_text(),
+                   Path(selection.source_decision.__code__.co_filename).read_text(),
+                   Path(selection_navigation.__file__).read_text(),
+                   Path(__file__).read_text()])
+
+
+def _refresh_changed_context(memory, job, job_path):
+    """Only a proven uncommitted revision conflict may reopen a selection.
+
+    CaptureLedger's failed state is authoritative, including a crash before the
+    producer could checkpoint the failure. The source event stays immutable.
+    """
+    with memory.connect() as con:
+        if not con.execute("SELECT 1 FROM sqlite_master WHERE name='capture_events'").fetchone():
+            return
+        row = con.execute('SELECT state,reason,payload_json,decision_hash FROM capture_events WHERE stream_id=? AND sequence=?',
+            ('portable:'+digest(job['owner']),job['sequence'])).fetchone()
+    if row is None or row['state'] != 'failed' or row['reason'] != 'CanonicalContextChanged':
+        return
+    if 'proposal' not in job:
+        return  # Already reopened; do not discard the new attempt on each call.
+    if not row['decision_hash'] or row['decision_hash'] != job.get('decision_hash'):
+        return  # An earlier failed attempt cannot invalidate a newer proposal.
+    event = json.loads(row['payload_json'])
+    if event['content'] != wire(job['inputs']) or event['event_id'] != 'portable-batch:'+job['input_hash']:
+        raise ValueError('failed source event does not match frozen producer input')
+    job.setdefault('prior_attempts',[]).append(dict(reason='canonical_context_changed',
+        proposal=job.pop('proposal'),navigation=job.pop('navigation',{})))
+    job['context_attempt'] = job.get('context_attempt',0)+1
+    job.pop('decision_hash',None)
+    job['state'] = 'prepared'
+    checkpoint(job_path,job)
+
+
 def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
-                 navigation_steps=4, retrieval='hybrid', _fault=None):
+                 navigation_steps=4, retrieval='hybrid', notice_sender=None, _fault=None):
     """Process at most one frozen batch. Reinvocation resumes uncertain commits.
 
     proposer(request, directory) returns an auditable JSON object containing
@@ -63,10 +103,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             raise ValueError('producer index binding differs')
         sequence = index['sequence']+1
         job_path = state_dir/f'batch-{sequence}.json'
-        code_hash = digest([Path(selection.__file__).read_text(),
-                            Path(selection.source_decision.__code__.co_filename).read_text(),
-                            Path(selection_navigation.__file__).read_text(),
-                            Path(__file__).read_text()])
+        code_hash = _code_hash()
         if job_path.exists():
             job = json.loads(job_path.read_text())
             if job['owner'] != owner or job['code_hash'] != code_hash:
@@ -139,6 +176,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         inputs = job['inputs']
         if job['retrieval'] != retrieval:
             raise ValueError('pending retrieval configuration changed; reconcile explicitly')
+        _refresh_changed_context(memory,job,job_path)
         # Each resume verifies the original dependency chain; metadata IDs alone
         # never prove that the source bytes needed by this job survived.
         originals = {}
@@ -151,12 +189,24 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         if 'proposal' not in job:
             if any(s['status']=='new' for s in inputs['sources']):
                 work = state_dir/f"batch-{sequence}-dispatch-{job['created_ns']}"
-                work.mkdir(exist_ok=True,mode=0o700)
-                proposal, dispatches = selection_navigation.advance(job,job_path,work,proposer,
-                    database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval)
+                if job.get('context_attempt'):
+                    work = work/f"context-{job['context_attempt']}"
+                work.mkdir(parents=True,exist_ok=True,mode=0o700)
+                try:
+                    proposal, dispatches = selection_navigation.advance(job,job_path,work,proposer,
+                        database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval)
+                except ProviderProblem as failure:
+                    alerts=Alerts(inbox)
+                    alert_id=alerts.report(job['input_hash'],'selection',failure)
+                    status=alerts.deliver(notice_sender) if notice_sender is not None else alerts.status()
+                    delivery=next(r['delivery'] for r in status['alerts'] if r['id']==alert_id)
+                    return {'state':'pending','reason':str(failure),'provider_problem':failure.problem,
+                        'alert_id':alert_id,'notification_pending':delivery!='delivered','notification_delivery':delivery,
+                        'processed_through':index['after'],
+                        'proposer_invoked':True}
                 proposer_invoked = bool(dispatches)
                 if proposal is None:
-                    return {'state':'pending','reason':'navigation invocation budget reached',
+                    return {'state':'pending','reason':job['navigation'].get('halted_reason','navigation invocation budget reached'),
                         'processed_through':index['after'],'proposer_invoked':proposer_invoked,
                         'navigation_steps':len(job['navigation']['steps'])}
             else:
@@ -173,12 +223,15 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                     'processed_through':index['after'],'proposer_invoked':proposer_invoked}
         originals.update({'request.json':wire(job['request']).encode(),
                           'navigation.json':wire(job.get('navigation',{})).encode(),
+                          'prior-attempts.json':wire(job.get('prior_attempts',[])).encode(),
                           'proposal.json':wire(job['proposal']).encode(),
                           'capture.json':wire(inputs['observations']).encode(),
                           'producer.json':wire({'schema':SCHEMA,'owner':owner,
                             'code_hash':code_hash,'input_hash':job['input_hash']}).encode()})
         bundle = artifacts.learning_bundle(originals,source_instance=binding['source_instance'],
             subject=binding['subject'],source_event_id='portable-batch:'+job['input_hash'])
+        for record in decision['records']:
+            record['metadata']['evidence'] = ['artifact:sha256:'+bundle['artifact_id']]
         backup = state_dir/f'batch-{sequence}-before.sqlite'
         if not backup.exists():
             verified_snapshot(memory.DB_PATH,backup)
@@ -186,7 +239,11 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         event = dict(stream_id='portable:'+digest(owner),sequence=sequence,
             event_id='portable-batch:'+job['input_hash'],source_version=digest(inputs['revisions']),
             content=wire(inputs),metadata=dict(mode='reported',source_instance=binding['source_instance'],
-                subject=binding['subject'],evidence=['artifact:sha256:'+bundle['artifact_id']]))
+                subject=binding['subject']))
+        job['decision_hash'] = digest(decision)
+        checkpoint(job_path,job)
+        if _fault:
+            _fault('before_stage')
         staged = ledger.stage(event)
         if _fault:
             _fault('after_stage')
@@ -200,12 +257,17 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 current = con.execute('SELECT record_uid,revision FROM chapters WHERE id=?',
                                       (record['id'],)).fetchone()
                 if current is None or tuple(current) != (record['record_uid'],record['revision']):
-                    raise ValueError('navigated canonical evidence changed; reconcile pending work')
+                    raise CanonicalContextChanged('navigated canonical evidence changed; reconcile pending work')
             con.execute('CREATE TABLE IF NOT EXISTS native_learning_artifacts(artifact_id TEXT PRIMARY KEY,envelope_json TEXT NOT NULL)')
             con.execute('INSERT OR IGNORE INTO native_learning_artifacts VALUES(?,?)',(bundle['artifact_id'],wire(bundle)))
             if con.execute('SELECT envelope_json FROM native_learning_artifacts WHERE artifact_id=?',(bundle['artifact_id'],)).fetchone()[0] != wire(bundle):
                 raise ValueError('retained producer artifact differs')
-        receipt = ledger.assess(staged['event_key'],decision,_validator=preserve)
+        try:
+            receipt = ledger.assess(staged['event_key'],decision,_validator=preserve)
+        except CanonicalContextChanged:
+            return {'state':'pending','reason':'canonical context changed; next invocation refreshes evidence',
+                'processed_through':index['after'],'proposer_invoked':proposer_invoked,
+                'event_key':staged['event_key']}
         if decision['outcome'] == 'applied' and artifacts.load_learning(memory,bundle['artifact_id']) != originals:
             raise ValueError('selected artifact did not survive intake')
         if _fault:
@@ -216,12 +278,13 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         index['after'] = max(r['id'] for r in inputs['observations'])
         index['sequence'] = sequence
         index['source_revisions'].update({s:r['revision'] for s,r in inputs['revisions'].items()})
+        Alerts(inbox).resolve(job['input_hash'])
         checkpoint(index_path,index)
         return {'state':'complete','processed_through':index['after'],'receipt':receipt,
                 'proposer_invoked':proposer_invoked,'artifact_id':artifact_id}
 
 
-def reprepare_pending(memory, inbox, state_dir, reason):
+def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=False):
     """Explicitly supersede a pre-stage proposal without dropping its sources.
 
     This is for changed representation or an invalid pre-stage decision, not for
@@ -249,6 +312,18 @@ def reprepare_pending(memory, inbox, state_dir, reason):
                     raise ValueError('staged work cannot be replaced; resume its original decision')
         archive=state_dir/f"batch-{sequence}-superseded-{digest(job)}.json"
         checkpoint(archive.with_suffix('.reason.json'),dict(reason=reason,job_hash=digest(job)))
+        if preserve_navigation:
+            if 'navigation' not in job or digest(job['inputs']) != job['input_hash']:
+                raise ValueError('verified frozen navigation is required')
+            checkpoint(archive,job)
+            job.pop('proposal',None)
+            job['code_hash'] = _code_hash()
+            job['state'] = 'prepared'
+            # Retain every response, including invalid ones. The new validator
+            # can process the saved final response before another dispatch.
+            # A code upgrade never resets the persisted correction budget.
+            checkpoint(path,job)
+            return {'state':'navigation_preserved','preserved_job':str(archive),'cursor_advanced':False}
         os.replace(path,archive)
         sync_directory(state_dir)
         return {'state':'reprepare_required','preserved_job':str(archive),'cursor_advanced':False}

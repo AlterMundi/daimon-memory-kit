@@ -10,6 +10,7 @@ import urllib.error
 import urllib.request
 
 import receiving_exchange as exchange
+from provider_status import classify
 
 ENDPOINTS = {
     'deepseek': 'https://api.deepseek.com/v1/chat/completions',
@@ -98,6 +99,7 @@ def dispatch(request_path, root, api_key, provider, opener=urllib.request.urlope
         # Include interrupted and incomplete-body attempts. Re-raise unchanged;
         # store only the class, never exception text or partial response bytes.
         receipt.update(state='failed', error_type=type(error).__name__)
+        receipt['problem'] = classify(error)
         if isinstance(error, urllib.error.HTTPError):
             receipt['http_status'] = error.code
         raise

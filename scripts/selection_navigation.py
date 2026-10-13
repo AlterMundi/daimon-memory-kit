@@ -48,12 +48,17 @@ def request_for(job):
     state = job['navigation']
     messages = selection.block_messages(job['inputs']['sources'], state['canon'], job['inputs']['context'])
     messages[0]['content'] += '\n' + POLICY
+    if job.get('context_attempt'):
+        payload=json.loads(messages[1]['content'])
+        payload['context_refresh'] = 'A concurrent canonical revision invalidated the previous uncommitted decision. Read current originals again; source input is unchanged.'
+        messages[1]['content']=wire(payload)
     # Include exact observed results. A lookup is a host-performed read, never an
     # assistant narrative promoted into canonical evidence.
     for step in state['steps']:
-        if 'results' in step:
+        if 'results' in step or 'feedback' in step:
             messages.append({'role':'assistant','content':wire(step['proposal']['selection'])})
-            messages.append({'role':'user','content':wire({'lookup_results':step['results']})})
+            messages.append({'role':'user','content':wire(
+                {'lookup_results':step['results']} if 'results' in step else step['feedback'])})
     return {'messages':messages,'response_schema':response_schema()}
 
 
@@ -103,7 +108,9 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
         body_ref=binding['source_instance'],retrieval=retrieval)
     dispatched = 0
     while True:
-        if not state['steps'] or state['steps'][-1].get('results') is not None:
+        if state.get('halted_reason'):
+            return None, dispatched
+        if not state['steps'] or any(k in state['steps'][-1] for k in ('results','feedback')):
             if dispatched >= steps:
                 return None, dispatched
             state['steps'].append({'request':request_for(job)})
@@ -118,7 +125,18 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
             dispatched += 1
             checkpoint(job_path,job)
         value = step['proposal']['selection']
-        if value.get('outcome') != 'lookup':
+        if not isinstance(value,dict) or value.get('outcome') != 'lookup':
+            try:
+                selection.selected_decision(value,job['inputs']['sources'],state['canon'])
+            except ValueError as error:
+                step['feedback'] = dict(selection_error=str(error),
+                    instruction='Correct the selection using the supplied schema and evidence. '
+                    'No facts have been changed or admitted. Reuse the successful reads; '
+                    'do not change meaning merely to make a response pass validation.')
+                if sum('feedback' in item for item in state['steps']) > 2:
+                    state['halted_reason'] = 'selection remains invalid after two corrections'
+                checkpoint(job_path,job)
+                continue
             return step['proposal'], dispatched
         if set(value) != {'outcome','requests'} or not isinstance(value['requests'],list) or not 1 <= len(value['requests']) <= 8:
             raise ValueError('lookup requires one to eight read requests')
