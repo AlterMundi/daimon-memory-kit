@@ -15,6 +15,14 @@ def quoted(value, *, expand_environment=False):
     return '"'+value+'"'
 
 
+def unit_path(value):
+    # Single-path directives do not use ExecStart's argument-list quoting.
+    value = str(value)
+    if not Path(value).is_absolute() or value != value.rstrip() or any(c in value for c in '\n\r\x00'):
+        raise ValueError('absolute single-line unit path required')
+    return value.replace('%','%%')
+
+
 def render(profile_path, interpreter, environment_file, *, calendar=None):
     """Use existing environment credential injection; no secret values in units.
 
@@ -34,7 +42,8 @@ Description=Finite HMK capture, reconciliation and index worker
 [Service]
 Type=oneshot
 UMask=0077
-EnvironmentFile={quoted(environment_file)}
+EnvironmentFile={unit_path(environment_file)}
+WorkingDirectory={unit_path(Path(profile_path).parent)}
 ExecStart={command}
 Restart=no
 TimeoutStartSec=30min

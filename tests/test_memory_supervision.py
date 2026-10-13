@@ -1,16 +1,18 @@
 """Finite supervision must expose failures without silently replaying paid work."""
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import memory_supervision
 
 
 def test_render_uses_finite_supervision_and_real_systemd_parser(tmp_path,monkeypatch):
     monkeypatch.setattr(memory_supervision,'profile',lambda _: {})
     profile=tmp_path/'profile with space.json'
-    env=tmp_path/'selected.env'
+    env=tmp_path/'selected provider.env'
     env.touch()
     units=memory_supervision.render(profile,Path('/usr/bin/python3'),env,calendar='daily')
     service=units['hmk-memory-worker.service']
@@ -23,6 +25,9 @@ def test_render_uses_finite_supervision_and_real_systemd_parser(tmp_path,monkeyp
         str(tmp_path/'hmk-memory-worker.service'),str(tmp_path/'hmk-memory-worker.timer')],
         capture_output=True,text=True)
     assert result.returncode==0,result.stderr
+    assert not result.stderr,result.stderr
+    assert f'EnvironmentFile={env}\n' in service
+    assert f'WorkingDirectory={tmp_path}\n' in service
     assert list(memory_supervision.render(profile,Path('/usr/bin/python3'),env))==['hmk-memory-worker.service']
 
 

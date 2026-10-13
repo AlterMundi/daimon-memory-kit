@@ -448,3 +448,19 @@ evidence. Receiving package preparation does not activate capture or learning.
 
 Continue with selected credential/profile preparation, coordinated adoption and
 the three receiving checks above. Do not reopen completed semantic qualification.
+
+Receiving preparation now preserves verified live-pool snapshots and prior CLI/MCP
+configuration for all three bodies. Explicit reviewer binaries execute as Codex
+0.162.1 inside the established isolation; ordinary receiver CLIs are unchanged.
+Provider material is selected privately from the existing DeepSeek account, with
+no values in release/profile files. Eko retains Model2Vec and both pools; CompAII
+and Oliva retain NVIDIA. Candidate hybrid queries have no backend errors in all
+four pools. These are backend/read-availability checks, not new conversational
+quality claims or completed live adoption.
+
+Real rendering exposed that systemd's single-path EnvironmentFile directive
+keeps argument quotes rather than using ExecStart parsing. The renderer now uses
+its own path syntax, verifies parser warnings as failures, and sets an accessible
+working directory. Eko's initial local-model diagnostic ran from an inaccessible
+container directory; the receiver's actual selected working directory resolves
+that failure without changing the embedding model or its stored space.
