@@ -1,0 +1,148 @@
+{
+  "schema": "hmk.source-window-diagnostic/v1",
+  "fictional": true,
+  "production_changed": false,
+  "full_pipeline_qualified": false,
+  "model": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "reasoning_effort": "low"
+  },
+  "purpose": "Resolve an ambiguous new correction by navigating earlier original context without submitting the entire historical source.",
+  "source_bytes": 1100862,
+  "initial_window_bytes": 366,
+  "initial_new_blocks": 1,
+  "evidence": {
+    "source_sha256": "af20eb80d67c0f7244531d5a064be1ca85b9e93b9925ec80b0d90823d2c6ca41",
+    "job_sha256": "c279a78e13b52112684223f896edd7057bab236dbe9c7fbc1027b5425e2807f5",
+    "source_context_blocks": 1,
+    "source_search_retrieval": "lexical",
+    "embedding_calls": 0,
+    "canonical_records": 1,
+    "original_quotes_preserved": true,
+    "human_attendance_not_being_attendance": true,
+    "old_wrong_date_retained_with_correction": true,
+    "unrelated_old_log_not_admitted": true
+  },
+  "calls": [
+    {
+      "request_sha256": "6006625f5908f07733a9978c6a01239de71ce03c719d4ae523398365006571f7",
+      "selection": {
+        "outcome": "lookup",
+        "requests": [
+          {
+            "action": "source_before",
+            "expected_revision": 0,
+            "offset": 0,
+            "query": "",
+            "record_uid": "fixture:window-source:1100623:4f77a9dd82e1feb8f66ca1575769d86c748db42a678ef38e0b8d0db490ae1969"
+          },
+          {
+            "action": "search",
+            "expected_revision": 0,
+            "offset": 0,
+            "query": "encounter June 3 June 4",
+            "record_uid": ""
+          }
+        ]
+      },
+      "lookups": [
+        {
+          "status": "ok",
+          "previous_id": "fixture:window-source:1100283:7a37cae61068b3a0743768b2245aa88f939d1eaa115a98cf02408de6b482b0e9",
+          "complete": true
+        },
+        {
+          "status": "no_matches"
+        }
+      ],
+      "usage": {
+        "completion_tokens": 447,
+        "completion_tokens_details": {
+          "reasoning_tokens": 332
+        },
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 1195,
+        "prompt_tokens": 1707,
+        "prompt_tokens_details": {
+          "cached_tokens": 512
+        },
+        "total_tokens": 2154
+      },
+      "seconds": 3.457752645947039
+    },
+    {
+      "request_sha256": "fa107e17b235cb516d7580cd085b4ed6af49192a5e37c244fa4077f9aa4b9b22",
+      "selection": {
+        "links": [],
+        "outcome": "applied",
+        "reason": "The window contains one genuinely new item: a human correction moving the reported encounter date from June 3 to June 4. No canonical memory exists yet for this encounter (current_canon empty; search returned no matches), so this is an add, not an update. The earlier account is the referent the correction depends on, so it is selected as context alongside the new correction. The record is episodic and attributed to the human report; the human explicitly states this body did not attend, so it is not our own attendance. No existing chapters are available to link to.",
+        "records": [
+          {
+            "engram_type": "episodic",
+            "key": "jo-vale-riverside-workshop-clamp-date-correction",
+            "operation": "add",
+            "shelf": "episodes",
+            "source_ids": [
+              "fixture:window-source:1100623:4f77a9dd82e1feb8f66ca1575769d86c748db42a678ef38e0b8d0db490ae1969",
+              "fixture:window-source:1100283:7a37cae61068b3a0743768b2245aa88f939d1eaa115a98cf02408de6b482b0e9"
+            ],
+            "title": "on June 4, not June 3"
+          }
+        ]
+      },
+      "lookups": [],
+      "usage": {
+        "completion_tokens": 1129,
+        "completion_tokens_details": {
+          "reasoning_tokens": 844
+        },
+        "prompt_cache_hit_tokens": 1664,
+        "prompt_cache_miss_tokens": 664,
+        "prompt_tokens": 2328,
+        "prompt_tokens_details": {
+          "cached_tokens": 1664
+        },
+        "total_tokens": 3457
+      },
+      "seconds": 6.966474074870348
+    }
+  ],
+  "total_tokens": 5611,
+  "http_seconds": 10.424226720817387,
+  "wall_seconds": 19.749654188752174,
+  "cost_usd": null,
+  "selected_record": {
+    "engram_type": "episodic",
+    "key": "jo-vale-riverside-workshop-clamp-date-correction",
+    "operation": "add",
+    "shelf": "episodes",
+    "title": "on June 4, not June 3",
+    "raw": "Human report; source fixture:window-source:1100283:7a37cae61068b3a0743768b2245aa88f939d1eaa115a98cf02408de6b482b0e9; received 2024-08-02T12:00:00Z through fixture:desk:\n\"I met Jo Vale at the Riverside workshop on June 3, 2024. Jo showed me a clamp technique for holding the thin reed. You did not attend.\"\n\nHuman report; source fixture:window-source:1100623:4f77a9dd82e1feb8f66ca1575769d86c748db42a678ef38e0b8d0db490ae1969; received 2024-08-02T12:00:00Z through fixture:desk:\n\"Correction: that encounter was on June 4, not June 3. My earlier account got the date wrong.\"",
+    "metadata": {
+      "mode": "reported"
+    }
+  },
+  "chronology": {
+    "provider_rerun": false,
+    "final_renderer_replayed_saved_selection": true,
+    "reason": "Earlier source context is serialized before the correction. Successful provider selection was reused, original artifacts retained."
+  },
+  "mechanical_evidence": {
+    "tests": "tests/test_source_windows.py",
+    "cases": [
+      "More than 1MiB first capture completes in bounded windows, including crash after canonical commit and a later concurrent capture.",
+      "A new small delta after a >1MiB processed history excludes unrelated old text.",
+      "Complete dependency closures cross window boundaries as earlier context.",
+      "Missing pinned group is detected and resumes after exact restoration.",
+      "Prior-source navigation resumes with saved evidence and cannot access unbound/future anchors.",
+      "An indivisible source closure or accumulated context above the invocation budget remains explicit pending work; its reported required budget can be supplied without a fixed total-source ceiling."
+    ]
+  },
+  "limitations": [
+    "No integrated automatic launcher or production rollout in this diagnostic.",
+    "The synthetic historical baseline was intentionally omitted during setup; this does not qualify historical memory selection.",
+    "An individually oversized original/dependency closure is not silently split. It requires a larger applicable model-input budget or a future qualified paged-source reader.",
+    "Full source artifacts remain preserved; bytes retained in capture, canonical artifacts and rollback snapshots are not a storage-compaction claim."
+  ]
+}

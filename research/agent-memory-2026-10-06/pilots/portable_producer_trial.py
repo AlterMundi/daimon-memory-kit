@@ -70,6 +70,8 @@ def main():
     p.add_argument('--canon',type=Path,required=True)
     p.add_argument('--state-dir',type=Path,required=True)
     p.add_argument('--limit',type=int,default=32)
+    p.add_argument('--source-budget-bytes',type=int,default=64000,
+        help='Per-invocation source context budget; full sources remain in the inbox')
     p.add_argument('--index-only',action='store_true',help='Maintain committed selected records without selection or a narrator credential')
     p.add_argument('--output-token-limit',type=int,default=6000)
     p.add_argument('--reprepare-reason')
@@ -92,7 +94,7 @@ def main():
     if a.reprepare_reason:
         reprepare_pending(memory,inbox,a.state_dir,a.reprepare_reason)
     result=process_once(memory,inbox,a.state_dir,proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of),
-        json.loads(a.context.read_text()),limit=a.limit)
+        json.loads(a.context.read_text()),limit=a.limit,source_budget_bytes=a.source_budget_bytes)
     print(json.dumps(result))
     if result['state'] not in {'complete','idle'}:
         raise SystemExit(2)

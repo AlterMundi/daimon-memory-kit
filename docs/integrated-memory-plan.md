@@ -192,22 +192,61 @@ diagnostics, not the cost of one production consolidation. The 79 affected
 navigation, reader, MCP, foundation and selection tests passed. This qualifies
 the navigation mechanism only, not full rollout, aging or other source families.
 
+### Resumable source windows and earlier-context navigation
+
+The old producer's 1 MiB whole-input guard could defer a small new correction
+forever once its source history grew. The producer now pins a captured source
+group and processes successive windows of new blocks with complete causal
+closures. Window progress commits with the canonical capture receipt; the
+observation cursor advances only after the group finishes. Later observations
+continue accumulating independently and cannot replace the pinned source halfway
+through processing. Originals stay in the inbox and selected artifact history.
+
+`source_budget_bytes` (CLI `--source-budget-bytes`, default 64,000) budgets source
+context for an invocation, not total corpus/history size. A block or dependency
+closure is never truncated to fit. An indivisible closure reports the required
+budget and remains pending. A retained source-context lookup similarly resumes
+with a larger budget without repeating its paid model request. This is not a
+claim that every individual input fits every provider's context capacity; a
+paged-source design would need its own qualification if such an input appears.
+No global source-length ceiling replaces the removed canonical-record ceiling.
+
+The selector can request `source_before` from an already supplied source ID to
+read earlier originals and their dependencies inside the frozen authorized source.
+The host does not expose other sources or future blocks through invented anchors.
+Read context cannot become a new event by itself. Final rendering preserves source
+order, including when earlier context was retrieved after the new correction.
+Canonical lookup remains separately bound to the existing complete-read API.
+
+[One real DeepSeek Flash low diagnostic](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-source-window-receipt.json)
+started with a 366-byte new source window over a 1,100,862-byte retained fictional
+source. The model requested the earlier context and searched canon, then selected
+the correction with the human's original account: Jo Vale, Riverside workshop,
+June 4 replacing June 3, and explicit non-attendance by the being. Two calls used
+5,611 tokens and 10.42 seconds HTTP; USD unknown, no embedding calls. Unrelated
+mechanical history was neither submitted nor admitted. This setup intentionally
+omitted the prior source from canon, so it qualifies context resolution rather
+than historical selection. The successful response was reused to check the final
+chronological rendering; no extra provider call was made for that mechanical fix.
+
+71 affected producer, source-window, navigation, capture, index, provider-error
+and CLI checks pass. They cover >1 MiB first capture, crash after canonical commit,
+concurrent later capture, dependency closure, missing group detection/recovery,
+prior-context continuation and context-budget resume without repeated inference.
+This is source-window qualification, not complete pipeline or production rollout.
+
 Next uncertainties and required work:
 
-1. Integrate bounded source-delta windows and useful dependent-account
-   consolidation through existing APIs. Historical source growth must not leave
-   a new small delta permanently deferred at the current 1 MiB input guard.
-   Preserve dependency closure and explicit progress for large first captures;
-   do not replace the removed corpus ceiling with another total-source ceiling.
-2. Wire the selected index phase into the owning launcher; define batching,
-   explicit invocation/supervision and backlog handling. Reuse the successful
-   capture, index, consolidation and native navigation evidence rather than
-   reopening reranker or query-prompt comparisons.
-3. Expose durable processing status to the receiving adapter described in
+1. Wire the selected index phase into the owning launcher and integrate useful
+   dependent-account consolidation through existing APIs. Define explicit
+   invocation/supervision and backlog handling; consume window progress rather
+   than treating one completed window as an empty queue. Reuse qualified capture,
+   source navigation, index and consolidation evidence.
+2. Expose durable processing status to the receiving adapter described in
    Telecodex #82. Telegram delivery, Sessions presentation and independent
    processor/stale-status observation belong to Telecodex. No HMK transport work
    is pending here; keep adoption readiness distinct from published API work.
-4. Complete meaningful receiving comparison and operational fault cases for the
+3. Complete meaningful receiving comparison and operational fault cases for the
    integrated flow; publish one coordinated delivery. Adopt on each authorized
    receiver with backup, rollback preserving later writes and live evidence.
 

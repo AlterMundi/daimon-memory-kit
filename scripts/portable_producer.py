@@ -16,6 +16,7 @@ from codex_coordinator import checkpoint, sync_directory
 import codex_projection as artifacts
 import portable_capture as selection
 import selection_navigation
+import source_windows
 from provider_status import Alerts, ProviderProblem, classify
 from sqlite_snapshot import verified_snapshot
 
@@ -30,6 +31,7 @@ def _code_hash():
     return digest([Path(selection.__file__).read_text(),
                    Path(selection.source_decision.__code__.co_filename).read_text(),
                    Path(selection_navigation.__file__).read_text(),
+                   Path(source_windows.__file__).read_text(),
                    Path(__file__).read_text()])
 
 
@@ -62,7 +64,7 @@ def _refresh_changed_context(memory, job, job_path):
 
 
 def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
-                 navigation_steps=4, retrieval='hybrid', notice_sender=None, _fault=None):
+                 navigation_steps=4, retrieval='hybrid', source_budget_bytes=64000, notice_sender=None, _fault=None):
     """Process at most one frozen batch. Reinvocation resumes uncertain commits.
 
     proposer(request, directory) returns an auditable JSON object containing
@@ -75,6 +77,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         raise ValueError('finite navigation step budget required')
     if retrieval not in {'lexical','hybrid'}:
         raise ValueError('unsupported retrieval mode')
+    if type(source_budget_bytes) is not int or source_budget_bytes < 1:
+        raise ValueError('positive source window byte budget required')
     binding = json.loads(inbox.binding)
     if any(context.get(k) != binding[k] for k in ('subject','source_instance')):
         raise ValueError('producer context conflicts with capture binding')
@@ -111,25 +115,40 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             if digest(job['inputs']) != job['input_hash']:
                 raise ValueError('producer inputs changed')
         else:
-            observations = inbox.observations(index['after'], limit)
-            if not observations:
-                return {'state':'idle','processed_through':index['after'],'proposer_invoked':False}
-            latest = {}
-            # A boundary hook may precede its prompt. Resolve bounded source
-            # dependencies against the latest captured observation in one read
-            # transaction, even when its event lies after this batch's cursor.
-            with inbox.connect() as con:
-                con.execute('BEGIN')
-                for row in observations:
-                    source = row['source']
-                    if source not in latest:
-                        latest[source] = dict(con.execute(
-                            'SELECT * FROM observations WHERE source=? ORDER BY id DESC LIMIT 1',
-                            (source,)).fetchone())
+            group_path = state_dir/f"source-group-after-{index['after']}.json"
+            if group_path.exists():
+                saved = json.loads(group_path.read_text())
+                group = saved['group']
+                if (saved['hash'] != digest(group) or group['owner'] != owner
+                        or group['after'] != index['after']
+                        or group['base_revisions'] != index['source_revisions']
+                        or index.get('window_group',saved['hash']) != saved['hash']):
+                    raise ValueError('frozen source group differs from committed progress')
+                observations, latest = group['observations'], group['latest']
+            else:
+                if index.get('window_group') or index.get('window_progress'):
+                    raise ValueError('missing frozen source group; preserve pending progress')
+                observations = inbox.observations(index['after'], limit)
+                if not observations:
+                    return {'state':'idle','processed_through':index['after'],'proposer_invoked':False}
+                latest = {}
+                # Resolve early boundary prompts against one captured snapshot.
+                # Once a window is prepared these revisions remain pinned until
+                # the entire group finishes; later capture cannot move the target.
+                with inbox.connect() as con:
+                    con.execute('BEGIN')
+                    for row in observations:
+                        source = row['source']
+                        if source not in latest:
+                            latest[source] = dict(con.execute(
+                                'SELECT * FROM observations WHERE source=? ORDER BY id DESC LIMIT 1',
+                                (source,)).fetchone())
+                group = dict(owner=owner,after=index['after'],observations=observations,
+                             latest=latest,base_revisions=index['source_revisions'])
             if any(row['error'] or row['revision'] is None for row in latest.values()):
                 return {'state':'deferred','reason':'incomplete source capture',
                         'processed_through':index['after'],'proposer_invoked':False}
-            sources, revisions = [], {}
+            sources, revisions, groups = [], {}, {}
             for source, row in latest.items():
                 snapshot = inbox.restore(row['revision'])
                 previous = index['source_revisions'].get(source)
@@ -151,7 +170,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                     return {'state':'deferred','reason':'unsupported source items',
                             'source':source,'details':normalized['unsupported'],
                             'processed_through':index['after'],'proposer_invoked':False}
-                sources.extend(selection.block_sources(normalized, binding['source_instance']))
+                groups[source] = selection.block_sources(normalized, binding['source_instance'])
+                sources.extend(groups[source])
                 revisions[source] = {'revision':row['revision'],'sha256':normalized['sha256']}
             # Do not consume an early hook prompt that has not yet reached its
             # transcript. A later Stop/Interrupt capture can complete that input.
@@ -161,12 +181,21 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 if prompt and not any(prompt == s['content'] for s in sources):
                     return {'state':'deferred','reason':'prompt not yet in captured transcript',
                             'processed_through':index['after'],'proposer_invoked':False}
+            if not group_path.exists():
+                checkpoint(group_path,dict(group=group,hash=digest(group)))
+            window = source_windows.select(groups,index.get('window_progress',{}),source_budget_bytes)
+            if window['minimum_required_bytes'] is not None:
+                return {'state':'pending','reason':'source dependency closure exceeds invocation budget',
+                        'minimum_required_bytes':window['minimum_required_bytes'],
+                        'source_budget_bytes':source_budget_bytes,
+                        'processed_through':index['after'],'proposer_invoked':False}
+            sources = window['sources']
             memory.init_db()
             inputs = dict(observations=observations, sources=sources, revisions=revisions,
-                          context=context, supporting_observations=list(latest.values()))
-            if len(wire(inputs).encode()) > 1024 * 1024:
-                return {'state':'deferred','reason':'batch exceeds bounded processing bytes',
-                        'processed_through':index['after'],'proposer_invoked':False}
+                          context=context, supporting_observations=list(latest.values()),
+                          source_window=dict(group_hash=digest(group),progress=window['progress'],
+                              complete=window['complete'],budget_bytes=source_budget_bytes,
+                              used_bytes=window['used_bytes']))
             request = dict(messages=selection.block_messages(sources,[],context),
                            response_schema=selection_navigation.response_schema())
             job = dict(owner=owner, sequence=sequence, inputs=inputs,
@@ -179,12 +208,13 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         _refresh_changed_context(memory,job,job_path)
         # Each resume verifies the original dependency chain; metadata IDs alone
         # never prove that the source bytes needed by this job survived.
-        originals = {}
+        originals, source_groups = {}, {}
         for source, revision in inputs['revisions'].items():
             data = inbox.restore(revision['revision'])
             if artifacts.sha(data) != revision['sha256']:
                 raise ValueError('prepared source differs from retained bytes')
             originals['sources/'+digest(source)+'.jsonl'] = data
+            source_groups[source] = selection.block_sources(selection.codex_sources(data,source=source),binding['source_instance'])
         proposer_invoked = False
         if 'proposal' not in job:
             if any(s['status']=='new' for s in inputs['sources']):
@@ -194,7 +224,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 work.mkdir(parents=True,exist_ok=True,mode=0o700)
                 try:
                     proposal, dispatches = selection_navigation.advance(job,job_path,work,proposer,
-                        database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval)
+                        database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval,
+                        source_reader=source_windows.ContextReader(source_groups,source_budget_bytes))
                 except ProviderProblem as failure:
                     alerts=Alerts(inbox)
                     alert_id=alerts.report(job['input_hash'],'selection',failure)
@@ -206,8 +237,10 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                         'proposer_invoked':True}
                 proposer_invoked = bool(dispatches)
                 if proposal is None:
-                    return {'state':'pending','reason':job['navigation'].get('halted_reason','navigation invocation budget reached'),
+                    pending = job['navigation'].get('source_budget_pending',{})
+                    return {'state':'pending','reason':pending.get('reason') or job['navigation'].get('halted_reason','navigation invocation budget reached'),
                         'processed_through':index['after'],'proposer_invoked':proposer_invoked,
+                        'minimum_required_bytes':pending.get('minimum_required_bytes'),
                         'navigation_steps':len(job['navigation']['steps'])}
             else:
                 proposal = {'selection':dict(outcome='omitted',reason='No new source items; lifecycle metadata only.',records=[],links=[]),
@@ -217,7 +250,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             job['state'] = 'proposed'
             checkpoint(job_path,job)
         canon = job.get('navigation',{}).get('canon',[])
-        decision = selection.selected_decision(job['proposal']['selection'], inputs['sources'], canon)
+        decision = selection.selected_decision(job['proposal']['selection'], selection_navigation.effective_sources(job), canon)
         if decision['outcome'] == 'deferred':
             return {'state':'deferred','reason':decision['reason'],
                     'processed_through':index['after'],'proposer_invoked':proposer_invoked}
@@ -275,13 +308,22 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         artifact_id = bundle['artifact_id'] if decision['outcome'] == 'applied' else None
         job.update(state='complete',decision=decision,receipt=receipt,artifact_id=artifact_id)
         checkpoint(job_path,job)
-        index['after'] = max(r['id'] for r in inputs['observations'])
+        window = inputs.get('source_window')
+        if window is None or window['complete']:
+            index['after'] = max(r['id'] for r in inputs['observations'])
+            index['source_revisions'].update({s:r['revision'] for s,r in inputs['revisions'].items()})
+            index.pop('window_group',None)
+            index.pop('window_progress',None)
+        else:
+            index['window_group'] = window['group_hash']
+            index['window_progress'] = window['progress']
         index['sequence'] = sequence
-        index['source_revisions'].update({s:r['revision'] for s,r in inputs['revisions'].items()})
         Alerts(inbox).resolve(job['input_hash'])
         checkpoint(index_path,index)
         return {'state':'complete','processed_through':index['after'],'receipt':receipt,
-                'proposer_invoked':proposer_invoked,'artifact_id':artifact_id}
+                'proposer_invoked':proposer_invoked,'artifact_id':artifact_id,
+                'source_group_complete':window is None or window['complete'],
+                'source_progress':window['progress'] if window else None}
 
 
 def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, notice_sender=None, _fault=None):
