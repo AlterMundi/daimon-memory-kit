@@ -28,7 +28,9 @@ def tool_spec():
             "Read selected durable being memory beyond the bounded native view. "
             "Use for relevant past encounters, project contributions, outcomes or lessons "
             "when the view is insufficient. Search returns navigation, not complete evidence; "
-            "read originals before factual claims. No matches do not establish canon absence. "
+            "Candidates may be unrelated; read originals and assess relevance before factual claims. "
+            "Do not recite unrelated memories when the question lacks support. "
+            "No matches do not establish canon absence. "
             "Remembered abilities do not grant current tools. Unrelated tasks need no recall."
         ),
         inputSchema=dict(
@@ -132,6 +134,7 @@ class Reader:
             record_uid=row["record_uid"],
             revision=row["revision"],
             title=row["title"],
+            relevance='unassessed; candidate navigation is not factual support',
             reference=f"mem:{row['record_uid']}@{row['revision']}",
             applicability=self.entries.get(row["record_uid"], {}).get("applicability",
                 row.get('applicability', {"kind":"unknown","targets":[]})),

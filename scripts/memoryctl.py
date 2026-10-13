@@ -1867,9 +1867,14 @@ def pack(query, budget_tokens=4000, limit=8, threshold=0.60,
                         retrieval_status='ok', score_space='lexical')
 
 
-def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=None, model=None,
-                shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
-                engram_types=None, _record_access=True, _query_cache=None, record_uids=None):
+def hybrid_candidates(query, limit=8, provider=None, model=None,
+                      shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
+                      engram_types=None, _query_cache=None, record_uids=None):
+    """Rank bounded search candidates before automatic-context admission.
+
+    A rank or cosine is not a relevance verdict. Navigating clients must read
+    original evidence and assess relevance before answering or selecting memory.
+    """
     cfg = embeddings_runtime_config(provider=provider, model=model)
     provider = cfg["provider"]
     model = cfg["model"]
@@ -1943,11 +1948,20 @@ def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=Non
             head.sort(key=lambda r: r["score"], reverse=True)
             ranked = sorted(head + ranked[rerank_pool:], key=lambda r: r['score'], reverse=True)
 
+    return dict(items=ranked, provider=provider, model=model,
+                retrieval_status=('degraded' if lexical else 'unavailable') if degraded else 'ok',
+                backend_errors=backend_errors, score_space='lexical' if degraded else 'hybrid')
+
+
+def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=None, model=None,
+                shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
+                engram_types=None, _record_access=True, _query_cache=None, record_uids=None):
+    candidates = hybrid_candidates(query, limit=limit, provider=provider, model=model,
+        shelves=shelves, exclude_shelves=exclude_shelves, tags=tags, exclude_tags=exclude_tags,
+        engram_types=engram_types, _query_cache=_query_cache, record_uids=record_uids)
+    ranked = candidates.pop('items')
     return _select_pack(query, ranked, budget_tokens, limit, threshold,
-                        record_access=_record_access, record_uids=record_uids, provider=provider, model=model,
-                        retrieval_status=('degraded' if lexical else 'unavailable') if degraded else 'ok',
-                        backend_errors=backend_errors,
-                        score_space='lexical' if degraded else 'hybrid')
+                        record_access=_record_access, record_uids=record_uids, **candidates)
 
 
 def engram_pack(query, budget_tokens=4000, limit=8, threshold=0.30,

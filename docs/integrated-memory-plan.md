@@ -96,13 +96,16 @@ collectors or prove the host is unmonitored. Confirm the actual current route an
 permission holder before adoption. Shared/private topology and credentials stay
 in the infrastructure's owning records, not this public project.
 
-Activation requires evidence for: provider payment/availability failure reaching
-the selected human destination; pending work surviving the failure and resuming
-without duplication; notification failure remaining visible; and an independent
-check detecting a dead/stalled processor or stale status. A worker cannot report
-its own absence. Missing observations must not become a healthy/zero-backlog
-status. Reuse existing monitoring where applicable and qualify the receiving
-route once, including recovery; no timers or services were installed by this work.
+The human subsequently selected Telegram delivery and the Sessions Mini App,
+and explicitly handed that work to Telecodex. [Telecodex #82](https://github.com/AlterMundi/telecodex/issues/82)
+owns receiving-bound notification, presentation and independent observation of
+worker absence/stale status, including while the Mini App is closed. HMK retains
+durable pending work, safe incident state and the launcher adapter boundary;
+no separate HMK notification stack or further Grafana integration is planned.
+The issue includes the existing adapter fields, delivery/recovery distinction,
+privacy boundary and real failure/recovery acceptance. It is a published handoff,
+not a deployed or verified notification route. Complete the producer work without
+waiting for that UI; operational adoption must accurately expose delivery readiness.
 
 ### Selected index maintenance and actual receiving diagnostic
 
@@ -154,23 +157,59 @@ and 21.30 seconds HTTP, plus one document embedding; no further consolidation
 passes or narrative calls were run. Candidate relevance/reranking is the next
 component to diagnose; this finding does not qualify the account for deployment.
 
+### Candidate navigation and native receiving
+
+The [bounded navigation diagnostic](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-navigation-receiving-receipt.json)
+separates candidate discovery from automatic context admission. Two existing
+local FlashRank models and the existing two-query planner did not fix the weak
+cue; neither is selected for deployment. Reading complete candidate originals
+let a DeepSeek receiver recognize the corrected encounter, but it still retold
+unrelated facts for negative questions and used imperfect temporal wording.
+Those API diagnostics are not recorded as full conversational acceptance.
+
+`hybrid_candidates` now exposes the existing ranking before `_select_pack`.
+Exploratory HMK search returns bounded metadata with an explicit unassessed
+relevance marker; the receiver must read evidence and determine applicability.
+`hybrid_pack` retains its automatic admission threshold, budgets and access
+semantics. This does not admit extra records to canonical memory or treat low
+scores as proof. It makes previously hidden candidates available for inspection.
+
+Two fresh native Codex receivers used the real reader over verified source-free
+SQLite snapshots of all 303 records. OpenAI Codex `gpt-6.1-sol`, low effort, native
+memory disabled, no inherited context or unrelated tools: the weak question
+elicited spontaneous search and complete reads of 301/302/303, followed by the
+correct proposer, proposal and explicitly dated non-adoption. The CedarWorks
+numeric-collision question elicited an evidence gap without unrelated retelling.
+The unchanged automatic pack returned no records for the native weak search;
+its first numeric-collision query still admits unrelated candidates. Thus the
+observed improvement is tool-guided exploration, not improved automatic admission.
+
+The two native turns took 39.72 and 36.55 seconds; reported usage totals 78,198
+tokens including 48,896 cached input tokens and the harness context. Three new
+query embeddings took 0.82 seconds. Separate API/local diagnostic costs and
+responses remain in the receipt; USD amounts are unknown. These are development
+diagnostics, not the cost of one production consolidation. The 79 affected
+navigation, reader, MCP, foundation and selection tests passed. This qualifies
+the navigation mechanism only, not full rollout, aging or other source families.
+
 Next uncertainties and required work:
 
-1. Diagnose candidate relevance/reranking using the retained query vectors and
-   positive/negative controls. Relevant candidates are found but not admitted;
-   one source-supported compact account did not resolve that failure. Resolve
-   weak recall and numeric distractor admission without lowering criteria. Do not
-   repeat the successful capture, initial index build or this consolidation.
-2. Integrate bounded source-delta context and useful dependent-account
-   consolidation through existing APIs; wire the selected index phase into the launcher. Define launcher
-   ownership, batching and backlog handling before automatic processing.
-3. Finish infrastructure-bound observation and actionable delivery for every
-   processing phase. Verify real delivery, processor absence and recovery using
-   the receiving infrastructure; do not infer delivery from a local incident or
-   a configured contact point.
-4. Compare meaningful receiving behavior with the current installation, complete
-   the operational fault cases, and publish a coordinated reviewed delivery.
-   Then adopt on each authorized receiver with backup, rollback and live evidence.
+1. Integrate bounded source-delta windows and useful dependent-account
+   consolidation through existing APIs. Historical source growth must not leave
+   a new small delta permanently deferred at the current 1 MiB input guard.
+   Preserve dependency closure and explicit progress for large first captures;
+   do not replace the removed corpus ceiling with another total-source ceiling.
+2. Wire the selected index phase into the owning launcher; define batching,
+   explicit invocation/supervision and backlog handling. Reuse the successful
+   capture, index, consolidation and native navigation evidence rather than
+   reopening reranker or query-prompt comparisons.
+3. Expose durable processing status to the receiving adapter described in
+   Telecodex #82. Telegram delivery, Sessions presentation and independent
+   processor/stale-status observation belong to Telecodex. No HMK transport work
+   is pending here; keep adoption readiness distinct from published API work.
+4. Complete meaningful receiving comparison and operational fault cases for the
+   integrated flow; publish one coordinated delivery. Adopt on each authorized
+   receiver with backup, rollback preserving later writes and live evidence.
 
 Production remains unchanged. No old queues were resumed; no real conversations
 were ingested. The earlier stock-hook and six-case producer evidence stays valid

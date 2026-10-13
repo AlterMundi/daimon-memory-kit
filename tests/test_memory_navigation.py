@@ -79,7 +79,7 @@ def test_backend_outage_preserves_lexical_access_and_does_not_claim_absence(setu
     assert mc.DB_PATH.read_bytes() == before
     def bug(*a, **kw):
         raise ValueError('ranking implementation defect')
-    monkeypatch.setattr(mc,'hybrid_pack',bug)
+    monkeypatch.setattr(mc,'hybrid_candidates',bug)
     with pytest.raises(ValueError, match='implementation defect'):
         navigation.search(mc,'clamp')
 
@@ -97,3 +97,26 @@ def test_history_only_match_exposes_current_revision_for_reading(setup):
     current = reader.call(dict(action='read', query='', record_uid=historical['record_uid'], offset=0))
     assert current['record']['revision'] == historical['current_revision']
     assert 'used a brace' in current['raw']
+
+
+def test_candidates_can_be_explored_without_relaxing_context_admission(setup, monkeypatch):
+    mc, _ = setup
+    import memory_navigation as navigation
+    cid = mc.add_text('episodes', 'Jo encounter', 'Jo proposed a clamp for the old instrument.')
+    text = mc.embed_input_text(mc._read_chapter(cid))
+    with mc.connect() as con:
+        mc.upsert_embedding(con, cid, 'local', 'fixture', text, [0.2, 0.98])
+    monkeypatch.setattr(mc, 'embeddings_runtime_config', lambda **kw: dict(
+        provider='local',model='fixture',output_dimensionality=None))
+    monkeypatch.setattr(mc, 'embed_texts', lambda *a, **kw: [[1.,0.]])
+    monkeypatch.setattr(mc, 'rerank_provider_default', lambda: 'none')
+    before = mc.DB_PATH.read_bytes()
+    with mc.read_scope(mc.DB_PATH):
+        automatic = mc.hybrid_pack('fastening apparatus', _record_access=False)
+        assert automatic['null_retrieval'] and automatic['threshold'] == 0.4
+        candidate = navigation.search(mc, 'fastening apparatus')['items'][0]
+        assert candidate['record_uid'] == mc._read_chapter(cid)['record_uid']
+        assert candidate['relevance'].startswith('unassessed')
+        assert candidate['score'] < automatic['threshold']
+        assert 'raw' not in candidate  # Search metadata is not an accepted answer.
+    assert mc.DB_PATH.read_bytes() == before

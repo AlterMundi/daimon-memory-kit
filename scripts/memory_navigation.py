@@ -28,9 +28,8 @@ def search(memory, query, *, mode='hybrid', record_uids=None, limit=12):
             errors = ['embedding_configuration_unavailable']
             status = 'degraded' if rows else 'unavailable'
         else:
-            pack = memory.hybrid_pack(query, budget_tokens=24000, limit=limit,
-                _record_access=False, record_uids=record_uids)
-            rows = pack['items']
+            pack = memory.hybrid_candidates(query, limit=limit, record_uids=record_uids)
+            rows = pack['items'][:limit]
             errors = pack.get('backend_errors', [])
             status = pack['retrieval_status']
             details = {k:pack[k] for k in ('provider','model','score_space','reason','used_tokens_estimate') if k in pack}
@@ -48,6 +47,7 @@ def search(memory, query, *, mode='hybrid', record_uids=None, limit=12):
                                  (row['record_uid'],)).fetchone()
         finally:
             con.close()
+        result['relevance'] = 'unassessed; read current evidence before use'
         result['applicability'] = json.loads(source[0] or '{}').get('applicability',
             {'kind':'unknown','targets':[]}) if source else {'kind':'unknown','targets':[]}
         if row.get('historical'):
