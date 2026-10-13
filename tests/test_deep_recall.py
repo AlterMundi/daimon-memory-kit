@@ -118,3 +118,16 @@ def test_opt_in_projection_navigation_is_verified_and_rollback_is_plain_selectio
     assert "hmk_recall" not in (tmp_path / "baseline/memory_summary.md").read_text()
     with pytest.raises(ValueError, match="unsupported"):
         p.render(mc.DB_PATH, {**baseline, "deep_recall": {"tool": "arbitrary"}})
+
+
+def test_epoch_storage_time_is_rendered_exactly_without_changing_event_time(setup):
+    mc, p = setup
+    import deep_recall as d
+    cid=mc.add_text('episodes','Dated report','Event occurred on 2024-06-18.')
+    with mc.connect() as con:
+        con.execute('UPDATE chapters SET created_at=?,updated_at=? WHERE id=?',(1791863777,1791863778,cid))
+    selection=select(mc,p,[cid]);uid=selection['records'][0]['record_uid']
+    result=d.Reader(mc.DB_PATH,selection).call(args('read','',uid))
+    assert result['local_storage_time_utc']=={'created_at':'2026-10-13T03:56:17Z','updated_at':'2026-10-13T03:56:18Z'}
+    assert result['record']['created_at']==1791863777
+    assert result['raw']=='Event occurred on 2024-06-18.'

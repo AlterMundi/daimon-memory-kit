@@ -1,0 +1,27 @@
+{
+  "schema": "hmk.isolated-hook-rollback/v1",
+  "hooks_observed_after": {
+    "data": [
+      {
+        "cwd": "/tmp/work",
+        "hooks": [],
+        "warnings": [],
+        "errors": []
+      }
+    ]
+  },
+  "configuration_backup_sha256": "e05f191a15fccac9c586ae2a113b47f09e470b4bf4ce422d1cc2a2a025373363",
+  "retained_files": {
+    "library.db": "d2c64b8e220f251099c87fd8c94e1d71bed193b3cd5444a69f459450a366e74e",
+    "capture.sqlite": "6ad61074ee405b8757957f6aa9fffd6d8b01abd8149781ba45a291d53da4abed"
+  },
+  "unchanged": true,
+  "later_learned_records": [
+    [
+      "b894f2a1-999c-4364-b5f9-a6cb247e1815",
+      1
+    ]
+  ],
+  "model_turns": 0,
+  "production_changed": false
+}
