@@ -1,6 +1,6 @@
 # Integrated operational memory
 
-Active work: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). PR #114 is merged. The CLI and hybrid reader are deployed to all three receivers; automatic capture/batching and real Alerts observation are still pending. The goal is active, not complete.
+Active work: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). PR #114 is merged. The CLI and hybrid reader are deployed to all three receivers; forward-only capture is now authorized and configured. Daily processing and real Alerts observation remain pending; the operational goal is not complete.
 
 ## Outcome
 
@@ -496,7 +496,7 @@ usage was 113,717, 90,785 and 93,564 total tokens, including 93,824, 76,544 and
 not a daily consolidation charge. Invoice cost is unknown. Raw answers, prompts,
 source references and snapshots remain private on their respective bodies.
 
-Prepared but inactive: per-body provider environment references, fixed isolated
+At the earlier access-only adoption, prepared but inactive: per-body provider environment references, fixed isolated
 reviewer binaries, forward-only Stop/SessionEnd capture bindings, finite worker
 profiles, systemd service/timer candidates and recovery instructions. CompAII
 uses user systemd; Eko/Oliva use their established system service manager with
@@ -504,19 +504,55 @@ uses user systemd; Eko/Oliva use their established system service manager with
 inert until specifically selected at activation; no old session can be admitted
 by a later hook event. No capture hook or timer has been installed by this rollout.
 
+### Human-authorized capture activation — 2026-10-13
+
+Nicolás explicitly approved activation and trial after the receiving results.
+The selected scope is new sessions in CompAII's HMK checkout and Eko/Oliva's
+being workspace. Each receiving binding has its own activation timestamp and
+being/source identity. Existing sessions, including this long-running HMK
+conversation, remain excluded; a new turn does not make an old session eligible.
+There is no historical import or cross-being pooling.
+
+The stock native configuration API enabled hooks and trusted only the selected
+Stop/SessionEnd commands. Each body now has its private durable capture inbox;
+the hooks make no model calls and do not write canonical memories. The original
+configuration and inert binding are retained beside the previous adoption
+backups. Native Codex memory remains disabled. No daemon restart or global Stop
+was used. These deployment changes leave the installed HMK release at `103a5a0`.
+
+Actual receiving checks use a short explicitly transient operational turn, not
+another semantic comparison. CompAII and Eko retained both Stop and SessionEnd
+observations and reconstructed the saved transcript bytes. Oliva's initial
+immediate check met a SQLite lock; the follow-up isolated a three-second
+SessionEnd timeout while Stop completed in 215 ms. Its receiving SessionEnd
+budget was raised to ten seconds, matching Stop, with the former configuration
+preserved. Oliva then retained both events, reconstructing all four saved revisions from
+the two observed turns. The [capture receipt](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-capture-adoption.json)
+separates these effects from the still-inactive producer.
+
+The daily midnight-UTC cadence is authorized, but not installed/enabled yet.
+The existing Alerts observer still misclassifies a successful finite worker as
+stopped and lacks the real per-receiver source/delivery bindings. The existing
+[Telecodex #82 handoff](https://github.com/AlterMundi/telecodex/issues/82#issuecomment-6144870671)
+now records that human authorization is resolved. Captured sources stay pending;
+there is no claim of successful daily learning or deployed producer alerts.
+
+Rollback of capture removes only these selected command entries from the current
+hooks file; preserve unrelated hooks and every inbox/canonical record, including
+later writes. Existing trusted hashes may remain inert. Do not restore an old
+configuration or memory database over subsequent work. The existing manual and
+MCP reader routes remain available independently of capture.
+
 Exact continuation:
 
-1. Resolve the pending human activation/scope question: candidate sources are
-   new sessions in CompAII's HMK checkout and Eko/Oliva's existing being workspace.
-   Broader scopes require explicit selection; these candidates do not imply
-   all private conversations are authorized. Keep the boundary at actual activation.
-2. Connect the real per-body finite-worker observations through the existing
-   Alerts owner, including system/user supervisor differences. The oneshot
-   handoff in Telecodex #82 is still pending and must not be reported as delivery.
-3. After the selected activation, verify the actual new-source capture and one
-   supervised resumable processing cycle on each authorized receiver, plus
-   visible failure/recovery through the installed observer. Reuse all closed
-   preservation, semantic and replay evidence. Do not restart old queues or
-   rerun comparisons merely to populate another receipt.
+1. Complete the existing Alerts finite-worker integration and per-body bindings,
+   including user/system supervisors and actual Telegram/Sessions observation.
+   Do not ask for activation permission again; scope and daily cadence are approved.
+2. Install the prepared supervised daily launcher once that observation works;
+   verify one actual new-source processing cycle and visible failure/recovery on
+   each receiver. Preserve pending sources and require explicit recovery for a
+   retained failed paid request.
+3. Publish the resulting operational receipt. Reuse the qualified semantic,
+   preservation and replay evidence; do not reopen comparisons or old queues.
 
 The operational goal remains open until these runtime effects are established.
