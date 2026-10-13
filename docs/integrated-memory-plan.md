@@ -424,3 +424,27 @@ Exact continuation toward deployment:
 Production remains unchanged. No old queues were resumed; no real conversations
 were ingested. The earlier stock-hook and six-case producer evidence stays valid
 for its original contract and is not relabeled as evidence for the new pipeline.
+
+### Finite receiving supervision — 2026-10-13
+
+The deployment path now renders a systemd oneshot and optional explicitly selected
+calendar, pins an explicitly selected native reviewer executable, and supports
+forward-only source admission by session creation time and original working
+directory. Rendering changes no installed hook, service or timer. Native memory
+remains off. Existing per-body embedding spaces and all live pools are retained.
+
+33 focused capture/runtime/provider/supervision checks passed. An actual user
+systemd invocation over the already-qualified fictional corpus completed idle in
+545 ms with capture, account reconciliation and indexing all current; no proposer
+ran. A deliberately absent fictional database produced safe launch failure and
+systemd `Result=exit-code`, `ExecMainStatus=1`. No semantic battery was repeated.
+
+The existing Alerts observer assumes a continuously active worker, which would
+misclassify a successfully completed oneshot. The exact finite-worker contract
+and required distinction were handed to its receiving owner in
+[Telecodex #82](https://github.com/AlterMundi/telecodex/issues/82#issuecomment-6144870671).
+Actual production observer binding is still pending; this handoff is not delivery
+evidence. Receiving package preparation does not activate capture or learning.
+
+Continue with selected credential/profile preparation, coordinated adoption and
+the three receiving checks above. Do not reopen completed semantic qualification.

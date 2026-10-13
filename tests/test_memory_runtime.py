@@ -265,6 +265,34 @@ def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
     assert model(request, state) == model(request, state) and len(calls) == 1
 
 
+def test_native_review_pins_explicit_binary(setup,tmp_path,monkeypatch):
+    memory,inbox,state,_,context,_,_=setup
+    value=configuration(tmp_path,memory,inbox,state,context)
+    binary=tmp_path/'qualified-codex'
+    binary.write_bytes(b'qualified version')
+    value['review']['binary']=str(binary)
+    path=tmp_path/'profile.json'
+    checkpoint(path,value)
+    assert memory_runtime.profile(path)['review']['binary']==str(binary)
+    model=Models(value['generation'],value['review'],'fictional')
+    calls=[]
+    def dispatch(path,root,catalog,credential_file=None,**kwargs):
+        calls.append(kwargs)
+        (root/'dispatches').mkdir(exist_ok=True)
+        checkpoint(root/'dispatches'/path.name,dict(request_sha256=path.stem,
+            state='completed',content='{}',tool_calls_observed=[]))
+    monkeypatch.setattr(memory_models.native,'dispatch',dispatch)
+    request=dict(phase='consolidation_review',messages=[dict(role='system',content='Review.'),
+        dict(role='user',content='Evidence.')],response_schema={'type':'object'})
+    assert model(request,state)==model(request,state)
+    assert calls==[{'binary':str(binary)}]
+    binary.write_bytes(b'changed version')
+    changed=Models(value['generation'],value['review'],'fictional')
+    with pytest.raises(ValueError,match='policy changed'):
+        changed(request,state)
+    assert len(calls)==1
+
+
 def test_profile_rejects_silent_model_substitution_and_unsupported_budgets(
     setup, tmp_path
 ):

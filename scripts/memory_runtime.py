@@ -72,14 +72,14 @@ def profile(path):
     ):
         raise ValueError("explicit DeepSeek Flash low generation profile required")
     if (
-        set(review) - {"provider", "model", "effort", "catalog", "credential_file"}
+        set(review) - {"provider", "model", "effort", "catalog", "credential_file", "binary"}
         or not {"provider", "model", "effort", "catalog"} <= set(review)
         or review["provider"] != "openai-codex-native"
         or review["model"] != "gpt-6.1-sol"
         or review["effort"] != "low"
     ):
         raise ValueError("explicit native OpenAI Codex Sol low review profile required")
-    for field in ("catalog", "credential_file"):
+    for field in ("catalog", "credential_file", "binary"):
         if field in review and (
             not isinstance(review[field], str) or not Path(review[field]).is_absolute()
         ):

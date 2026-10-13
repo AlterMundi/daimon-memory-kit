@@ -50,7 +50,7 @@ DISABLED = (
 )
 
 
-def command(request, catalog, empty_cwd, logs):
+def command(request, catalog, empty_cwd, logs, binary='codex'):
     scope = request.get("source_scope")
     valid_source = (
         request.get("format") == "hmk-fictional-receiving-request/v1"
@@ -124,7 +124,7 @@ def command(request, catalog, empty_cwd, logs):
         },
     )
     argv = [
-        "codex",
+        str(binary),
         "exec",
         "--ignore-user-config",
         "--ignore-rules",
@@ -162,7 +162,7 @@ def command(request, catalog, empty_cwd, logs):
     return argv + ["-"], stdin
 
 
-def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file=None):
+def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file=None, binary='codex'):
     root, catalog, request_path = (
         Path(root).resolve(),
         Path(catalog).resolve(),
@@ -194,7 +194,7 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
         raise ValueError("native catalog does not establish medium reasoning support")
     cwd = root / "empty-cwd"
     cwd.mkdir(mode=0o700, exist_ok=True)
-    argv, stdin = command(request, catalog, cwd.resolve(), (root / "logs").resolve())
+    argv, stdin = command(request, catalog, cwd.resolve(), (root / "logs").resolve(), binary=binary)
     receipt_path = root / "dispatches" / (d + ".json")
     response_path = root / "responses" / (d + ".json")
     if receipt_path.exists() or response_path.exists():

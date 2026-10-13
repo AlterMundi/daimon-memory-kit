@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -15,11 +16,24 @@ from capture_inbox import Inbox
 EVENTS = {'SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop', 'PreCompact', 'PostCompact', 'Interrupt', 'SessionEnd'}
 
 
+def timestamp(value):
+    if not isinstance(value,str):
+        raise ValueError('explicit timezone-aware session boundary required')
+    result=datetime.fromisoformat(value.replace('Z','+00:00'))
+    if result.tzinfo is None:
+        raise ValueError('explicit timezone-aware session boundary required')
+    return result
+
+
 def capture(binding, payload, *, _fault=None):
     started = time.monotonic()
-    if binding.get('schema') != 'hmk.codex-hook-binding/v1':
+    scoped = binding.get('schema') == 'hmk.codex-hook-binding/v2'
+    if binding.get('schema') not in {'hmk.codex-hook-binding/v1','hmk.codex-hook-binding/v2'}:
         raise ValueError('unsupported explicit hook binding')
     required = {'schema','subject','source_instance','source_root','allowed_cwds','inbox','max_source_bytes'}
+    if scoped:
+        required.add('sessions_started_at_or_after')
+        boundary=timestamp(binding.get('sessions_started_at_or_after'))
     if set(binding) != required or not all(isinstance(binding[k], str) and binding[k] for k in ('subject','source_instance','source_root','inbox')):
         raise ValueError('complete source and receiving binding required')
     limit = binding['max_source_bytes']
@@ -30,6 +44,8 @@ def capture(binding, payload, *, _fault=None):
     if not isinstance(payload, dict) or payload.get('hook_event_name') not in EVENTS:
         raise ValueError('unsupported hook event')
     if payload.get('cwd') not in binding['allowed_cwds']:
+        if scoped:
+            return dict(capture_complete=False,skipped=True,reason='unselected_working_directory')
         raise ValueError('working directory outside selected scope')
     sid = payload.get('session_id')
     if not isinstance(sid, str) or not sid:
@@ -66,10 +82,27 @@ def capture(binding, payload, *, _fault=None):
                                     or not isinstance(meta.get('payload'), dict)
                                     or meta['payload'].get('id') != sid):
                                 raise ValueError('transcript session differs from hook')
+                            if scoped:
+                                if meta['payload'].get('cwd') not in binding['allowed_cwds']:
+                                    return dict(capture_complete=False,skipped=True,
+                                        reason='unselected_session_working_directory')
+                                try:
+                                    session_started=timestamp(meta['payload'].get('timestamp'))
+                                except (ValueError,TypeError):
+                                    data,error=None,'session_scope_unverified'
+                                else:
+                                    if session_started < boundary:
+                                        return dict(capture_complete=False,skipped=True,
+                                            reason='session_precedes_selected_boundary')
         except FileNotFoundError:
             error = 'transcript_missing'
     # Null/unavailable transcripts still retain the event payload and a visible gap.
     # Only a successful exact snapshot receives capture_complete=true.
+    if scoped and data is None:
+        # Without a verified source header, this event is not authorized intake.
+        # Report a gap to the caller; do not journal private prompt/answer bytes
+        # from a possibly older session merely because its hook ran today.
+        return dict(capture_complete=False,error=error,scope_verified=False)
     inbox = Inbox(binding['inbox'], binding)
     result = inbox.observe(sid, payload, data, error=error, _fault=_fault)
     result['handler_seconds'] = time.monotonic() - started
@@ -84,7 +117,7 @@ def main():
     payload = json.load(sys.stdin)
     receipt = capture(binding, payload)
     # Valid hook output must not block the user's turn or inject memory prose.
-    print(json.dumps({} if receipt['capture_complete'] else {
+    print(json.dumps({} if receipt['capture_complete'] or receipt.get('skipped') else {
         'systemMessage': 'HMK source capture deferred: ' + receipt['error']}))
 
 

@@ -163,6 +163,13 @@ credential store. The current body's existing DeepSeek route is its Hermes pool,
 not that embedding environment file. Connecting that receiving secret route and
 supervisor is still adoption work, not evidence of a missing account or quota.
 
+`review.binary` optionally selects an absolute path to the qualified Codex CLI.
+Its content hash joins the durable model policy, so replacing the executable
+cannot silently change a pending review. This does not update the receiving
+body's everyday CLI. Keep the selected executable outside `CODEX_HOME`: native
+review deliberately hides that directory in its private mount namespace, except
+for its read-only authentication descriptor.
+
 Dispatch receipts pin request, provider/model settings, transport implementations
 and the native catalog. Pending work rejects a silent model change. A missing
 credential leaves an actionable authentication incident without a network attempt;
@@ -208,3 +215,39 @@ The integrated fictional correction/failed-action case and ten-year-clock
 receiving comparison are qualified in `integrated-memory-plan.md`. Receiving
 supervision, secret routing and the three live installations remain the next
 work; repeating that completed semantic case is unnecessary.
+
+## Receiving supervision and forward-only capture
+
+`memory_supervision.py` renders systemd units without installing or enabling
+them. Supply the private worker profile, installed interpreter and selected
+credential environment-file reference. No credential values enter the unit:
+
+```sh
+python3 scripts/memory_supervision.py --profile /selected/worker.json \
+  --interpreter /selected/venv/bin/python \
+  --environment-file /selected/provider.env --output /selected/rendered
+```
+
+An explicitly selected `--calendar daily` also renders a timer; rendering grants
+no activation authority. The service is finite, has no automatic restart, and
+terminates its process group on timeout. Budgets/checkpoints remain HMK-owned.
+An invocation can end with pending work; neither the next timer tick nor an alert
+retries a retained failed paid request without the explicit recovery above.
+
+A completed oneshot normally becomes inactive. The receiving observer must use
+service `Result`/`ExecMainStatus`, cadence and HMK timestamps to distinguish that
+from failure or overdue work. `RemainAfterExit=yes` prevents subsequent scheduled
+invocation and is not appropriate. An active timer alone does not prove worker
+health. Integration is tracked in
+[Telecodex #82](https://github.com/AlterMundi/telecodex/issues/82#issuecomment-6144870671).
+
+For newly selected sessions, `hmk.codex-hook-binding/v2` retains all v1 fields and
+requires a timezone-aware `sessions_started_at_or_after`. Admission checks the
+transcript's session creation timestamp and original working directory, as well
+as the hook working directory and exact session ID. A late event does not make
+an older session eligible. Unselected sessions are skipped without creating an
+inbox. If the source header cannot establish scope, the handler reports deferred
+capture and does not journal potentially unauthorized prompt/answer payloads.
+That report is a capture gap, not successful preservation. v1 retains its original
+explicit selected-source behavior. Never silently change an existing inbox's
+immutable binding; activate a newly selected binding separately.

@@ -119,3 +119,44 @@ def test_scope_session_and_binding_mismatch_do_not_redirect_capture(bound,tmp_pa
     outside=tmp_path/'outside.jsonl';outside.write_bytes(source.read_bytes())
     with pytest.raises(ValueError,match='outside selected'):capture(b,{**event,'transcript_path':str(outside)})
     assert len(Inbox(b['inbox'],b).observations())==1
+
+
+@pytest.mark.parametrize('created,expected', [
+    ('2026-10-12T23:59:59Z', 'old'),
+    ('2026-10-13T00:00:00Z', 'accepted'),
+    ('2026-10-12T21:00:00-03:00', 'accepted'),
+    ('2026-10-13T00:00:00', 'unverified'),
+    (None, 'unverified'),
+])
+def test_forward_only_scope_uses_session_creation_not_hook_time(bound,created,expected):
+    binding,source,event=bound
+    binding.update(schema='hmk.codex-hook-binding/v2',
+                   sessions_started_at_or_after='2026-10-13T00:00:00Z')
+    source.write_text(json.dumps(dict(type='session_meta',
+        payload=dict(id='session-a',timestamp=created,cwd='/work')))+'\n')
+    event['timestamp']='2026-11-01T00:00:00Z'
+    receipt=capture(binding,event)
+    if expected=='accepted':
+        assert receipt['capture_complete']
+        assert Inbox(binding['inbox'],binding).restore(receipt['revision'])==source.read_bytes()
+    else:
+        assert not receipt['capture_complete']
+        assert not Path(binding['inbox']).exists()
+        if expected=='old':
+            assert receipt['skipped'] and receipt['reason']=='session_precedes_selected_boundary'
+        else:
+            assert receipt['error']=='session_scope_unverified'
+
+
+def test_scoped_unselected_or_unverifiable_event_does_not_journal_payload(bound):
+    binding,source,event=bound
+    binding.update(schema='hmk.codex-hook-binding/v2',
+                   sessions_started_at_or_after='2026-10-13T00:00:00Z')
+    assert capture(binding,{**event,'cwd':'/private'})['skipped']
+    source.write_text(json.dumps(dict(type='session_meta',payload=dict(
+        id='session-a',cwd='/private',timestamp='2026-10-14T00:00:00Z')))+'\n')
+    assert capture(binding,event)['reason']=='unselected_session_working_directory'
+    source.unlink()
+    result=capture(binding,event)
+    assert result['error']=='transcript_missing' and not result['scope_verified']
+    assert not Path(binding['inbox']).exists()

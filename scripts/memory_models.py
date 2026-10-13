@@ -96,6 +96,8 @@ class Models:
                 + [Path(__file__).read_text()]
             ),
         )
+        if review.get('binary'):
+            self.policy['binary_sha256'] = hashlib.sha256(Path(review['binary']).read_bytes()).hexdigest()
 
     def __call__(self, request, directory):
         directory = Path(directory)
@@ -162,11 +164,17 @@ class Models:
         if not receipt_path.exists():
             try:
                 if review:
+                    options = {}
+                    if self.review.get('binary'):
+                        if hashlib.sha256(Path(self.review['binary']).read_bytes()).hexdigest() != self.policy['binary_sha256']:
+                            raise ValueError('native binary changed during invocation')
+                        options['binary'] = self.review['binary']
                     native.dispatch(
                         request_path,
                         directory,
                         self.review["catalog"],
                         credential_file=self.review.get("credential_file"),
+                        **options,
                     )
                 else:
                     credential = os.environ.get(self.generation["credential_env"])
