@@ -36,7 +36,7 @@ def tool_spec():
         inputSchema=dict(
             type="object",
             properties={
-                "action": dict(type="string", enum=["search", "read", "history"]),
+                "action": dict(type="string", enum=["search", "read", "history", "checkpoint"]),
                 "query": dict(
                     type="string", description="Search words; empty for read/history."
                 ),
@@ -154,7 +154,7 @@ class Reader:
             if (
                 not isinstance(arguments, dict)
                 or set(arguments) != {"action", "query", "record_uid", "offset"}
-                or arguments["action"] not in {"search", "read", "history"}
+                or arguments["action"] not in {"search", "read", "history", "checkpoint"}
                 or any(
                     not isinstance(arguments[k], str) for k in ("query", "record_uid")
                 )
@@ -166,6 +166,23 @@ class Reader:
             with memory.read_scope(self.database):
                 con = memory.connect()
                 live = getattr(self, "live", False)
+                if arguments['action']=='checkpoint':
+                    uid=arguments['record_uid']
+                    if not uid or arguments['query'] or arguments['offset']:
+                        raise ValueError('checkpoint requires one UID, empty query and offset zero')
+                    if not live and uid not in self.entries:return self._result('not_in_selection')
+                    # Deliberately select no text, title, source metadata or neighbors.
+                    row=con.execute("SELECT c.record_uid,c.revision,(p.chapter_id IS NOT NULL OR b.source_kind='daimon-projection') AS projected FROM chapters c "
+                        'LEFT JOIN books b ON b.id=c.book_id '
+                        'LEFT JOIN daimon_projections p ON p.chapter_id=c.id '
+                        'WHERE c.record_uid=? AND (p.active IS NULL OR p.active=1)',(uid,)).fetchone()
+                    if row is None:return self._result('not_in_selection')
+                    if not live and row['revision']!=self.entries[uid]['revision']:
+                        return self._result('stale_binding',detail='Refresh the host selection before use.')
+                    return self._result('ok',current_reference={'record_uid':row['record_uid'],'revision':row['revision']},
+                        metadata_only=True,content_loaded=False,
+                        projection_ledger_freshness='unverified' if row['projected'] else 'not_applicable',
+                        seconds=round(time.monotonic()-started,6))
                 ids = {}
                 # A live read checks only its requested record. A search ranks
                 # over the bound pool without loading its full metadata into RAM.

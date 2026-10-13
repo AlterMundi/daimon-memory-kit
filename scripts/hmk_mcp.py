@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 from typing import Literal
 
 from deep_recall import Reader
@@ -156,7 +157,7 @@ def server(binding):
         ),
     )
     def hmk_recall(
-        action: Literal["search", "read", "history"],
+        action: Literal["search", "read", "history", "checkpoint"],
         query: str = "",
         record_uid: str = "",
         pool: str = "",
@@ -185,8 +186,19 @@ def server(binding):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binding", required=True)
+    parser.add_argument('--request-stdin',action='store_true',help='One bounded foreground recall/checkpoint request; no MCP dependency or server')
     args = parser.parse_args()
-    server(load_binding(args.binding)).run(transport="stdio")
+    binding=load_binding(args.binding)
+    if args.request_stdin:
+        request=sys.stdin.buffer.read(16385)
+        if len(request)>16384:parser.error('Foreground request exceeds its bounded size')
+        try:
+            request=json.loads(request)
+            if not isinstance(request,dict) or set(request)-{'action','query','record_uid','pool','offset','expected_revision'}:
+                raise ValueError('Use supported recall request fields only')
+            print(json.dumps(recall(binding,**request),ensure_ascii=False))
+        except (ValueError,TypeError):parser.error('Invalid foreground recall request')
+    else:server(binding).run(transport="stdio")
 
 
 if __name__ == "__main__":
