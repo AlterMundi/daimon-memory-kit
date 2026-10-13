@@ -235,13 +235,39 @@ concurrent later capture, dependency closure, missing group detection/recovery,
 prior-context continuation and context-budget resume without repeated inference.
 This is source-window qualification, not complete pipeline or production rollout.
 
+### Finite foreground worker and restart
+
+`memory_worker.run` now coordinates finite capture, organization and selected-index
+phase calls under one inbox-bound worker lock. Pending phases are held for the
+rest of the invocation; independent committed work can progress. The worker
+validates the producer destination, snapshots before registering its owner and
+publishes a small last-observed status before and after phase work. It creates no
+background process, hook or timer. The [worker contract](memory-worker.md) defines
+explicit budgets, receiving obligations and the current organization gap.
+
+The [real-provider restart diagnostic](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-worker-receipt.json)
+reused the already-qualified source-window corpus, without selecting it again.
+One current NVIDIA embedding request indexed its new record (0.34 seconds HTTP).
+The first invocation took 22.01 seconds including setup, and the next explicit
+invocation 0.54 seconds with no selector or embedding request. Both truthfully
+report organization pending because its adapter is not implemented. This verifies
+finite index integration and no-work reentry, not whole-flow readiness.
+
+34 affected tests passed: worker ownership/concurrency, provider-credit failure
+and recovery, original capture/index behavior, CLI budget forwarding and safe alert
+projection. Existing internal `embedding` incidents now project as receiving
+`index` incidents without rewriting historical journals, fixing a demonstrated
+compatibility gap with the newly supplied Alerts exporter. Notification delivery
+remains owned by Telecodex #82. Native memory and production remain unchanged.
+
 Next uncertainties and required work:
 
-1. Wire the selected index phase into the owning launcher and integrate useful
-   dependent-account consolidation through existing APIs. Define explicit
-   invocation/supervision and backlog handling; consume window progress rather
-   than treating one completed window as an empty queue. Reuse qualified capture,
-   source navigation, index and consolidation evidence.
+1. Implement the useful dependent-account organization adapter through existing
+   support-currency/consolidation APIs, with retained semantic assessment and
+   indexing of its committed receipts. Prioritize invalidated existing accounts;
+   do not create redundant summaries to make the phase appear active. The finite
+   capture/index worker and source windows are qualified; reuse that evidence.
+   Production invocation/provider wiring and receiving supervision remain pending.
 2. Expose durable processing status to the receiving adapter described in
    Telecodex #82. Telegram delivery, Sessions presentation and independent
    processor/stale-status observation belong to Telecodex. No HMK transport work

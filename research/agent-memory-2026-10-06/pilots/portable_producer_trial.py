@@ -20,6 +20,7 @@ from native_producer_delivery import load_memory
 from portable_producer import process_once, reprepare_pending, maintain_index_once
 from provider_status import ProviderProblem
 import receiving_text_api as api
+import memory_worker
 
 
 def proposer(api_key, *, output_limit=6000, retry_of=None):
@@ -72,6 +73,7 @@ def main():
     p.add_argument('--limit',type=int,default=32)
     p.add_argument('--source-budget-bytes',type=int,default=64000,
         help='Per-invocation source context budget; full sources remain in the inbox')
+    p.add_argument('--worker-steps',type=int,help='Run this many foreground phases; missing organization adapter remains explicitly pending')
     p.add_argument('--index-only',action='store_true',help='Maintain committed selected records without selection or a narrator credential')
     p.add_argument('--output-token-limit',type=int,default=6000)
     p.add_argument('--reprepare-reason')
@@ -80,6 +82,8 @@ def main():
     a=p.parse_args()
     if not a.inbox.is_file():
         p.error('capture inbox must already exist')
+    if a.worker_steps is not None and (a.worker_steps < 1 or a.index_only or a.reprepare_reason):
+        p.error('worker-steps must be positive and cannot combine with index-only or reprepare')
     if a.index_only and (a.reprepare_reason or a.retry_of):
         p.error('index-only cannot reprepare selection or retry narrator requests')
     memory=load_memory(a.canon)
@@ -93,6 +97,13 @@ def main():
         p.error('caller must supply DEEPSEEK_API_KEY')
     if a.reprepare_reason:
         reprepare_pending(memory,inbox,a.state_dir,a.reprepare_reason)
+    if a.worker_steps is not None:
+        result=memory_worker.run(memory,inbox,a.state_dir,
+            proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of),
+            json.loads(a.context.read_text()),max_steps=a.worker_steps,
+            source_budget_bytes=a.source_budget_bytes,capture_limit=a.limit,index_limit=a.limit)
+        print(json.dumps(result['status']))
+        return 0 if result['status']['state']=='idle' else 2
     result=process_once(memory,inbox,a.state_dir,proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of),
         json.loads(a.context.read_text()),limit=a.limit,source_budget_bytes=a.source_budget_bytes)
     print(json.dumps(result))

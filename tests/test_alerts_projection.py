@@ -25,3 +25,12 @@ def test_safe_projection_is_bounded_and_preserves_source_delivery(tmp_path):
     assert safe_projection(inbox)['items'][0]['processing_state']=='resolved'
     with sqlite3.connect(inbox.path) as con:
         assert con.execute('SELECT COUNT(*) FROM observations').fetchone()[0]==0
+
+
+def test_existing_embedding_incidents_project_as_index_without_rewriting_journal(tmp_path):
+    inbox=Inbox(tmp_path/'capture.sqlite',{'subject':'fictional'})
+    alerts=Alerts(inbox)
+    alerts.report('selected-index','embedding',ProviderProblem('nvidia','fixture',{'code':'quota_exhausted'}))
+    projected=safe_projection(inbox)['items'][0]
+    assert projected['phase']=='index' and projected['problem_code']=='quota_exhausted'
+    assert alerts.status()['alerts'][0]['phase']=='embedding'

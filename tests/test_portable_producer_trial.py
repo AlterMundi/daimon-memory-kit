@@ -24,3 +24,27 @@ def test_recorded_success_replays_and_truncated_attempt_needs_explicit_retry(tmp
     assert response['selection']['outcome']=='omitted' and len(count)==2
     assert trial.proposer('test-key',output_limit=12000,retry_of=old)(request,tmp_path)==response
     assert len(count)==2 and (tmp_path/'dispatches'/f'{old}.json').exists()
+
+
+def test_worker_cli_keeps_pending_visible_and_forwards_phase_budgets(tmp_path,monkeypatch,capsys):
+    inbox=tmp_path/'capture.sqlite'
+    inbox.touch()
+    binding=tmp_path/'binding.json'
+    binding.write_text('{}')
+    context=tmp_path/'context.json'
+    context.write_text('{}')
+    monkeypatch.setenv('DEEPSEEK_API_KEY','fictional-test-key')
+    monkeypatch.setattr(trial,'load_memory',lambda path:object())
+    monkeypatch.setattr(trial,'Inbox',lambda *args:object())
+    calls=[]
+    def worker(*args,**kwargs):
+        calls.append(kwargs)
+        return dict(status=dict(state='pending',phases={'organization':{'reason_code':'organization_adapter_unconfigured'}}))
+    monkeypatch.setattr(trial.memory_worker,'run',worker)
+    monkeypatch.setattr(sys,'argv',['trial','--inbox',str(inbox),'--binding',str(binding),
+        '--context',str(context),'--canon',str(tmp_path/'canon'),'--state-dir',str(tmp_path/'state'),
+        '--limit','7','--worker-steps','5','--fictional-isolated-profile'])
+    assert trial.main()==2
+    assert json.loads(capsys.readouterr().out)['state']=='pending'
+    assert calls[0]['capture_limit']==calls[0]['index_limit']==7
+    assert calls[0]['max_steps']==5

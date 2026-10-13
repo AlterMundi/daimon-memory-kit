@@ -147,7 +147,9 @@ def safe_projection(inbox, *, after=0, limit=100):
     for row in rows:
         problem=json.loads(row['problem_json'])
         code=problem.get('code')
-        phase=row['phase']
+        # Existing index incidents use "embedding" internally. Preserve their
+        # journal history while exposing the shared receiving phase name.
+        phase='index' if row['phase']=='embedding' else row['phase']
         if code not in ACTIONS or phase not in {'capture','selection','organization','consolidation','index'}:
             raise ValueError('unsupported operational projection')
         if row['state'] not in {'open','resolved'}:

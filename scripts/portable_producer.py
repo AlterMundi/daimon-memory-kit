@@ -356,6 +356,8 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
         # The canonical ledger is authoritative, even after a crash before the
         # capture index checkpoint. Never scan other streams or private pools.
         with memory.connect() as con:
+            if not con.execute("SELECT 1 FROM sqlite_master WHERE name='capture_events'").fetchone():
+                return dict(state='idle',indexed_through=state['after'],space=cfg)
             row = con.execute("SELECT sequence,state,receipt_json FROM capture_events WHERE stream_id=? AND sequence>? ORDER BY sequence LIMIT 1",
                 ('portable:'+digest(owner),state['after'])).fetchone()
         if row is None:
