@@ -15,26 +15,14 @@ from capturectl import CaptureLedger, digest, wire
 from codex_coordinator import checkpoint, sync_directory
 import codex_projection as artifacts
 import portable_capture as selection
+import selection_navigation
 from sqlite_snapshot import verified_snapshot
 
 SCHEMA = 'hmk.portable-producer/v1'
 
 
-def _canon(memory, maximum=256):
-    con = memory.connect()
-    try:
-        rows = [dict(r) for r in con.execute('''SELECT c.id,c.record_uid,c.revision,c.raw,c.title,c.source_metadata_json,
-            c.engram_type,s.name AS shelf FROM chapters c JOIN books b ON c.book_id=b.id
-            JOIN shelves s ON b.shelf_id=s.id ORDER BY c.id LIMIT ?''', (maximum+1,))]
-        if len(rows) > maximum or len(wire(rows).encode()) > 512 * 1024:
-            raise ValueError('canonical context exceeds this bounded producer profile; defer without truncation')
-        return rows
-    finally:
-        con.close()
-
-
 def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
-                 _fault=None):
+                 navigation_steps=4, retrieval='hybrid', _fault=None):
     """Process at most one frozen batch. Reinvocation resumes uncertain commits.
 
     proposer(request, directory) returns an auditable JSON object containing
@@ -43,6 +31,10 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
     """
     if type(limit) is not int or not 1 <= limit <= 128:
         raise ValueError('finite batch limit required')
+    if type(navigation_steps) is not int or not 1 <= navigation_steps <= 32:
+        raise ValueError('finite navigation step budget required')
+    if retrieval not in {'lexical','hybrid'}:
+        raise ValueError('unsupported retrieval mode')
     binding = json.loads(inbox.binding)
     if any(context.get(k) != binding[k] for k in ('subject','source_instance')):
         raise ValueError('producer context conflicts with capture binding')
@@ -73,6 +65,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         job_path = state_dir/f'batch-{sequence}.json'
         code_hash = digest([Path(selection.__file__).read_text(),
                             Path(selection.source_decision.__code__.co_filename).read_text(),
+                            Path(selection_navigation.__file__).read_text(),
                             Path(__file__).read_text()])
         if job_path.exists():
             job = json.loads(job_path.read_text())
@@ -132,19 +125,20 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                     return {'state':'deferred','reason':'prompt not yet in captured transcript',
                             'processed_through':index['after'],'proposer_invoked':False}
             memory.init_db()
-            canon = _canon(memory)
             inputs = dict(observations=observations, sources=sources, revisions=revisions,
-                          canon=canon, context=context, supporting_observations=list(latest.values()))
+                          context=context, supporting_observations=list(latest.values()))
             if len(wire(inputs).encode()) > 1024 * 1024:
                 return {'state':'deferred','reason':'batch exceeds bounded processing bytes',
                         'processed_through':index['after'],'proposer_invoked':False}
-            request = dict(messages=selection.block_messages(sources,canon,context),
-                           response_schema=selection.block_schema())
+            request = dict(messages=selection.block_messages(sources,[],context),
+                           response_schema=selection_navigation.response_schema())
             job = dict(owner=owner, sequence=sequence, inputs=inputs,
                        input_hash=digest(inputs), code_hash=code_hash, request=request,
-                       created_ns=time.time_ns(), state='prepared')
+                       retrieval=retrieval, created_ns=time.time_ns(), state='prepared')
             checkpoint(job_path,job)
         inputs = job['inputs']
+        if job['retrieval'] != retrieval:
+            raise ValueError('pending retrieval configuration changed; reconcile explicitly')
         # Each resume verifies the original dependency chain; metadata IDs alone
         # never prove that the source bytes needed by this job survived.
         originals = {}
@@ -158,8 +152,13 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             if any(s['status']=='new' for s in inputs['sources']):
                 work = state_dir/f"batch-{sequence}-dispatch-{job['created_ns']}"
                 work.mkdir(exist_ok=True,mode=0o700)
-                proposal = proposer(job['request'],work)
-                proposer_invoked = True
+                proposal, dispatches = selection_navigation.advance(job,job_path,work,proposer,
+                    database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval)
+                proposer_invoked = bool(dispatches)
+                if proposal is None:
+                    return {'state':'pending','reason':'navigation invocation budget reached',
+                        'processed_through':index['after'],'proposer_invoked':proposer_invoked,
+                        'navigation_steps':len(job['navigation']['steps'])}
             else:
                 proposal = {'selection':dict(outcome='omitted',reason='No new source items; lifecycle metadata only.',records=[],links=[]),
                             'dispatch':{'model_calls':0}}
@@ -167,11 +166,13 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             job['proposal'] = proposal
             job['state'] = 'proposed'
             checkpoint(job_path,job)
-        decision = selection.selected_decision(job['proposal']['selection'], inputs['sources'], inputs['canon'])
+        canon = job.get('navigation',{}).get('canon',[])
+        decision = selection.selected_decision(job['proposal']['selection'], inputs['sources'], canon)
         if decision['outcome'] == 'deferred':
             return {'state':'deferred','reason':decision['reason'],
                     'processed_through':index['after'],'proposer_invoked':proposer_invoked}
         originals.update({'request.json':wire(job['request']).encode(),
+                          'navigation.json':wire(job.get('navigation',{})).encode(),
                           'proposal.json':wire(job['proposal']).encode(),
                           'capture.json':wire(inputs['observations']).encode(),
                           'producer.json':wire({'schema':SCHEMA,'owner':owner,
@@ -192,6 +193,14 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         def preserve(con):
             if decision['outcome'] != 'applied':
                 return
+            # The reads and model calls occur outside the writer transaction.
+            # Check their observed versions inside the same transaction as the
+            # write; another session's correction must not be overwritten.
+            for record in canon:
+                current = con.execute('SELECT record_uid,revision FROM chapters WHERE id=?',
+                                      (record['id'],)).fetchone()
+                if current is None or tuple(current) != (record['record_uid'],record['revision']):
+                    raise ValueError('navigated canonical evidence changed; reconcile pending work')
             con.execute('CREATE TABLE IF NOT EXISTS native_learning_artifacts(artifact_id TEXT PRIMARY KEY,envelope_json TEXT NOT NULL)')
             con.execute('INSERT OR IGNORE INTO native_learning_artifacts VALUES(?,?)',(bundle['artifact_id'],wire(bundle)))
             if con.execute('SELECT envelope_json FROM native_learning_artifacts WHERE artifact_id=?',(bundle['artifact_id'],)).fetchone()[0] != wire(bundle):

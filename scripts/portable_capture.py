@@ -98,7 +98,8 @@ state. Recalled/projected memories are earlier experience, not new encounters.
 Select a genuinely new report, interpretation or correction without duplicating
 the prior episode. Retrieved context is not selectable source evidence. Use a
 memory:<id> reference to retain existing canon when a genuinely new correction or
-interpretation changes it. Reading memory is not a correction. Canonical IDs and
+interpretation changes it; <id> may be its supplied integer ID or stable record_uid.
+Reading memory is not a correction. Canonical IDs and
 revisions belong to the receiving database; external retrieved revisions are a
 different namespace and never justify updating canon on their own. Existing canon is context. A human report is not this body's
 attendance, and a separate being's experience is not our own. Keep attribution and
@@ -167,13 +168,22 @@ def selected_decision(value, sources, canon):
     value = json.loads(json.dumps(value))
     available = {s['id']: s for s in sources}
     allowed = {s['id'] for s in sources if s.get('status') == 'new'}
+    current = {r['id']: r for r in canon}
     for record in value.get('records', []):
         if set(record) - fields or record.get('operation') not in {'add','update'}:
             raise ValueError('closed block-selection record with explicit operation required')
+        if record['operation'] == 'update':
+            original = current.get(record.get('chapter_id'))
+            if original is None or record.get('expected_revision') != original['revision']:
+                raise ValueError('update requires a completely read current canonical record')
         if any(available.get(ref, {}).get('retrieved_context') for ref in record.get('source_ids', [])):
             raise ValueError('retrieved memory is context, not selectable intake evidence')
         if not allowed.intersection(record.get('source_ids', [])):
             raise ValueError('a selected record needs genuinely new source bytes')
+    for link in value.get('links', []):
+        for endpoint in ('source','target'):
+            if type(link.get(endpoint)) is int and link[endpoint] not in current:
+                raise ValueError('link requires a completely read canonical endpoint')
     # Validate proposed titles and references before adding causal context.
     source_decision(value, sources, canon)
     ordering = {s['id']: i for i, s in enumerate(sources)}
@@ -197,7 +207,7 @@ def selected_decision(value, sources, canon):
         raise ValueError('duplicate proposed record key')
     for record in sorted(value['records'], key=lambda r: -len(set(r['source_ids']))):
         refs = set(record['source_ids'])
-        covering = next((r for r in keep if record['operation'] == r['operation'] == 'add'
+        covering = next((r for r in keep if record['operation'] == 'add'
                          and refs <= set(r['source_ids'])), None)
         if covering:
             aliases[record['key']] = covering['key']

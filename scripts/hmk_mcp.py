@@ -43,6 +43,8 @@ def load_binding(path):
         or not 1 <= len(binding["pools"]) <= 8
     ):
         raise ValueError("explicit versioned being/body/pool binding required")
+    if binding.get('retrieval', 'lexical') not in {'lexical','hybrid'}:
+        raise ValueError('unsupported receiving retrieval mode')
     names, paths = set(), set()
     for pool in binding["pools"]:
         name, database = pool.get("name"), pool.get("database")
@@ -101,6 +103,7 @@ def recall(
             being_ref=binding["being_ref"],
             body_ref=binding["body_ref"],
             max_bytes=budget,
+            retrieval=binding.get('retrieval','lexical'),
         )
         result = reader.call(
             dict(action=action, query=query, record_uid=record_uid, offset=offset)

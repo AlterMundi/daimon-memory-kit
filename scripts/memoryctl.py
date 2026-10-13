@@ -179,7 +179,7 @@ def _parse_csv(value):
 
 def _filter_clauses_and_params(shelves=None, exclude_shelves=None,
                                tags=None, exclude_tags=None,
-                               engram_types=None,
+                               engram_types=None, record_uids=None,
                                shelf_table_alias="s", chapter_table_alias="c"):
     """Build SQL WHERE clauses and params for shelf/tag filters.
 
@@ -191,6 +191,11 @@ def _filter_clauses_and_params(shelves=None, exclude_shelves=None,
     falsely match e.g. 'mc' inside 'mcp')."""
     clauses = []
     params = []
+    if record_uids is not None:
+        if not isinstance(record_uids, (list, tuple)) or any(not isinstance(uid, str) for uid in record_uids):
+            raise ValueError('record_uids must be an explicit list or None')
+        clauses.append(f"{chapter_table_alias}.record_uid IN (SELECT value FROM json_each(?))")
+        params.append(json.dumps(record_uids))
     sh_in = _parse_csv(shelves)
     sh_out = _parse_csv(exclude_shelves)
     tg_in = _parse_csv(tags)
@@ -1368,7 +1373,7 @@ def overlap_ratio(a, b):
 
 
 def search(query, limit=12, shelves=None, exclude_shelves=None,
-           tags=None, exclude_tags=None, engram_types=None):
+           tags=None, exclude_tags=None, engram_types=None, record_uids=None):
     if not tokenize_query(query) or limit <= 0:
         return []
     init_db()
@@ -1377,7 +1382,7 @@ def search(query, limit=12, shelves=None, exclude_shelves=None,
     extra_clauses, extra_params = _filter_clauses_and_params(
         shelves=shelves, exclude_shelves=exclude_shelves,
         tags=tags, exclude_tags=exclude_tags,
-        engram_types=engram_types,
+        engram_types=engram_types, record_uids=record_uids,
     )
     extra_sql = (" AND " + " AND ".join(extra_clauses)) if extra_clauses else ""
     rows = con.execute(
@@ -1516,10 +1521,21 @@ def capture_neighbors(chapter_id):
     return result
 
 
-def recall_neighbors(chapter_id):
+def recall_neighbors(chapter_id, record_uids=None):
     linked = linked_neighbors(chapter_id)
     ids = {row['id'] for row in linked}
-    return linked + [row for row in capture_neighbors(chapter_id) if row['id'] not in ids]
+    candidates = linked + [row for row in capture_neighbors(chapter_id) if row['id'] not in ids]
+    con = connect()
+    try:
+        scope, params = _filter_clauses_and_params(record_uids=record_uids)
+        extra = (' AND ' + ' AND '.join(scope)) if scope else ''
+        eligible = {row[0] for row in con.execute(
+            'SELECT c.id FROM chapters c LEFT JOIN daimon_projections p ON p.chapter_id=c.id '
+            'WHERE c.id IN (SELECT value FROM json_each(?)) AND (p.active IS NULL OR p.active=1)' + extra,
+            (json.dumps([r['id'] for r in candidates]), *params))}
+        return [r for r in candidates if r['id'] in eligible]
+    finally:
+        con.close()
 
 
 # --- maintenance lock (v3.9.0, flock) ---
@@ -1645,7 +1661,7 @@ def backfill_embeddings(provider=None, model=None, batch_size=8, limit=0, only_m
 
 def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
                     shelves=None, exclude_shelves=None, tags=None, exclude_tags=None, engram_types=None,
-                    _query_cache=None):
+                    _query_cache=None, record_uids=None):
     """Semantic search via embeddings.
 
     If use_binary is True (default when binary embeddings exist), does a two-pass:
@@ -1678,7 +1694,7 @@ def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
     _sem_extra_clauses, _sem_extra_params = _filter_clauses_and_params(
         shelves=shelves, exclude_shelves=exclude_shelves,
         tags=tags, exclude_tags=exclude_tags,
-        engram_types=engram_types,
+        engram_types=engram_types, record_uids=record_uids,
     )
     _sem_extra_sql = (" AND " + " AND ".join(_sem_extra_clauses)) if _sem_extra_clauses else ""
     con = connect()
@@ -1783,7 +1799,7 @@ def _item_cost(item):
     return max(token_estimate(text), math.ceil(len(text) / 4))
 
 
-def _select_pack(query, candidates, budget_tokens, limit, threshold, *, record_access=True, **details):
+def _select_pack(query, candidates, budget_tokens, limit, threshold, *, record_access=True, record_uids=None, **details):
     if limit <= 0 or budget_tokens < 0:
         raise ValueError('limit must be positive and budget nonnegative')
     eligible = [row for row in candidates if row['score'] >= threshold]
@@ -1799,7 +1815,7 @@ def _select_pack(query, candidates, budget_tokens, limit, threshold, *, record_a
         # Compact hints keep the primary relation; full expand retains every relation.
         # Repeating a target cannot consume another navigation slot.
         item['neighbors'] = [{key: value for key, value in neighbor.items() if key != 'relations'}
-                             for neighbor in recall_neighbors(row['id'])[:3]]
+                             for neighbor in recall_neighbors(row['id'], record_uids=record_uids)[:3]]
         cost = _item_cost(item)
         if used + cost > budget_tokens:
             # Neighbors are navigation hints; preserve the source-qualified
@@ -1838,20 +1854,20 @@ def pack(query, budget_tokens=4000, limit=8, threshold=0.60,
 
 def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=None, model=None,
                 shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
-                engram_types=None, _record_access=True, _query_cache=None):
+                engram_types=None, _record_access=True, _query_cache=None, record_uids=None):
     cfg = embeddings_runtime_config(provider=provider, model=model)
     provider = cfg["provider"]
     model = cfg["model"]
     lexical = search(query, limit=limit * 2,
                      shelves=shelves, exclude_shelves=exclude_shelves,
                      tags=tags, exclude_tags=exclude_tags,
-                     engram_types=engram_types)
+                     engram_types=engram_types, record_uids=record_uids)
     backend_errors = []
     try:
         semantic = semantic_search(query, limit=limit * 2, provider=provider, model=model,
                                    shelves=shelves, exclude_shelves=exclude_shelves,
                                    tags=tags, exclude_tags=exclude_tags, engram_types=engram_types,
-                                   _query_cache=_query_cache)
+                                   _query_cache=_query_cache, record_uids=record_uids)
     except EmbeddingBackendError:
         semantic = []
         backend_errors.append('embedding_backend_unavailable')
@@ -1913,7 +1929,7 @@ def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=Non
             ranked = sorted(head + ranked[rerank_pool:], key=lambda r: r['score'], reverse=True)
 
     return _select_pack(query, ranked, budget_tokens, limit, threshold,
-                        record_access=_record_access, provider=provider, model=model,
+                        record_access=_record_access, record_uids=record_uids, provider=provider, model=model,
                         retrieval_status=('degraded' if lexical else 'unavailable') if degraded else 'ok',
                         backend_errors=backend_errors,
                         score_space='lexical' if degraded else 'hybrid')
@@ -2451,15 +2467,21 @@ def history(chapter_id):
         con.close()
 
 
-def history_search(query, limit=12):
+def history_search(query, limit=12, record_uids=None):
     if not tokenize_query(query) or limit <= 0:
         return []
     init_db()
     con = connect()
     try:
+        clauses, scope_params = _filter_clauses_and_params(record_uids=record_uids)
+        scope = ' AND (p.active IS NULL OR p.active=1)'
+        if clauses:
+            scope += ' AND ' + ' AND '.join(clauses)
+        params = [fts_query_string(query), *scope_params]
         rows = con.execute('SELECT r.snapshot_json,r.reason,r.archived_at FROM chapter_revisions_fts f '
-                           'JOIN chapter_revisions r ON r.id=f.rowid WHERE chapter_revisions_fts MATCH ? '
-                           'ORDER BY bm25(chapter_revisions_fts) LIMIT ?', (fts_query_string(query), limit)).fetchall()
+                           'JOIN chapter_revisions r ON r.id=f.rowid JOIN chapters c ON c.id=r.chapter_id '
+                           'LEFT JOIN daimon_projections p ON p.chapter_id=c.id WHERE chapter_revisions_fts MATCH ? '+scope+
+                           ' ORDER BY bm25(chapter_revisions_fts) LIMIT ?', (*params, limit)).fetchall()
         return [{**json.loads(r['snapshot_json']), 'revision_reason': r['reason'], 'archived_at': r['archived_at'],
                  'historical': True} for r in rows]
     finally:

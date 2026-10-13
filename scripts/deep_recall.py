@@ -14,6 +14,7 @@ import time
 
 import codex_projection as projection
 import memoryctl as memory
+import memory_navigation
 
 TOOL = "hmk_recall"
 ROUTE = "hmk.deep-recall.route/v1"
@@ -74,11 +75,11 @@ def navigation(route):
 class Reader:
     """One host-bound selection, checked against current revisions on every call.
 
-    This delivery uses existing lexical and historical search. It neither changes
-    embedding spaces nor silently contacts an embedding/reranking service.
+    Lexical navigation is the default. The host may explicitly select hybrid
+    retrieval using the configured embedding space and ranking services.
     """
 
-    def __init__(self, database, selection, *, max_bytes=12000):
+    def __init__(self, database, selection, *, max_bytes=12000, retrieval='lexical'):
         if type(max_bytes) is not int or not 2000 <= max_bytes <= 32000:
             raise ValueError("max_bytes must be 2000..32000")
         # Reuse the projection's authority, applicability and source validation.
@@ -87,9 +88,12 @@ class Reader:
         self.selection = copy.deepcopy(selection)
         self.entries = {r["record_uid"]: r for r in self.selection["records"]}
         self.max_bytes = max_bytes
+        if retrieval not in {'lexical','hybrid'}:
+            raise ValueError('unsupported retrieval mode')
+        self.retrieval = retrieval
 
     @classmethod
-    def live_pool(cls, database, *, being_ref, body_ref, max_bytes=12000):
+    def live_pool(cls, database, *, being_ref, body_ref, max_bytes=12000, retrieval='lexical'):
         """One request against an owner-selected live pool, including later writes.
 
         Applicability stays unknown unless retained explicitly. Matrix rows keep
@@ -104,6 +108,9 @@ class Reader:
         result.selection = dict(being_ref=being_ref, body_ref=body_ref)
         result.entries = {}
         result.max_bytes = max_bytes
+        if retrieval not in {'lexical','hybrid'}:
+            raise ValueError('unsupported retrieval mode')
+        result.retrieval = retrieval
         result.live = True
         return result
 
@@ -113,7 +120,7 @@ class Reader:
             status=status,
             being_ref=self.selection["being_ref"],
             body_ref=self.selection["body_ref"],
-            retrieval="lexical",
+            retrieval=self.retrieval,
             coverage="owner-selected-live-pool"
             if getattr(self, "live", False)
             else "host-selected-records-only",
@@ -121,13 +128,17 @@ class Reader:
         )
 
     def _navigation(self, row):
-        return dict(
+        result = dict(
             record_uid=row["record_uid"],
             revision=row["revision"],
             title=row["title"],
             reference=f"mem:{row['record_uid']}@{row['revision']}",
-            applicability=self.entries[row["record_uid"]]["applicability"],
+            applicability=self.entries.get(row["record_uid"], {}).get("applicability",
+                row.get('applicability', {"kind":"unknown","targets":[]})),
         )
+        if row.get('historical'):
+            result.update(historical=True, current_revision=row.get('current_revision'))
+        return result
 
     def call(self, arguments):
         started = time.monotonic()
@@ -146,32 +157,26 @@ class Reader:
                 raise ValueError("invalid read request")
             with memory.read_scope(self.database):
                 con = memory.connect()
-                if getattr(self, "live", False):
-                    self.entries = {}
-                    for row in con.execute(
-                        "SELECT c.record_uid,c.revision,c.source_metadata_json FROM chapters c "
-                        "LEFT JOIN daimon_projections p ON p.chapter_id=c.id "
-                        "WHERE p.active IS NULL OR p.active=1"
-                    ):
-                        metadata = json.loads(row["source_metadata_json"] or "{}")
-                        self.entries[row["record_uid"]] = dict(
-                            revision=row["revision"],
-                            applicability=metadata.get(
-                                "applicability", {"kind": "unknown", "targets": []}
-                            ),
-                        )
-                # Fail closed on a changed binding instead of serving an old head.
+                live = getattr(self, "live", False)
                 ids = {}
-                for uid, entry in self.entries.items():
-                    row = con.execute(
-                        "SELECT id,revision FROM chapters WHERE record_uid=?", (uid,)
-                    ).fetchone()
-                    if row is None or row["revision"] != entry["revision"]:
-                        return self._result(
-                            "stale_binding",
-                            detail="Refresh the host selection before use.",
-                        )
-                    ids[uid] = row["id"]
+                # A live read checks only its requested record. A search ranks
+                # over the bound pool without loading its full metadata into RAM.
+                if live:
+                    uid = arguments['record_uid']
+                    if uid:
+                        row = con.execute("SELECT c.id,c.revision,c.source_metadata_json FROM chapters c "
+                            "LEFT JOIN daimon_projections p ON p.chapter_id=c.id "
+                            "WHERE c.record_uid=? AND (p.active IS NULL OR p.active=1)",(uid,)).fetchone()
+                        if row:
+                            ids[uid] = row['id']
+                            self.entries[uid] = dict(revision=row['revision'],applicability=
+                                json.loads(row['source_metadata_json'] or '{}').get('applicability',{'kind':'unknown','targets':[]}))
+                else:
+                    for uid, entry in self.entries.items():
+                        row = con.execute('SELECT id,revision FROM chapters WHERE record_uid=?',(uid,)).fetchone()
+                        if row is None or row['revision'] != entry['revision']:
+                            return self._result('stale_binding', detail='Refresh the host selection before use.')
+                        ids[uid] = row['id']
                 action = arguments["action"]
                 if action == "search":
                     if (
@@ -179,23 +184,15 @@ class Reader:
                         or arguments["offset"]
                     ):
                         raise ValueError("search requires words and offset zero")
-                    # Candidate collection is bounded; out-of-selection content never leaves the host.
-                    rows = memory.search(arguments["query"], limit=32)
-                    selected = [
-                        self._navigation(r) for r in rows if r["record_uid"] in ids
-                    ][:8]
-                    history = [
-                        self._navigation(r)
-                        for r in memory.history_search(arguments["query"], limit=32)
-                        if r["record_uid"] in ids
-                    ][:4]
-                    result = self._result(
-                        "ok" if selected or history else "no_matches",
-                        items=selected,
-                        historical_matches=history,
-                        navigation_only=True,
-                        detail="Bounded lexical search of selected records; no match is not proof of absence.",
-                    )
+                    found = memory_navigation.search(memory, arguments['query'], mode=self.retrieval,
+                        record_uids=None if live else list(ids), limit=8)
+                    selected = [self._navigation(r) for r in found['items']]
+                    history = [self._navigation(r) for r in found['historical_matches']]
+                    result = self._result('ok' if selected or history else
+                        'unavailable' if found['retrieval_status']=='unavailable' else 'no_matches',
+                        items=selected, historical_matches=history, navigation_only=True,
+                        retrieval_status=found['retrieval_status'],backend_errors=found['backend_errors'],
+                        detail=found['coverage'])
                 else:
                     uid = arguments["record_uid"]
                     if uid not in ids:
@@ -243,8 +240,7 @@ class Reader:
                         current.pop("access_count", None)
                         neighbors = [
                             self._navigation(r)
-                            for r in memory.recall_neighbors(ids[uid])
-                            if r["record_uid"] in ids
+                            for r in memory.recall_neighbors(ids[uid], record_uids=None if live else list(ids))
                         ]
                         result = self._result(
                             "ok",
