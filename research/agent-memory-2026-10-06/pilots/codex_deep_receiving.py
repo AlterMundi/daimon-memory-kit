@@ -9,6 +9,7 @@ import os
 import pathlib
 import selectors
 import subprocess
+import tempfile
 import time
 
 
@@ -31,6 +32,9 @@ class Native:
         max_rollouts=1,
         startup_switch_supported=True,
         extraction_only=False,
+        hook_probe=False,
+        transport="stdio",
+        probe_tools=None,
     ):
         selected = [
             m
@@ -52,6 +56,10 @@ class Native:
         from deep_recall import tool_spec
 
         self.dynamic_tools = [tool_spec()] if reader else []
+        if probe_tools is not None:
+            if not hook_probe or reader is None:
+                raise ValueError("probe tools require an isolated hook probe responder")
+            self.dynamic_tools = probe_tools
         self.model = model
         self.root = pathlib.Path(root).resolve()
         self.root.mkdir(mode=0o700, exist_ok=True)
@@ -65,6 +73,8 @@ class Native:
             else []
         )
         self.i = 0
+        if transport not in {"stdio", "proxy"}:
+            raise ValueError("explicit stdio or isolated proxy transport required")
         config = {
             "model": self.model,
             "model_provider": "openai",
@@ -93,7 +103,7 @@ class Native:
             "orchestrator.mcp.enabled": False,
             "features.apps": False,
             "features.plugins": False,
-            "features.hooks": False,
+            "features.hooks": hook_probe,
             "features.goals": False,
             "features.multi_agent": False,
             "features.multi_agent_v2": False,
@@ -118,6 +128,8 @@ class Native:
             "app-server",
             "--stdio",
         ]
+        if transport == "proxy":
+            argv[-1:] = ["--listen", "unix:///tmp/work/control.sock"]
         for k, v in config.items():
             argv += ["-c", k + "=" + json.dumps(v)]
         fd = os.open("/home/debian/.codex/auth.json", os.O_RDONLY)
@@ -142,6 +154,13 @@ class Native:
         ):
             if pathlib.Path(path).exists():
                 isolated += ["--tmpfs", path]
+        self.socket_directory = None
+        if transport == "proxy":
+            # Unix socket paths are limited to ~108 bytes. Only disposable
+            # transport endpoints need this short directory; evidence stays at root.
+            self.socket_directory = tempfile.TemporaryDirectory(prefix="hmk-proxy-")
+            sockets = pathlib.Path(self.socket_directory.name)
+            isolated += ["--bind", str(sockets), f"/tmp/codex-daemon-{os.getuid()}"]
         isolated += [
             "--ro-bind",
             str(pathlib.Path(binary).resolve()),
@@ -182,6 +201,7 @@ class Native:
             for k, v in os.environ.items()
             if k in ("PATH", "HOME", "USER", "LANG", "SSL_CERT_FILE", "SSL_CERT_DIR")
         }
+        env["CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED"] = "1"
         err = open(self.root / "stderr.log", "a")
         self.proc = subprocess.Popen(
             isolated,
@@ -194,6 +214,37 @@ class Native:
         )
         os.close(fd)
         err.close()
+        self.server_proc = None
+        self.proxy = None
+        if transport == "proxy":
+            self.server_proc = self.proc
+            socket = work / "control.sock"
+            deadline = time.monotonic() + 15
+            while not (socket.is_symlink() and
+                       (sockets / pathlib.Path(os.readlink(socket)).name).exists()):
+                if self.server_proc.poll() is not None or time.monotonic() >= deadline:
+                    self.server_proc.terminate()
+                    self.server_proc.wait(timeout=10)
+                    self.socket_directory.cleanup()
+                    raise RuntimeError("isolated App Server socket unavailable")
+                time.sleep(.05)
+            physical_socket = sockets / pathlib.Path(os.readlink(socket)).name
+            from codex_proxy_transport import ProxyTransport
+            try:
+                with open(self.root / "proxy-stderr.log", "a") as proxy_err:
+                    self.proc = subprocess.Popen(
+                        [str(binary), "app-server", "proxy", "--sock", str(physical_socket)],
+                        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                        stderr=proxy_err, env={**env, "CODEX_HOME": str(home)},
+                    )
+                self.proxy = ProxyTransport(self.proc)
+            except BaseException:
+                self.proc.terminate()
+                self.proc.wait(timeout=10)
+                self.server_proc.terminate()
+                self.server_proc.wait(timeout=10)
+                self.socket_directory.cleanup()
+                raise
         self.selector = selectors.DefaultSelector()
         self.selector.register(self.proc.stdout, selectors.EVENT_READ)
         self.buffer = b""
@@ -207,10 +258,20 @@ class Native:
         self.send({"method": "initialized"})
 
     def send(self, item):
+        if self.proxy:
+            self.proxy.send(item)
+            return
         self.proc.stdin.write((json.dumps(item) + "\n").encode())
         self.proc.stdin.flush()
 
     def event(self, timeout=60):
+        if self.proxy:
+            e = self.proxy.receive(timeout)
+        else:
+            e = self.stdio_event(timeout)
+        return self.record_event(e)
+
+    def stdio_event(self, timeout):
         end = time.monotonic() + timeout
         while b"\n" not in self.buffer:
             if not self.selector.select(max(0, end - time.monotonic())):
@@ -221,13 +282,16 @@ class Native:
             self.buffer += chunk
         line, self.buffer = self.buffer.split(b"\n", 1)
         e = json.loads(line)
+        return e
+
+    def record_event(self, e):
         self.events.append(e)
         save(self.root / "events.json", self.events)
         if "method" in e and "id" in e:
             if (
                 e["method"] != "item/tool/call"
                 or self.reader is None
-                or e["params"]["tool"] != "hmk_recall"
+                or e["params"]["tool"] not in {t["name"] for t in self.dynamic_tools}
                 or e["params"]["threadId"] != self.tid
                 or e["params"].get("namespace") is not None
             ):
@@ -327,3 +391,9 @@ class Native:
             self.proc.terminate()
             self.proc.wait(timeout=10)
         self.selector.close()
+        if self.proxy:
+            self.proxy.close()
+        if self.server_proc:
+            self.server_proc.terminate()
+            self.server_proc.wait(timeout=10)
+            self.socket_directory.cleanup()

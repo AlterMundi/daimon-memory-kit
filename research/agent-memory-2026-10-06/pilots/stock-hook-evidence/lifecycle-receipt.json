@@ -1,0 +1,758 @@
+{
+  "schema": "hmk.stock-hook-diagnostic/v1",
+  "scope": "fictional boundary diagnosis; not a qualified producer",
+  "binary_version": "codex-cli 0.162.1",
+  "binary_sha256": "628e35487d888a28f0427fc37501da529dd3d81fcbad7a2c3421c1e8670d92e1",
+  "requested_model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "provider": "openai",
+  "native_memory_use": false,
+  "native_memory_generation": false,
+  "arms": {
+    "lifecycle-stdio": {
+      "hooks": [
+        {
+          "eventName": "sessionStart",
+          "status": "completed",
+          "durationMs": 460,
+          "entries": []
+        },
+        {
+          "eventName": "userPromptSubmit",
+          "status": "failed",
+          "durationMs": 3003,
+          "entries": [
+            {
+              "kind": "error",
+              "text": "hook timed out after 3s"
+            }
+          ]
+        },
+        {
+          "eventName": "stop",
+          "status": "completed",
+          "durationMs": 218,
+          "entries": []
+        },
+        {
+          "eventName": "preCompact",
+          "status": "completed",
+          "durationMs": 46,
+          "entries": []
+        },
+        {
+          "eventName": "postCompact",
+          "status": "completed",
+          "durationMs": 73,
+          "entries": []
+        }
+      ],
+      "snapshots": [
+        {
+          "hook": "SessionStart",
+          "turn_id": null,
+          "session_start_source": "startup",
+          "bytes": 31944,
+          "sha256": "70eca2be8c74a496574a227eda13f26a000e153e89bd4f6d1b6f87af02f7c208",
+          "transcript_available": true,
+          "user_marker_present": false,
+          "final_marker_present": false,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "session_id",
+            "source",
+            "transcript_path"
+          ]
+        },
+        {
+          "hook": "UserPromptSubmit",
+          "turn_id": "01a13325-6d1e-7da2-b0a4-953bec23bbe8",
+          "session_start_source": null,
+          "bytes": 31944,
+          "sha256": "70eca2be8c74a496574a227eda13f26a000e153e89bd4f6d1b6f87af02f7c208",
+          "transcript_available": true,
+          "user_marker_present": false,
+          "final_marker_present": false,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "prompt",
+            "session_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "Stop",
+          "turn_id": "01a13325-6d1e-7da2-b0a4-953bec23bbe8",
+          "session_start_source": null,
+          "bytes": 36386,
+          "sha256": "f24e3c38bd035ca0a660ccb99f4a198ac313110a89f9f6c18b0fe7372d247416",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "last_assistant_message",
+            "model",
+            "permission_mode",
+            "session_id",
+            "stop_hook_active",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "PreCompact",
+          "turn_id": "01a13325-8bc6-7123-b424-c21e9c85b138",
+          "session_start_source": null,
+          "bytes": 37119,
+          "sha256": "96bbd47d44ee64b94b7c50eba43a3f11182464b1341b22858cf98ea82e40f01f",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "session_id",
+            "transcript_path",
+            "trigger",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "PostCompact",
+          "turn_id": "01a13325-8bc6-7123-b424-c21e9c85b138",
+          "session_start_source": null,
+          "bytes": 55699,
+          "sha256": "163bffd20a945b828a58dd3fb233bbec60bf995e4fc98a280fcebfc8e60ff314",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "session_id",
+            "transcript_path",
+            "trigger",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "UserPromptSubmit",
+          "turn_id": "01a13325-aa29-7201-b412-8f12a67568d8",
+          "session_start_source": null,
+          "bytes": 57806,
+          "sha256": "153888c35c30c0c021b6c3f0defbbcf294e7d0668715e4c7d029e2606f11c13e",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "prompt",
+            "session_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "Interrupt",
+          "turn_id": "01a13325-aa29-7201-b412-8f12a67568d8",
+          "session_start_source": null,
+          "bytes": 59721,
+          "sha256": "bc5efa133039ece5345f38f30a49f7f2e0373addcf18c356a3e257a0c9cf9b24",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "session_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "SessionEnd",
+          "turn_id": null,
+          "session_start_source": null,
+          "bytes": 60022,
+          "sha256": "cba7df7b91f63bc9bf8fb4efc4dd27c4531dcdb2d1beb876064f200e0d7f5a53",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "reason",
+            "session_id",
+            "transcript_path"
+          ]
+        }
+      ],
+      "answers": [
+        {
+          "turn_id": "01a13325-6d1e-7da2-b0a4-953bec23bbe8",
+          "status": "completed",
+          "messages": [
+            "Acknowledged: Mira offered to annotate the relay sketch; no implementation was promised. WILLOW-913"
+          ]
+        },
+        {
+          "turn_id": "01a13325-8bc6-7123-b424-c21e9c85b138",
+          "status": "completed",
+          "messages": []
+        }
+      ],
+      "usage_notifications": [
+        {
+          "threadId": "01a13325-6cd0-7313-89d2-7bd59c66526f",
+          "turnId": "01a13325-6d1e-7da2-b0a4-953bec23bbe8",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 8895,
+              "inputTokens": 8870,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 25,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 8895,
+              "inputTokens": 8870,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 25,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        },
+        {
+          "threadId": "01a13325-6cd0-7313-89d2-7bd59c66526f",
+          "turnId": "01a13325-8bc6-7123-b424-c21e9c85b138",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 8895,
+              "inputTokens": 8870,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 25,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 6995,
+              "inputTokens": 0,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 0,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        }
+      ],
+      "rpc_errors": [
+        {
+          "code": -32600,
+          "message": "no active turn to interrupt"
+        }
+      ],
+      "source_observation_file_sha256": "2007e24448c2339d0170f07b3a474091ef25fc00cc6d1f84f8abc1ab1f1466d4",
+      "billed_cost_usd": null,
+      "compaction_billing_usage": "unknown; last-token counters after compaction are not treated as billed token deltas"
+    },
+    "lifecycle-proxy": {
+      "hooks": [
+        {
+          "eventName": "sessionStart",
+          "status": "completed",
+          "durationMs": 375,
+          "entries": []
+        },
+        {
+          "eventName": "userPromptSubmit",
+          "status": "completed",
+          "durationMs": 99,
+          "entries": []
+        },
+        {
+          "eventName": "postToolUse",
+          "status": "completed",
+          "durationMs": 7480,
+          "entries": []
+        },
+        {
+          "eventName": "stop",
+          "status": "completed",
+          "durationMs": 1266,
+          "entries": []
+        },
+        {
+          "eventName": "preCompact",
+          "status": "completed",
+          "durationMs": 105,
+          "entries": []
+        },
+        {
+          "eventName": "postCompact",
+          "status": "completed",
+          "durationMs": 70,
+          "entries": []
+        },
+        {
+          "eventName": "interrupt",
+          "status": "completed",
+          "durationMs": 74,
+          "entries": []
+        },
+        {
+          "eventName": "sessionEnd",
+          "status": "completed",
+          "durationMs": 79,
+          "entries": []
+        },
+        {
+          "eventName": "sessionStart",
+          "status": "completed",
+          "durationMs": 3448,
+          "entries": []
+        },
+        {
+          "eventName": "userPromptSubmit",
+          "status": "completed",
+          "durationMs": 2155,
+          "entries": []
+        },
+        {
+          "eventName": "stop",
+          "status": "completed",
+          "durationMs": 2639,
+          "entries": []
+        },
+        {
+          "eventName": "sessionEnd",
+          "status": "completed",
+          "durationMs": 2115,
+          "entries": []
+        }
+      ],
+      "snapshots": [
+        {
+          "hook": "SessionStart",
+          "turn_id": null,
+          "session_start_source": "startup",
+          "bytes": 32236,
+          "sha256": "f2d632a2b1d142705d219233330f47743a9e82a8c157901229b874fa3a015111",
+          "transcript_available": true,
+          "user_marker_present": false,
+          "final_marker_present": false,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "session_id",
+            "source",
+            "transcript_path"
+          ]
+        },
+        {
+          "hook": "UserPromptSubmit",
+          "turn_id": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "session_start_source": null,
+          "bytes": 32236,
+          "sha256": "f2d632a2b1d142705d219233330f47743a9e82a8c157901229b874fa3a015111",
+          "transcript_available": true,
+          "user_marker_present": false,
+          "final_marker_present": false,
+          "failed_delivery_present": false,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "prompt",
+            "session_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "PostToolUse",
+          "turn_id": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "session_start_source": null,
+          "bytes": 37106,
+          "sha256": "595bda065a3639b6a6ea20a18b62602d33d0b173546bdab469d56e575275f948",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "session_id",
+            "tool_input",
+            "tool_name",
+            "tool_response",
+            "tool_use_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "Stop",
+          "turn_id": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "session_start_source": null,
+          "bytes": 41522,
+          "sha256": "ddafeb3497682cfc5d03a740ec0e5e1e91a68d91c5143c4eed4a649a93a6d133",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "last_assistant_message",
+            "model",
+            "permission_mode",
+            "session_id",
+            "stop_hook_active",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "PreCompact",
+          "turn_id": "01a1332a-debc-7230-bc0d-9f67d15e8f77",
+          "session_start_source": null,
+          "bytes": 42242,
+          "sha256": "43e176d440f0c69493d5c94e1606c567f76d4a7d38b5dd67a9dd3fc68823ca00",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "session_id",
+            "transcript_path",
+            "trigger",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "PostCompact",
+          "turn_id": "01a1332a-debc-7230-bc0d-9f67d15e8f77",
+          "session_start_source": null,
+          "bytes": 62517,
+          "sha256": "61915b6e901c8ab24f00c64e343078b041c72561bdd269bb016675577cfc2c7e",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "session_id",
+            "transcript_path",
+            "trigger",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "Interrupt",
+          "turn_id": "01a1332a-ff83-72d1-a2b6-3e25cce066d6",
+          "session_start_source": null,
+          "bytes": 67405,
+          "sha256": "f9fb6f0bd242f20eef9dbee6579775391ad23909192f03bf4ec191c5987898bc",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "session_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "SessionEnd",
+          "turn_id": null,
+          "session_start_source": null,
+          "bytes": 67705,
+          "sha256": "908ada4f7419727c806aaf826acad9ee07d3d698a0292ff9d738559ca4e02c09",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "reason",
+            "session_id",
+            "transcript_path"
+          ]
+        },
+        {
+          "hook": "SessionStart",
+          "turn_id": null,
+          "session_start_source": "resume",
+          "bytes": 72978,
+          "sha256": "cf02a1721605501f8ae2288f231229d89ea194d229bbac71ef973994ecc37ff0",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "session_id",
+            "source",
+            "transcript_path"
+          ]
+        },
+        {
+          "hook": "UserPromptSubmit",
+          "turn_id": "01a1332b-c5b0-76d2-a137-2123262538e7",
+          "session_start_source": null,
+          "bytes": 72978,
+          "sha256": "cf02a1721605501f8ae2288f231229d89ea194d229bbac71ef973994ecc37ff0",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "model",
+            "permission_mode",
+            "prompt",
+            "session_id",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "Stop",
+          "turn_id": "01a1332b-c5b0-76d2-a137-2123262538e7",
+          "session_start_source": null,
+          "bytes": 77248,
+          "sha256": "e5422958b3b388a000ca6897708ac28e565bf5fd172d45cc077a9cd066f89507",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "last_assistant_message",
+            "model",
+            "permission_mode",
+            "session_id",
+            "stop_hook_active",
+            "transcript_path",
+            "turn_id"
+          ]
+        },
+        {
+          "hook": "SessionEnd",
+          "turn_id": null,
+          "session_start_source": null,
+          "bytes": 77677,
+          "sha256": "60e9c4627d51d9b82a5777cfd22911765cb9a00cbd4cbf0f0d71dc06c2a341bb",
+          "transcript_available": true,
+          "user_marker_present": true,
+          "final_marker_present": true,
+          "failed_delivery_present": true,
+          "payload_keys": [
+            "cwd",
+            "hook_event_name",
+            "reason",
+            "session_id",
+            "transcript_path"
+          ]
+        }
+      ],
+      "answers": [
+        {
+          "turn_id": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "status": "completed",
+          "messages": [
+            "The invitation to Jo Venn was not delivered because authentication failed. WILLOW-913"
+          ]
+        },
+        {
+          "turn_id": "01a1332a-debc-7230-bc0d-9f67d15e8f77",
+          "status": "completed",
+          "messages": []
+        },
+        {
+          "turn_id": "01a1332a-ff83-72d1-a2b6-3e25cce066d6",
+          "status": "interrupted",
+          "messages": []
+        },
+        {
+          "turn_id": "01a1332b-c5b0-76d2-a137-2123262538e7",
+          "status": "completed",
+          "messages": [
+            "The invitation was not delivered because authentication failed. There was no delivery receipt."
+          ]
+        }
+      ],
+      "usage_notifications": [
+        {
+          "threadId": "01a1332a-a313-7b80-b121-85de535d6103",
+          "turnId": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 8994,
+              "inputTokens": 8928,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 66,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 8994,
+              "inputTokens": 8928,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 66,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        },
+        {
+          "threadId": "01a1332a-a313-7b80-b121-85de535d6103",
+          "turnId": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 18061,
+              "inputTokens": 17973,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 88,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 9067,
+              "inputTokens": 9045,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 22,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        },
+        {
+          "threadId": "01a1332a-a313-7b80-b121-85de535d6103",
+          "turnId": "01a1332a-debc-7230-bc0d-9f67d15e8f77",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 18061,
+              "inputTokens": 17973,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 88,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 7256,
+              "inputTokens": 0,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 0,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        },
+        {
+          "threadId": "01a1332a-a313-7b80-b121-85de535d6103",
+          "turnId": "01a1332a-a332-7e13-aee4-4bd6685f4dad",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 18061,
+              "inputTokens": 17973,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 88,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 7256,
+              "inputTokens": 0,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 0,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        },
+        {
+          "threadId": "01a1332a-a313-7b80-b121-85de535d6103",
+          "turnId": "01a1332b-c5b0-76d2-a137-2123262538e7",
+          "tokenUsage": {
+            "total": {
+              "totalTokens": 27334,
+              "inputTokens": 27227,
+              "cachedInputTokens": 8704,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 107,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 9273,
+              "inputTokens": 9254,
+              "cachedInputTokens": 8704,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 19,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 258400
+          }
+        }
+      ],
+      "rpc_errors": [],
+      "source_observation_file_sha256": "e20569744e5d9900301bfa24f5f77461742ca568d65337dfaabea1478814ad70",
+      "billed_cost_usd": null,
+      "compaction_billing_usage": "unknown; last-token counters after compaction are not treated as billed token deltas"
+    }
+  }
+}
