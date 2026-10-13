@@ -1,6 +1,6 @@
 # Canonical being memory and Codex projections
 
-Current native-producer goal: the [2026-10-12 V1/V2 quality gate](../research/agent-memory-2026-10-06/pilots/2026-10-12-native-producer-qualification.md) selects V2 for a bounded extraction-only durable handoff. V1 omitted the encounter and failed communication; V2 preserved all four sources. Next: implement and qualify delivery into existing HMK APIs. No production activation or completed bridge is claimed.
+Current native-producer goal: the [2026-10-12 V1/V2 quality gate](../research/agent-memory-2026-10-06/pilots/2026-10-12-native-producer-qualification.md) selects V2 for a bounded extraction-only durable handoff. V1 omitted the encounter and failed communication; V2 preserved all four sources. PR #106 delivers experimental receiving intake through existing HMK APIs, with interrupted-delivery/replay/correction checks. The native extraction-only producer is being compiled and qualified; the integrated native-to-HMK closing test remains next. No production activation or completed bridge is claimed.
 
 ## Current continuation — native producer diagnosis, 2026-10-12
 

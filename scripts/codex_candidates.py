@@ -9,7 +9,7 @@ from pathlib import Path
 import sqlite3
 import time
 
-from capturectl import CaptureLedger, wire
+from capturectl import CaptureLedger, digest, wire
 import codex_projection as projection
 from sqlite_snapshot import verified_snapshot
 
@@ -90,6 +90,20 @@ def candidate_event(row, stream, *, source_instance, subject):
     return event, bundle
 
 
+def preservation_receipt(event, bundle):
+    return wire(
+        dict(
+            schema="hmk.candidate-preserved/v1",
+            event_key=digest(
+                [event["stream_id"], event["event_id"], event["source_version"]]
+            ),
+            artifact_id=bundle["artifact_id"],
+            source_instance=bundle["source_instance"],
+            subject=bundle["subject"],
+        )
+    )
+
+
 def ingest(
     memory,
     producer_db,
@@ -139,6 +153,16 @@ def ingest(
             )
             for r in rows
         ]
+        for row, event, bundle in prepared:
+            if row["acknowledged_receipt"] not in (
+                None,
+                preservation_receipt(event, bundle),
+            ):
+                raise ValueError(
+                    "candidate already acknowledged for another receiving binding"
+                )
+        if not prepared:
+            return []
         memory.init_db()
         verified_snapshot(
             memory.DB_PATH,
@@ -176,15 +200,7 @@ def ingest(
                 raise ValueError("candidate artifact verification failed")
             if _fault:
                 _fault("before_ack")
-            receipt = wire(
-                dict(
-                    schema="hmk.candidate-preserved/v1",
-                    event_key=staged["event_key"],
-                    artifact_id=bundle["artifact_id"],
-                    source_instance=source_instance,
-                    subject=subject,
-                )
-            )
+            receipt = preservation_receipt(event, bundle)
             # A concurrent changed source must not acquire a receipt for other bytes.
             with source:
                 current = source.execute(
