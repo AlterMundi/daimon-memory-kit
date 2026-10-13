@@ -1,7 +1,7 @@
 # Native extraction candidate intake (experimental)
 
 This contract separates candidate preservation from selected memory. The native
-producer patch is under qualification; stock Codex has no such outbox. The live
+producer patch is qualified on the bounded fictional corpus; stock Codex has no such outbox. The live
 CompAII/Eko/Oliva installations do not enable it. See the
 [V1/V2 quality gate](../research/agent-memory-2026-10-06/pilots/2026-10-12-native-producer-qualification.md)
 and [producer diagnosis](codex-native-producer-diagnostic.md).
@@ -21,8 +21,10 @@ envelope and its completion watermark in one transaction. Native
 source rollout text, actual submitted input messages/instructions/schema, exact
 generated JSON, parsed output, model/version/effort and available token usage.
 Native output truncation remains visible beside the unmodified generated JSON.
-Malformed source items or a source changed during extraction cause failure rather
-than a silently partial committed candidate. This initial source-preservation
+Malformed source items or a source changed while loading cause failure rather
+than a silently mismatched committed candidate. Prepared input is a frozen source
+revision, retained with a snapshot timestamp; later source edits or loss do not
+discard its generated result. This initial source-preservation
 path accepts UTF-8 JSONL; compressed rollouts are not yet qualified.
 
 The versioned memory database contains:
@@ -75,10 +77,15 @@ another independent event. Select only an actual new encounter, attributed repor
 correction or meaningful later interpretation. A no-output candidate is a native
 producer result, never a retraction of canonical experience.
 
-## Qualification still required
+## Qualification and next boundary
 
-Receiving unit checks cover interrupted delivery, replay, source mutation,
-pagination, explicit correction/history and source-free lexical recall. These use
-synthetic envelopes and do not substitute for a built native transaction test or
-a model-backed end-to-end handoff. Complete those before claiming the bridge is
-qualified. Do not activate production, hooks, timers or autonomous attention.
+The [compiled delivery report](../research/agent-memory-2026-10-06/pilots/2026-10-13-native-candidate-delivery.md) records real extraction, interrupted
+intake/replay, explicit correction/history, original preservation, producer
+restart and source-free conversational recall. Native transaction/config/startup
+checks and seven receiving tests passed. The selector was an explicit evaluator
+using existing CaptureLedger APIs; candidate receipts are not an automatic
+canonical decision. No production, hook, timer or autonomous attention was enabled.
+
+Next, qualify an owner-approved selection policy and explicit coordinator before
+separately authorized real-source adoption. Preserve the qualified evidence and
+address archive lifecycle/current official Codex compatibility in that delivery.

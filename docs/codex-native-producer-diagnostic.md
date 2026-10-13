@@ -2,7 +2,9 @@
 
 Date: 2026-10-12. Initial diagnostic: feasible implementation seam identified.
 Follow-up: [real V1/V2 extraction gate](../research/agent-memory-2026-10-06/pilots/2026-10-12-native-producer-qualification.md) found V1 loses two required episodes and V2 preserves all four tested cases.
-**V2 warrants delivery implementation; no working automatic adapter is qualified yet.**
+**Follow-up 2026-10-13: [bounded extraction-only delivery is qualified](../research/agent-memory-2026-10-06/pilots/2026-10-13-native-candidate-delivery.md).**
+The original diagnosis below is historical; explicit selection and production
+rollout remain separate. Reuse the closing report for current evidence and continuation.
 The human requested this diagnosis before choosing a new implementation goal.
 Production CompAII/Eko/Oliva configuration and memory remain unchanged.
 
