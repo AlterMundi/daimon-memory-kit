@@ -27,17 +27,40 @@ The model is `deepseek-flash`, reasoning low, stateless text-only JSON, no tools
 
 ## Processing and recovery
 
-An inbox is bound to one canonical destination and coordinator directory. A separate advisory lock permits capture to continue while preventing concurrent processors from owning independent cursors. A batch freezes observations, exact source revisions, canonical context, model request, code hash and context binding before inference. The latest captured revision of each selected source can support an earlier boundary event, including a prompt that had not yet reached its transcript; later observation cursors still remain pending until processed.
+An inbox is bound to one canonical destination and coordinator directory. A separate advisory lock permits capture to continue while preventing concurrent processors from owning independent cursors. A batch freezes observations, exact source revisions, code hash and context binding before inference. The latest captured revision of each selected source can support an earlier boundary event, including a prompt that had not yet reached its transcript; later observation cursors still remain pending until processed.
 
 The processor reconstructs and checks exact source dependencies on every resume. It records the unmodified model proposal before validation. Existing `CaptureLedger` then commits selected records, links, the terminal decision and progress atomically; an existing preserved-artifact envelope stores exact originals and formation evidence with selected memory. A verified SQLite snapshot precedes canonical intake. Replay after an uncertain canonical commit uses the same frozen proposal and stable event, without calling the model again or duplicating writes. A lifecycle-only batch invokes no proposer. Omitted source payloads stay in the separate processing evidence rather than becoming permanent canonical artifact bundles.
 
 The DeepSeek wrapper retains requests and dispatch receipts. A completed successful response is reused. A failed, unresolved or truncated response is not silently retried. An explicit `--retry-of HASH` can preserve that attempt and dispatch into a separate retry directory, optionally with a different output ceiling. Its additional cost is recorded. `--reprepare-reason TEXT` archives a **pre-stage** frozen job when a representation change or invalid proposal requires new preparation; its source cursor does not advance. It cannot replace an event already staged in CaptureLedger, including an uncertain successful commit. Resume such work with its original writer, or perform an attributed repair; never discard its journal to unblock a queue.
 
-Incomplete sources, unsupported response items, oversized batches and missing early prompts remain visibly pending. This qualified native source profile is append-only: an out-of-order older snapshot or divergent rewrite cannot hide an intermediate acknowledged version or reset the novelty baseline. It defers until a complete reconciled capture covers the pending versions; original branches stay retained. Arbitrary destructive transcript rewrites need a separately qualified reconciliation adapter. Source capture is bounded to the binding's ceiling; processing allows at most 128 observation events, 1 MiB frozen inputs, and 256 canonical records / 512 KiB canonical context. This small-corpus qualification does not claim scalability beyond those bounds. A blocked head is not skipped automatically. A missing/corrupt dependency must be recovered from preserved evidence, not marked complete. Abrupt death can prevent a lifecycle hook entirely; capture receipts prove observed captures, not that every possible unsignalled final byte was captured.
+Incomplete sources, unsupported response items, oversized batches and missing early prompts remain visibly pending. This qualified native source profile is append-only: an out-of-order older snapshot or divergent rewrite cannot hide an intermediate acknowledged version or reset the novelty baseline. It defers until a complete reconciled capture covers the pending versions; original branches stay retained. Arbitrary destructive transcript rewrites need a separately qualified reconciliation adapter. Source capture is bounded to the binding's ceiling; processing budgets each invocation by observation count (up to 128) and complete source windows (64,000 bytes by default), retaining unfinished source progress. An indivisible causal closure remains pending with its required budget; no whole-history 1 MiB limit applies. The new navigation path removes the former 256-record / 512 KiB all-canon loading limit; its integrated qualification is tracked in [#113](integrated-memory-plan.md). Corpus size is no longer the prompt admission criterion. A blocked head is not skipped automatically. A missing/corrupt dependency must be recovered from preserved evidence, not marked complete. Abrupt death can prevent a lifecycle hook entirely; capture receipts prove observed captures, not that every possible unsignalled final byte was captured.
+
+## Resumable canonical navigation (in qualification)
+
+`process_once(..., navigation_steps=4, retrieval="hybrid")` permits at most four
+additional selector dispatches per invocation. `selection_navigation` exposes
+only the existing bound read API through a closed JSON lookup request; it grants
+no model access to external tools, credentials or another pool. Search returns
+navigation, never complete factual support. Read all original pages before an
+update or a link to an existing record. Historical hits distinguish their old
+revision from the current revision needed for a safe read.
+
+Each request, successful response and lookup result is checkpointed. Exhausting
+this invocation's step budget returns `state=pending`; reinvocation continues
+without replaying successful calls or advancing the capture cursor prematurely.
+An unread target is rejected. Read revisions are rechecked in the writer
+transaction. A changed source after staging is preserved as failed pending work;
+its reconciliation path is still being implemented and is a blocker for rollout.
+
+Hybrid mode uses existing configured embeddings and ranking. The receiver's MCP
+binding may explicitly set `retrieval: hybrid`; its default remains lexical.
+Neither mode writes access counters or migrates the database while reading.
+Unavailable embedding services are reported separately from lexical misses.
+This does not yet implement index maintenance or prove semantic coverage.
 
 ## Selection, attribution and feedback
 
-The model selects original source IDs and existing memory references, not generated factual summaries. `source_selection` reuses the qualified source-block writer. Exact quoted evidence retains speaker/channel, originating body, receipt timestamp and stable source identifiers. Every proposed title must be a recognition phrase present in its selected evidence. Overlapping new records with subset evidence coalesce without losing aliases or source meaning. Native writers retain revisions, identity, provenance and links.
+The model selects original source IDs and existing memory references, not generated factual summaries. `source_selection` reuses the qualified source-block writer. Exact quoted evidence retains speaker/channel, originating body, receipt timestamp and stable source identifiers. Every proposed title must be a recognition phrase present in its selected evidence. New records whose evidence is already covered by another selected record coalesce without losing aliases or source meaning. Existing memory source references accept the supplied local integer ID or stable UID; neither resolves unread external content. Native writers retain revisions, identity, provenance and links.
 
 Normalization supplies causal dependencies: a tool reply retains its call and world pointer; a subsequent statement retains the turn's date/context and the preceding recalled memory where needed to interpret a correction or revisit. Retrieved memory has an explicit context channel and cannot be selected as new intake evidence. It may accompany a genuinely new source as attributed supporting context. Reading a record, or comparing revision numbers from different namespaces, does not justify a new episode or canonical update. The current known recall-tool names are `hmk_recall` and `mcp__hmk__hmk_recall`; other memory-returning tools require explicit adapter support before equivalent feedback protection can be claimed.
 

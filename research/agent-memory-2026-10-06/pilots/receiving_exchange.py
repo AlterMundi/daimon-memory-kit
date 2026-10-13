@@ -113,7 +113,8 @@ def freeze(source, corpus_path, out, upgrade=False):
         source_conditions=conditions,fixture_sha256=checksum(corpus_path),
         recorded_planner='source-run plans replayed without another model call',
         reader_sha256=reader_hash,reader_upgrade=upgrade,exchange_sha256=checksum(Path(__file__)),
-        narrative_sha256=checksum(Path(narrative.__file__)),packets_sha256=checksum(out/'packets.json'),
+        narrative_sha256=checksum(Path(narrative.__file__)),
+        assertion_review_sha256=checksum(Path(narrative.review_shape.__code__.co_filename)),packets_sha256=checksum(out/'packets.json'),
         original_sources_available=False,context_scope='frozen-retrieval-plan narrative experiment',
         model_requests_executed=0))
 
@@ -187,6 +188,7 @@ def receive(packet_root,out,model,effort='xhigh',resume=False,review_model=None,
     packets=json.loads((packet_root/'packets.json').read_text())
     frozen=dict(model=model,reasoning_effort=effort,packets_sha256=conditions['packets_sha256'],
         exchange_sha256=checksum(Path(__file__)),narrative_sha256=checksum(Path(narrative.__file__)),
+        assertion_review_sha256=checksum(Path(narrative.review_shape.__code__.co_filename)),
         qualification=False,dispatch='external; this process executes no model requests')
     if review_model != model or review_effort != effort:
         frozen.update(review_model=review_model,review_reasoning_effort=review_effort)

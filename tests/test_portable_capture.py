@@ -98,3 +98,32 @@ def test_retrieval_context_supplies_date_without_becoming_new_experience():
     assert 'retrieved_memory_context;' in result['records'][0]['raw']
     assert '2024-06-21' in result['records'][0]['raw']
     assert len(result['records'])==1
+
+
+def test_capture_cannot_demote_derived_account_or_replace_its_supports():
+    original=dict(id=17,revision=4,raw='Earlier account',engram_type='semantic',
+        source_metadata_json=json.dumps(dict(mode='inferred',evidence=['mem:original@2'])))
+    value=dict(outcome='applied',reason='Correction',records=[dict(key='update',operation='update',
+        chapter_id=17,expected_revision=4,title='Tavi reported',source_ids=['human','memory:17'])],links=[])
+    before=json.dumps(value)
+    with pytest.raises(ValueError,match='cannot overwrite an inferred/generated account'):
+        selected_decision(value,sources(),[original])
+    assert json.dumps(value)==before
+    # Correcting an original preserves its prior prose and the exact new report.
+    original['source_metadata_json']=json.dumps(dict(mode='reported'))
+    result=selected_decision(value,sources(),[original])
+    assert 'Earlier account' in result['records'][0]['raw']
+    assert 'Tavi reported meeting Jo; year unknown.' in result['records'][0]['raw']
+
+
+def test_free_form_link_claims_remain_in_proposal_not_canonical_fact():
+    value=candidate()
+    value['records']=value['records'][:1]
+    value['links']=[dict(source='episode',target=17,link_type='related_to',
+                       note='Jo definitely attended, was born in 1990, and delivery succeeded.')]
+    prior=json.dumps(value)
+    result=selected_decision(value,sources(),[dict(id=17,revision=1,raw='Earlier report')])
+    assert result['links'][0]['link_type']=='related_to'
+    assert 'Not independent factual support' in result['links'][0]['note']
+    assert '1990' not in json.dumps(result['links'])
+    assert json.dumps(value)==prior

@@ -98,11 +98,20 @@ state. Recalled/projected memories are earlier experience, not new encounters.
 Select a genuinely new report, interpretation or correction without duplicating
 the prior episode. Retrieved context is not selectable source evidence. Use a
 memory:<id> reference to retain existing canon when a genuinely new correction or
-interpretation changes it. Reading memory is not a correction. Canonical IDs and
+interpretation changes it; <id> may be its supplied integer ID or stable record_uid.
+Reading memory is not a correction. Canonical IDs and
 revisions belong to the receiving database; external retrieved revisions are a
 different namespace and never justify updating canon on their own. Existing canon is context. A human report is not this body's
 attendance, and a separate being's experience is not our own. Keep attribution and
 uncertainty in source evidence rather than resolving it by invention.
+
+Inferred/generated accounts belong to the reconciliation phase, not direct source
+capture. Read their support references to find the relevant original. When a new
+report corrects that original, update it with the new source and memory:<original>
+so its earlier meaning stays available; reconciliation then updates dependent
+accounts with reviewed prose. Do not replace a derived account with reported text.
+Link types are navigation associations, not factual proof. Free-form link notes
+are kept only in formation evidence; do not rely on them to preserve facts.
 
 Every record requires key, operation, title and source_ids. operation is add or
 update. For add include shelf (episodes for encounters, library for accounts or
@@ -161,19 +170,61 @@ def block_messages(sources, canon, binding):
 
 def selected_decision(value, sources, canon):
     if (not isinstance(value, dict) or set(value) - {'outcome','reason','records','links'}
-            or not isinstance(value.get('records'), list)):
+            or not isinstance(value.get('records'), list) or not isinstance(value.get('links'),list)
+            or value.get('outcome') not in {'applied','omitted','deferred'}
+            or not isinstance(value.get('reason'),str) or not value['reason'].strip()):
         raise ValueError('closed block-selection decision required')
+    if ((value['outcome'] != 'applied' and (value['records'] or value['links']))
+            or (value['outcome'] == 'applied' and not (value['records'] or value['links']))):
+        raise ValueError('only applied outcomes may contain records or links; applied needs selected work')
     fields = {'key','operation','title','source_ids','shelf','chapter_id','expected_revision','engram_type'}
     value = json.loads(json.dumps(value))
     available = {s['id']: s for s in sources}
     allowed = {s['id'] for s in sources if s.get('status') == 'new'}
-    for record in value.get('records', []):
-        if set(record) - fields or record.get('operation') not in {'add','update'}:
+    current = {r['id']: r for r in canon}
+    for index, record in enumerate(value.get('records', [])):
+        if not isinstance(record,dict):
+            raise ValueError(f'records[{index}] must be an object')
+        if set(record) - fields:
+            raise ValueError(f'closed block records[{index}] has unsupported fields: {", ".join(sorted(set(record)-fields))}; use only the supplied schema')
+        if record.get('operation') not in {'add','update'}:
             raise ValueError('closed block-selection record with explicit operation required')
+        if any(not isinstance(record.get(k),str) or not record[k].strip() for k in ('key','title')):
+            raise ValueError(f'records[{index}] requires nonempty key and title')
+        if (not isinstance(record.get('source_ids'),list) or not record['source_ids']
+                or any(not isinstance(ref,str) for ref in record['source_ids'])):
+            raise ValueError(f'records[{index}] requires a nonempty array of string source_ids')
+        if record.get('engram_type','episodic') not in {'episodic','semantic','procedural'}:
+            raise ValueError(f'records[{index}] has an unsupported engram_type')
+        if record['operation'] == 'add' and (not isinstance(record.get('shelf'),str) or not record['shelf'].strip()):
+            raise ValueError(f'records[{index}] add requires a shelf')
+        if record['operation'] == 'update':
+            if type(record.get('chapter_id')) is not int or type(record.get('expected_revision')) is not int:
+                raise ValueError(f'records[{index}] update requires integer chapter_id and expected_revision')
+            original = current.get(record.get('chapter_id'))
+            if original is None or record.get('expected_revision') != original['revision']:
+                raise ValueError('update requires a completely read current canonical record')
+            metadata = json.loads(original.get('source_metadata_json') or '{}')
+            if metadata.get('mode') in {'inferred','generated'}:
+                raise ValueError('capture cannot overwrite an inferred/generated account; read and update '
+                    'the relevant original source with its new correction, preserving memory:<source>; '
+                    'account reconciliation owns derived prose and its support history')
         if any(available.get(ref, {}).get('retrieved_context') for ref in record.get('source_ids', [])):
             raise ValueError('retrieved memory is context, not selectable intake evidence')
         if not allowed.intersection(record.get('source_ids', [])):
             raise ValueError('a selected record needs genuinely new source bytes')
+    for link in value.get('links', []):
+        if (not isinstance(link,dict) or set(link)-{'source','target','link_type','weight','note'}
+                or not isinstance(link.get('link_type'),str) or not link['link_type'].strip()
+                or any(type(link.get(k)) not in {str,int} for k in ('source','target'))
+                or ('weight' in link and type(link['weight']) not in {int,float})
+                or ('note' in link and link['note'] is not None and not isinstance(link['note'],str))):
+            raise ValueError('link requires source, target and link_type in the supplied closed schema')
+        for endpoint in ('source','target'):
+            if type(link.get(endpoint)) is int and link[endpoint] not in current:
+                raise ValueError('link requires a completely read canonical endpoint')
+            if type(link[endpoint]) is str and link[endpoint] not in {r['key'] for r in value['records']}:
+                raise ValueError('string link endpoint must be a selected record key')
     # Validate proposed titles and references before adding causal context.
     source_decision(value, sources, canon)
     ordering = {s['id']: i for i, s in enumerate(sources)}
@@ -197,7 +248,7 @@ def selected_decision(value, sources, canon):
         raise ValueError('duplicate proposed record key')
     for record in sorted(value['records'], key=lambda r: -len(set(r['source_ids']))):
         refs = set(record['source_ids'])
-        covering = next((r for r in keep if record['operation'] == r['operation'] == 'add'
+        covering = next((r for r in keep if record['operation'] == 'add'
                          and refs <= set(r['source_ids'])), None)
         if covering:
             aliases[record['key']] = covering['key']
@@ -209,6 +260,10 @@ def selected_decision(value, sources, canon):
     links = []
     for link in decision.get('links', []):
         link = dict(link)
+        # Free-form model notes are not source blocks. Keep their untouched
+        # proposal in the formation artifact, not as unsupported canonical facts.
+        # Associations remain navigation hints; linked originals establish meaning.
+        link['note'] = 'Selection association; inspect linked originals. Not independent factual support.'
         link['source'] = aliases.get(link['source'], link['source'])
         link['target'] = aliases.get(link['target'], link['target'])
         if link['source'] != link['target'] and link not in links:

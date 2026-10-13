@@ -12,6 +12,68 @@ from support_currency import check, references
 
 AUTO_SUPPORT_NOTE = 'Derived account; the source episode is not superseded.'
 FIELDS = ('id','record_uid','revision','title','raw','spr','engram_type','event_ts','source_metadata_json')
+ACCOUNT_SHELVES = ('library','plans','mc-social','mc-skills','mc-places')
+
+
+def reconciliation_plan(memory=mc, *, limit=32):
+    """Discover existing stale native accounts, without a persisted second queue.
+
+    Current support must be reconciled before its dependents. Each result is a
+    navigation hint: callers still read the full target and preview its current
+    sources before proposing an update. A version check proves currency, not
+    factual correctness. Missing/cyclic/protected support never becomes ready.
+    `limit` bounds returned hints, not how much of the corpus can be discovered.
+    """
+    if type(limit) is not int or limit < 1:
+        raise ValueError('positive reconciliation result budget required')
+    with memory.connect() as con:
+        con.execute('BEGIN')
+        rows = con.execute('''SELECT c.id,c.record_uid,c.revision,c.source_metadata_json,
+            b.source_kind FROM chapters c JOIN books b ON b.id=c.book_id
+            JOIN shelves s ON s.id=b.shelf_id
+            WHERE c.engram_type IN ('semantic','procedural')
+            AND json_extract(c.source_metadata_json,'$.mode') IN ('inferred','generated')
+            AND b.source_kind IN ('text','capture','auto')
+            AND s.name IN (SELECT value FROM json_each(?))
+            AND NOT EXISTS (SELECT 1 FROM daimon_projections p WHERE p.chapter_id=c.id)
+            ORDER BY c.id''', (json.dumps(ACCOUNT_SHELVES),)).fetchall()
+        refs = {r['record_uid']:references(json.loads(r['source_metadata_json'] or '{}'),r['source_kind'])
+                for r in rows}
+        rows = [r for r in rows if refs[r['record_uid']]]
+        wanted = sorted({uid for pairs in refs.values() for uid,_ in pairs})
+        sources = {r['record_uid']:dict(r) for r in con.execute('''
+            SELECT c.id,c.record_uid,c.revision,b.source_kind,
+            EXISTS (SELECT 1 FROM daimon_projections p WHERE p.chapter_id=c.id) AS protected
+            FROM chapters c JOIN books b ON b.id=c.book_id
+            WHERE c.record_uid IN (SELECT value FROM json_each(?))''', (json.dumps(wanted),))}
+        roots = [(r['record_uid'],r['revision']) for r in rows]
+        roots.extend((r['record_uid'],r['revision']) for r in sources.values())
+        currency = {(r['record_uid'],r['revision']):r for r in check(con,roots)}
+        ready,blocked = [],[]
+        for row in rows:
+            state = currency[(row['record_uid'],row['revision'])]
+            if state['status']=='current':
+                continue
+            item = dict(chapter_id=row['id'],record_uid=row['record_uid'],
+                        expected_revision=row['revision'],support_checks=state,
+                        supports=[],blockers=[])
+            for uid,old_revision in refs[row['record_uid']]:
+                current = sources.get(uid)
+                if current is None:
+                    item['blockers'].append(dict(record_uid=uid,reason='missing_support'))
+                    continue
+                status = currency[(uid,current['revision'])]['status']
+                item['supports'].append(dict(chapter_id=current['id'],record_uid=uid,
+                    previous_revision=old_revision,revision=current['revision']))
+                reason = ('protected_support' if current['protected'] or current['source_kind'] not in {'text','capture','auto'}
+                          else 'support_needs_reconciliation' if status!='current' else None)
+                if reason:
+                    item['blockers'].append(dict(record_uid=uid,reason=reason,status=status))
+            (blocked if item['blockers'] else ready).append(item)
+    return dict(schema='hmk.reconciliation-plan/v1',state='pending' if ready or blocked else 'idle',
+                ready=ready[:limit],blocked=blocked[:limit],
+                ready_count=len(ready),blocked_count=len(blocked),
+                interpretation='Version currency only; full-source semantic assessment is required before writing.')
 
 
 def snapshot(row):
@@ -151,12 +213,16 @@ def main():
     sub = parser.add_subparsers(dest='action', required=True)
     inspect = sub.add_parser('preview'); inspect.add_argument('--ids', nargs='+', type=int, required=True)
     inspect.add_argument('--profile', choices=('episodes','native'), default='episodes')
+    reconcile = sub.add_parser('reconcile-plan')
+    reconcile.add_argument('--limit', type=int, default=32)
     commit = sub.add_parser('apply'); commit.add_argument('--manifest', required=True); commit.add_argument('--proposal', required=True)
     commit.add_argument('--stream', required=True); commit.add_argument('--sequence', type=int, required=True)
     commit.add_argument('--record-supports', help='JSON map of proposal keys to selected manifest IDs')
     commit.add_argument('--event-id', required=True); commit.add_argument('--selection-version', required=True)
     args = parser.parse_args()
-    if args.action == 'preview':
+    if args.action == 'reconcile-plan':
+        result = reconciliation_plan(limit=args.limit)
+    elif args.action == 'preview':
         result = preview(args.ids, profile=args.profile)
     else:
         with open(args.manifest, encoding='utf-8') as handle:

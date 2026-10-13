@@ -28,12 +28,15 @@ def source_decision(value, sources, canon):
         raise ValueError('source selection needs a records array')
     available = {s['id']: s for s in sources}
     available.update({'memory:'+str(r['id']): r for r in canon})
+    # Stable UIDs and legacy local integer handles address the same completely
+    # supplied original. Never resolve a guessed/external UID against the DB.
+    available.update({'memory:'+r['record_uid']: r for r in canon if r.get('record_uid')})
     decision = json.loads(json.dumps(value))
     for record in decision['records']:
         refs = record.pop('source_ids', None)
         if not isinstance(refs, list) or not refs or any(
                 not isinstance(ref, str) or ref not in available for ref in refs):
-            raise ValueError('each record needs source_ids from supplied sources or memory:<integer ID>')
+            raise ValueError('each record needs source_ids from supplied sources or memory:<supplied ID or UID>')
         if 'raw' in record or 'summary' in record:
             raise ValueError('source selection uses source_ids, not generated raw or summary')
         blocks = []

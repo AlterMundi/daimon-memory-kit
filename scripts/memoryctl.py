@@ -179,7 +179,7 @@ def _parse_csv(value):
 
 def _filter_clauses_and_params(shelves=None, exclude_shelves=None,
                                tags=None, exclude_tags=None,
-                               engram_types=None,
+                               engram_types=None, record_uids=None,
                                shelf_table_alias="s", chapter_table_alias="c"):
     """Build SQL WHERE clauses and params for shelf/tag filters.
 
@@ -191,6 +191,11 @@ def _filter_clauses_and_params(shelves=None, exclude_shelves=None,
     falsely match e.g. 'mc' inside 'mcp')."""
     clauses = []
     params = []
+    if record_uids is not None:
+        if not isinstance(record_uids, (list, tuple)) or any(not isinstance(uid, str) for uid in record_uids):
+            raise ValueError('record_uids must be an explicit list or None')
+        clauses.append(f"{chapter_table_alias}.record_uid IN (SELECT value FROM json_each(?))")
+        params.append(json.dumps(record_uids))
     sh_in = _parse_csv(shelves)
     sh_out = _parse_csv(exclude_shelves)
     tg_in = _parse_csv(tags)
@@ -1368,7 +1373,7 @@ def overlap_ratio(a, b):
 
 
 def search(query, limit=12, shelves=None, exclude_shelves=None,
-           tags=None, exclude_tags=None, engram_types=None):
+           tags=None, exclude_tags=None, engram_types=None, record_uids=None):
     if not tokenize_query(query) or limit <= 0:
         return []
     init_db()
@@ -1377,7 +1382,7 @@ def search(query, limit=12, shelves=None, exclude_shelves=None,
     extra_clauses, extra_params = _filter_clauses_and_params(
         shelves=shelves, exclude_shelves=exclude_shelves,
         tags=tags, exclude_tags=exclude_tags,
-        engram_types=engram_types,
+        engram_types=engram_types, record_uids=record_uids,
     )
     extra_sql = (" AND " + " AND ".join(extra_clauses)) if extra_clauses else ""
     rows = con.execute(
@@ -1516,10 +1521,21 @@ def capture_neighbors(chapter_id):
     return result
 
 
-def recall_neighbors(chapter_id):
+def recall_neighbors(chapter_id, record_uids=None):
     linked = linked_neighbors(chapter_id)
     ids = {row['id'] for row in linked}
-    return linked + [row for row in capture_neighbors(chapter_id) if row['id'] not in ids]
+    candidates = linked + [row for row in capture_neighbors(chapter_id) if row['id'] not in ids]
+    con = connect()
+    try:
+        scope, params = _filter_clauses_and_params(record_uids=record_uids)
+        extra = (' AND ' + ' AND '.join(scope)) if scope else ''
+        eligible = {row[0] for row in con.execute(
+            'SELECT c.id FROM chapters c LEFT JOIN daimon_projections p ON p.chapter_id=c.id '
+            'WHERE c.id IN (SELECT value FROM json_each(?)) AND (p.active IS NULL OR p.active=1)' + extra,
+            (json.dumps([r['id'] for r in candidates]), *params))}
+        return [r for r in candidates if r['id'] in eligible]
+    finally:
+        con.close()
 
 
 # --- maintenance lock (v3.9.0, flock) ---
@@ -1571,81 +1587,93 @@ def _unlock_maintenance(fd):
         pass
 
 
-def embedding_candidates(provider=None, model=None, limit=0, only_missing=True):
+def embedding_candidates(provider=None, model=None, limit=0, only_missing=True, *, record_uids=None):
+    """Select missing/stale vectors within the requested current canonical scope."""
     provider = normalize_embed_provider(provider)
     model = normalize_embed_model(provider, model)
     init_db()
+    clauses, scope_params = _filter_clauses_and_params(record_uids=record_uids)
+    scope_sql = (' AND ' + ' AND '.join(clauses)) if clauses else ''
     con = connect()
-    sql = """
-        SELECT
-          c.id,
-          c.title,
-          c.spr,
-          c.raw,
-          c.updated_at,
-          b.title AS book_title
-        FROM chapters c
-        JOIN books b ON b.id = c.book_id
+    try:
+        rows = con.execute("""
+            SELECT c.id,c.record_uid,c.revision,c.title,c.spr,c.raw,c.updated_at,
+                   b.title AS book_title,e.input_text_hash
+            FROM chapters c JOIN books b ON b.id=c.book_id
+            LEFT JOIN chapter_embeddings e ON e.chapter_id=c.id AND e.provider=? AND e.model=?
+            LEFT JOIN daimon_projections p ON p.chapter_id=c.id
+            WHERE c.embed_disabled=0 AND (p.active IS NULL OR p.active=1)
+            """ + scope_sql + ' ORDER BY c.id ASC', (provider,model,*scope_params))
+        selected = []
+        for row in rows:
+            item = dict(row)
+            if only_missing and item['input_text_hash'] == text_hash(embed_input_text(item)):
+                continue
+            selected.append(item)
+            if limit and len(selected) >= limit:
+                break
+        return selected
+    finally:
+        con.close()
+
+
+def backfill_embeddings(provider=None, model=None, batch_size=8, limit=0, only_missing=True, *, record_uids=None):
+    """Refresh selected vectors without holding a write lock across provider calls.
+
+    Recheck input and eligibility inside the write transaction. A concurrent
+    correction stays pending instead of acquiring a vector for its former text.
+    Previously committed batches survive failure and are skipped on resume.
     """
-    params = []
-    if only_missing:
-        sql += """
-        LEFT JOIN chapter_embeddings e
-          ON e.chapter_id = c.id AND e.provider = ? AND e.model = ?
-        WHERE c.embed_disabled = 0 AND e.chapter_id IS NULL
-        """
-        params.extend([provider, model])
-    else:
-        sql += """
-        LEFT JOIN chapter_embeddings e
-          ON e.chapter_id = c.id AND e.provider = ? AND e.model = ?
-        WHERE c.embed_disabled = 0
-        """
-        params.extend([provider, model])
-    sql += " ORDER BY c.id ASC"
-    if limit and limit > 0:
-        sql += " LIMIT ?"
-        params.append(limit)
-    rows = con.execute(sql, params).fetchall()
-    con.close()
-    return [dict(r) for r in rows]
-
-
-def backfill_embeddings(provider=None, model=None, batch_size=8, limit=0, only_missing=True):
+    if type(batch_size) is not int or batch_size < 1 or type(limit) is not int or limit < 0:
+        raise ValueError('positive embedding batch size and nonnegative limit required')
     fd = _lock_maintenance()
+    con = None
     try:
         cfg = embeddings_runtime_config(provider=provider, model=model)
-        provider = cfg["provider"]
-        model = cfg["model"]
-        output_dimensionality = cfg["output_dimensionality"]
-        candidates = embedding_candidates(provider=provider, model=model, limit=limit, only_missing=only_missing)
-        if not candidates:
-            return {"processed": 0, "provider": provider, "model": model}
+        provider, model = cfg['provider'], cfg['model']
+        candidates = embedding_candidates(provider=provider, model=model, limit=limit,
+            only_missing=only_missing, record_uids=record_uids)
+        processed, changed = 0, []
         con = connect()
-        processed = 0
         for start in range(0, len(candidates), batch_size):
-            batch = candidates[start : start + batch_size]
+            batch = candidates[start:start + batch_size]
             texts = [embed_input_text(row) for row in batch]
-            vectors = embed_texts(
-                provider,
-                texts,
-                input_type="passage",
-                model=model,
-                output_dimensionality=output_dimensionality,
-            )
+            vectors = embed_texts(provider, texts, input_type='passage', model=model,
+                output_dimensionality=cfg['output_dimensionality'])
+            if (not isinstance(vectors,list) or len(vectors) != len(batch)
+                    or any(not isinstance(v,list) or not v or any(
+                        type(x) not in (int,float) or not math.isfinite(x) for x in v) for v in vectors)
+                    or len({len(v) for v in vectors}) != 1
+                    or (cfg['output_dimensionality'] is not None
+                        and len(vectors[0]) != cfg['output_dimensionality'])):
+                raise EmbeddingBackendError('invalid embedding response shape or dimensions')
+            con.execute('BEGIN IMMEDIATE')
+            dimensions = {r[0] for r in con.execute(
+                'SELECT DISTINCT dims FROM chapter_embeddings WHERE provider=? AND model=?',(provider,model))}
+            if dimensions and dimensions != {len(vectors[0])}:
+                raise EmbeddingBackendError('embedding space dimensions changed; explicit migration required')
             for row, vector, source_text in zip(batch, vectors, texts):
-                upsert_embedding(con, row["id"], provider, model, source_text, vector)
+                current = con.execute("""SELECT c.*,b.title AS book_title FROM chapters c
+                    JOIN books b ON b.id=c.book_id LEFT JOIN daimon_projections p ON p.chapter_id=c.id
+                    WHERE c.record_uid=? AND c.embed_disabled=0 AND (p.active IS NULL OR p.active=1)""",
+                    (row['record_uid'],)).fetchone()
+                if current is None or embed_input_text(dict(current)) != source_text:
+                    changed.append(row['record_uid'])
+                    continue
+                upsert_embedding(con, row['id'], provider, model, source_text, vector)
                 processed += 1
             con.commit()
-        con.close()
-        return {"processed": processed, "provider": provider, "model": model}
+        return {'processed':processed,'provider':provider,'model':model,
+                'changed_during_embedding':changed}
     finally:
+        if con is not None:
+            con.close()
         _unlock_maintenance(fd)
 
 
 def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
                     shelves=None, exclude_shelves=None, tags=None, exclude_tags=None, engram_types=None,
-                    _query_cache=None):
+                    _query_cache=None, record_uids=None):
     """Semantic search via embeddings.
 
     If use_binary is True (default when binary embeddings exist), does a two-pass:
@@ -1678,7 +1706,7 @@ def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
     _sem_extra_clauses, _sem_extra_params = _filter_clauses_and_params(
         shelves=shelves, exclude_shelves=exclude_shelves,
         tags=tags, exclude_tags=exclude_tags,
-        engram_types=engram_types,
+        engram_types=engram_types, record_uids=record_uids,
     )
     _sem_extra_sql = (" AND " + " AND ".join(_sem_extra_clauses)) if _sem_extra_clauses else ""
     con = connect()
@@ -1721,6 +1749,7 @@ def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
           n.subject_me_id AS daimon_subject_me_id,
           n.projector_id AS daimon_projector_id,
           n.projector_version AS daimon_projector_version,
+          e.input_text_hash,
           e.embedding_json,
           e.embedding_bin,
           e.dims
@@ -1738,6 +1767,8 @@ def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
     if not rows:
         return []
 
+    # Older writers may have left stale vectors after a concurrent update.
+    rows = [r for r in rows if r["input_text_hash"] == text_hash(embed_input_text(dict(r)))]
     have_binary = all(r["embedding_bin"] is not None for r in rows)
     use_binary = have_binary if use_binary is None else (use_binary and have_binary)
 
@@ -1783,7 +1814,7 @@ def _item_cost(item):
     return max(token_estimate(text), math.ceil(len(text) / 4))
 
 
-def _select_pack(query, candidates, budget_tokens, limit, threshold, *, record_access=True, **details):
+def _select_pack(query, candidates, budget_tokens, limit, threshold, *, record_access=True, record_uids=None, **details):
     if limit <= 0 or budget_tokens < 0:
         raise ValueError('limit must be positive and budget nonnegative')
     eligible = [row for row in candidates if row['score'] >= threshold]
@@ -1799,7 +1830,7 @@ def _select_pack(query, candidates, budget_tokens, limit, threshold, *, record_a
         # Compact hints keep the primary relation; full expand retains every relation.
         # Repeating a target cannot consume another navigation slot.
         item['neighbors'] = [{key: value for key, value in neighbor.items() if key != 'relations'}
-                             for neighbor in recall_neighbors(row['id'])[:3]]
+                             for neighbor in recall_neighbors(row['id'], record_uids=record_uids)[:3]]
         cost = _item_cost(item)
         if used + cost > budget_tokens:
             # Neighbors are navigation hints; preserve the source-qualified
@@ -1836,22 +1867,27 @@ def pack(query, budget_tokens=4000, limit=8, threshold=0.60,
                         retrieval_status='ok', score_space='lexical')
 
 
-def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=None, model=None,
-                shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
-                engram_types=None, _record_access=True, _query_cache=None):
+def hybrid_candidates(query, limit=8, provider=None, model=None,
+                      shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
+                      engram_types=None, _query_cache=None, record_uids=None):
+    """Rank bounded search candidates before automatic-context admission.
+
+    A rank or cosine is not a relevance verdict. Navigating clients must read
+    original evidence and assess relevance before answering or selecting memory.
+    """
     cfg = embeddings_runtime_config(provider=provider, model=model)
     provider = cfg["provider"]
     model = cfg["model"]
     lexical = search(query, limit=limit * 2,
                      shelves=shelves, exclude_shelves=exclude_shelves,
                      tags=tags, exclude_tags=exclude_tags,
-                     engram_types=engram_types)
+                     engram_types=engram_types, record_uids=record_uids)
     backend_errors = []
     try:
         semantic = semantic_search(query, limit=limit * 2, provider=provider, model=model,
                                    shelves=shelves, exclude_shelves=exclude_shelves,
                                    tags=tags, exclude_tags=exclude_tags, engram_types=engram_types,
-                                   _query_cache=_query_cache)
+                                   _query_cache=_query_cache, record_uids=record_uids)
     except EmbeddingBackendError:
         semantic = []
         backend_errors.append('embedding_backend_unavailable')
@@ -1912,11 +1948,20 @@ def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=Non
             head.sort(key=lambda r: r["score"], reverse=True)
             ranked = sorted(head + ranked[rerank_pool:], key=lambda r: r['score'], reverse=True)
 
+    return dict(items=ranked, provider=provider, model=model,
+                retrieval_status=('degraded' if lexical else 'unavailable') if degraded else 'ok',
+                backend_errors=backend_errors, score_space='lexical' if degraded else 'hybrid')
+
+
+def hybrid_pack(query, budget_tokens=4000, limit=8, threshold=0.40, provider=None, model=None,
+                shelves=None, exclude_shelves=None, tags=None, exclude_tags=None,
+                engram_types=None, _record_access=True, _query_cache=None, record_uids=None):
+    candidates = hybrid_candidates(query, limit=limit, provider=provider, model=model,
+        shelves=shelves, exclude_shelves=exclude_shelves, tags=tags, exclude_tags=exclude_tags,
+        engram_types=engram_types, _query_cache=_query_cache, record_uids=record_uids)
+    ranked = candidates.pop('items')
     return _select_pack(query, ranked, budget_tokens, limit, threshold,
-                        record_access=_record_access, provider=provider, model=model,
-                        retrieval_status=('degraded' if lexical else 'unavailable') if degraded else 'ok',
-                        backend_errors=backend_errors,
-                        score_space='lexical' if degraded else 'hybrid')
+                        record_access=_record_access, record_uids=record_uids, **candidates)
 
 
 def engram_pack(query, budget_tokens=4000, limit=8, threshold=0.30,
@@ -2451,15 +2496,21 @@ def history(chapter_id):
         con.close()
 
 
-def history_search(query, limit=12):
+def history_search(query, limit=12, record_uids=None):
     if not tokenize_query(query) or limit <= 0:
         return []
     init_db()
     con = connect()
     try:
+        clauses, scope_params = _filter_clauses_and_params(record_uids=record_uids)
+        scope = ' AND (p.active IS NULL OR p.active=1)'
+        if clauses:
+            scope += ' AND ' + ' AND '.join(clauses)
+        params = [fts_query_string(query), *scope_params]
         rows = con.execute('SELECT r.snapshot_json,r.reason,r.archived_at FROM chapter_revisions_fts f '
-                           'JOIN chapter_revisions r ON r.id=f.rowid WHERE chapter_revisions_fts MATCH ? '
-                           'ORDER BY bm25(chapter_revisions_fts) LIMIT ?', (fts_query_string(query), limit)).fetchall()
+                           'JOIN chapter_revisions r ON r.id=f.rowid JOIN chapters c ON c.id=r.chapter_id '
+                           'LEFT JOIN daimon_projections p ON p.chapter_id=c.id WHERE chapter_revisions_fts MATCH ? '+scope+
+                           ' ORDER BY bm25(chapter_revisions_fts) LIMIT ?', (*params, limit)).fetchall()
         return [{**json.loads(r['snapshot_json']), 'revision_reason': r['reason'], 'archived_at': r['archived_at'],
                  'historical': True} for r in rows]
     finally:
@@ -2895,6 +2946,7 @@ def main():
     p_embed.add_argument("--provider", default=default_embed_provider())
     p_embed.add_argument("--model")
     p_embed.add_argument("--batch-size", type=int, default=8)
+    p_embed.add_argument("--record-uid", action="append", help="Restrict maintenance to selected stable records")
     p_embed.add_argument("--limit", type=int, default=0)
     p_embed.add_argument("--all", action="store_true", help="recompute even if embeddings already exist")
 
@@ -3024,6 +3076,7 @@ def main():
             batch_size=args.batch_size,
             limit=args.limit,
             only_missing=not args.all,
+            record_uids=args.record_uid,
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))
     elif args.command == "semantic-search":

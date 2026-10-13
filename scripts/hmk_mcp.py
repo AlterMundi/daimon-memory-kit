@@ -16,7 +16,10 @@ INSTRUCTIONS = (
     "HMK is this being's durable memory. Consult hmk_recall when past encounters, "
     "relationships, projects, decisions or lessons would help the current human task, "
     "without waiting for an explicit memory-search request. Skip self-contained tasks. "
-    "Search is navigation: read originals and all pages before factual claims. "
+    "Search returns candidates, not relevance verdicts: read originals and all pages "
+    "before factual claims. Use only evidence relevant to the question; if support is "
+    "missing, say what is missing without retelling unrelated memories. "
+    "Distinguish event/report dates from later receipt or memory-write dates. "
     "Preserve source attribution, corrections, dates, uncertainty and failed outcomes. "
     "Use the latest revision; remember that historical abilities are not current capabilities. "
     "No matches are not proof of absence; unavailable memory is not forgotten memory. "
@@ -43,6 +46,8 @@ def load_binding(path):
         or not 1 <= len(binding["pools"]) <= 8
     ):
         raise ValueError("explicit versioned being/body/pool binding required")
+    if binding.get('retrieval', 'lexical') not in {'lexical','hybrid'}:
+        raise ValueError('unsupported receiving retrieval mode')
     names, paths = set(), set()
     for pool in binding["pools"]:
         name, database = pool.get("name"), pool.get("database")
@@ -101,6 +106,7 @@ def recall(
             being_ref=binding["being_ref"],
             body_ref=binding["body_ref"],
             max_bytes=budget,
+            retrieval=binding.get('retrieval','lexical'),
         )
         result = reader.call(
             dict(action=action, query=query, record_uid=record_uid, offset=offset)

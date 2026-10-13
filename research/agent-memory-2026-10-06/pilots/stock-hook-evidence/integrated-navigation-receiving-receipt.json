@@ -1,0 +1,2050 @@
+{
+  "schema": "hmk.navigation-diagnostic/v1",
+  "fictional": true,
+  "production_changed": false,
+  "full_pipeline_qualified": false,
+  "decision": "Expose ranked metadata candidates for exploratory reads; retain automatic context admission threshold and full evidence reading. Do not install tested rerankers or add a query planner.",
+  "corpus": {
+    "records": 303,
+    "distractors": 300,
+    "current_embeddings": "nvidia/nemotron-3-embed-1b",
+    "history_preserved": true,
+    "consolidations_repeated": 0
+  },
+  "local_rerank": {
+    "versions": {
+      "flashrank": "0.2.10",
+      "onnxruntime": "1.31.0"
+    },
+    "results": [
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "preview",
+        "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "name": "weak",
+        "seconds": 0.3668648200109601,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 8.472173067275435e-05
+          },
+          {
+            "id": 301,
+            "score": 8.026745490496978e-05
+          },
+          {
+            "id": 302,
+            "score": 2.739866977208294e-05
+          },
+          {
+            "id": 255,
+            "score": 2.1086083506816067e-05
+          },
+          {
+            "id": 38,
+            "score": 2.0886589481960982e-05
+          },
+          {
+            "id": 225,
+            "score": 2.086938729917165e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "preview",
+        "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+        "name": "targeted",
+        "seconds": 0.2806665441021323,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.991192638874054
+          },
+          {
+            "id": 301,
+            "score": 0.004517263732850552
+          },
+          {
+            "id": 38,
+            "score": 0.00026584803708828986
+          },
+          {
+            "id": 302,
+            "score": 0.00017600433784537017
+          },
+          {
+            "id": 255,
+            "score": 3.69496519851964e-05
+          },
+          {
+            "id": 225,
+            "score": 2.886509901145473e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "preview",
+        "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "name": "absent",
+        "seconds": 0.2826201831921935,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 301,
+            "score": 2.7171357942279428e-05
+          },
+          {
+            "id": 302,
+            "score": 2.4224878870882094e-05
+          },
+          {
+            "id": 303,
+            "score": 2.4175307771656662e-05
+          },
+          {
+            "id": 38,
+            "score": 2.142101584468037e-05
+          },
+          {
+            "id": 255,
+            "score": 2.1355417629820295e-05
+          },
+          {
+            "id": 225,
+            "score": 2.0941095499438234e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "preview",
+        "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "name": "number_collision",
+        "seconds": 0.3667383352294564,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.0035761920735239983
+          },
+          {
+            "id": 301,
+            "score": 0.0033308069687336683
+          },
+          {
+            "id": 38,
+            "score": 0.0004454349400475621
+          },
+          {
+            "id": 302,
+            "score": 4.2353309254394844e-05
+          },
+          {
+            "id": 255,
+            "score": 3.126341835013591e-05
+          },
+          {
+            "id": 225,
+            "score": 2.602815038699191e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "preview",
+        "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "name": "unsupported_topic",
+        "seconds": 0.2674346389248967,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.027550257742404938
+          },
+          {
+            "id": 301,
+            "score": 0.00015569987590424716
+          },
+          {
+            "id": 302,
+            "score": 0.00010803410987136886
+          },
+          {
+            "id": 225,
+            "score": 2.2032309061614797e-05
+          },
+          {
+            "id": 255,
+            "score": 2.1710582586820237e-05
+          },
+          {
+            "id": 38,
+            "score": 2.1111938622198068e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "original",
+        "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "name": "weak",
+        "seconds": 0.28634654358029366,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 8.377470658160746e-05
+          },
+          {
+            "id": 301,
+            "score": 7.074213499436155e-05
+          },
+          {
+            "id": 302,
+            "score": 3.7872454413445666e-05
+          },
+          {
+            "id": 255,
+            "score": 2.0971296180505306e-05
+          },
+          {
+            "id": 225,
+            "score": 2.083913750539068e-05
+          },
+          {
+            "id": 38,
+            "score": 2.0820563804591075e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "original",
+        "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+        "name": "targeted",
+        "seconds": 0.3474645661190152,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.9907453060150146
+          },
+          {
+            "id": 301,
+            "score": 0.06143754720687866
+          },
+          {
+            "id": 302,
+            "score": 0.005059394054114819
+          },
+          {
+            "id": 38,
+            "score": 0.0002556125691626221
+          },
+          {
+            "id": 255,
+            "score": 3.953858322347514e-05
+          },
+          {
+            "id": 225,
+            "score": 2.9471977541106753e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "original",
+        "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "name": "absent",
+        "seconds": 0.21149761136621237,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 301,
+            "score": 2.6968684323946945e-05
+          },
+          {
+            "id": 302,
+            "score": 2.6001876904047094e-05
+          },
+          {
+            "id": 303,
+            "score": 2.462269549141638e-05
+          },
+          {
+            "id": 255,
+            "score": 2.148746898456011e-05
+          },
+          {
+            "id": 38,
+            "score": 2.132173722202424e-05
+          },
+          {
+            "id": 225,
+            "score": 2.0969853721908294e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "original",
+        "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "name": "number_collision",
+        "seconds": 0.3475243803113699,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 301,
+            "score": 0.0033889925107359886
+          },
+          {
+            "id": 303,
+            "score": 0.002663552528247237
+          },
+          {
+            "id": 38,
+            "score": 0.0004168465966358781
+          },
+          {
+            "id": 302,
+            "score": 7.921248470665887e-05
+          },
+          {
+            "id": 255,
+            "score": 3.141943670925684e-05
+          },
+          {
+            "id": 225,
+            "score": 2.684605169633869e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-TinyBERT-L-2-v2",
+        "surface": "original",
+        "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "name": "unsupported_topic",
+        "seconds": 0.28101258259266615,
+        "load_seconds": 1.2444937713444233,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.022123463451862335
+          },
+          {
+            "id": 302,
+            "score": 0.0011967869941145182
+          },
+          {
+            "id": 301,
+            "score": 0.0007281548460014164
+          },
+          {
+            "id": 225,
+            "score": 2.2154426915221848e-05
+          },
+          {
+            "id": 255,
+            "score": 2.152034176106099e-05
+          },
+          {
+            "id": 38,
+            "score": 2.105841485899873e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "preview",
+        "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "name": "weak",
+        "seconds": 7.644176845438778,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 301,
+            "score": 0.00025211050524376333
+          },
+          {
+            "id": 303,
+            "score": 7.333647954510525e-05
+          },
+          {
+            "id": 302,
+            "score": 2.2747784896637313e-05
+          },
+          {
+            "id": 255,
+            "score": 1.5808274838491343e-05
+          },
+          {
+            "id": 225,
+            "score": 1.5610001355526038e-05
+          },
+          {
+            "id": 38,
+            "score": 1.55938741954742e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "preview",
+        "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+        "name": "targeted",
+        "seconds": 7.858020597137511,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.9804949760437012
+          },
+          {
+            "id": 301,
+            "score": 0.017788851633667946
+          },
+          {
+            "id": 302,
+            "score": 0.00028428720543161035
+          },
+          {
+            "id": 38,
+            "score": 0.00018156068108510226
+          },
+          {
+            "id": 225,
+            "score": 2.0635501641663723e-05
+          },
+          {
+            "id": 255,
+            "score": 2.0587835024343804e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "preview",
+        "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "name": "absent",
+        "seconds": 6.873647904954851,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 302,
+            "score": 2.1070041839266196e-05
+          },
+          {
+            "id": 255,
+            "score": 1.920887552842032e-05
+          },
+          {
+            "id": 225,
+            "score": 1.9133733076159842e-05
+          },
+          {
+            "id": 38,
+            "score": 1.884604716906324e-05
+          },
+          {
+            "id": 301,
+            "score": 1.6934216546360403e-05
+          },
+          {
+            "id": 303,
+            "score": 1.597414302523248e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "preview",
+        "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "name": "number_collision",
+        "seconds": 6.936295696534216,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.03088938444852829
+          },
+          {
+            "id": 301,
+            "score": 0.022454433143138885
+          },
+          {
+            "id": 38,
+            "score": 0.0009717770735733211
+          },
+          {
+            "id": 302,
+            "score": 2.8225274945725687e-05
+          },
+          {
+            "id": 255,
+            "score": 2.4578472221037373e-05
+          },
+          {
+            "id": 225,
+            "score": 2.2294861992122605e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "preview",
+        "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "name": "unsupported_topic",
+        "seconds": 6.678461735136807,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.021887952461838722
+          },
+          {
+            "id": 302,
+            "score": 2.6478670406504534e-05
+          },
+          {
+            "id": 301,
+            "score": 2.30846580961952e-05
+          },
+          {
+            "id": 225,
+            "score": 1.6141366359079257e-05
+          },
+          {
+            "id": 255,
+            "score": 1.590055035194382e-05
+          },
+          {
+            "id": 38,
+            "score": 1.5356919902842492e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "original",
+        "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "name": "weak",
+        "seconds": 7.09498589579016,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 301,
+            "score": 0.0002713793655857444
+          },
+          {
+            "id": 303,
+            "score": 6.602682697121054e-05
+          },
+          {
+            "id": 302,
+            "score": 2.5157314667012542e-05
+          },
+          {
+            "id": 255,
+            "score": 1.576518661750015e-05
+          },
+          {
+            "id": 38,
+            "score": 1.575071655679494e-05
+          },
+          {
+            "id": 225,
+            "score": 1.5710331354057416e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "original",
+        "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+        "name": "targeted",
+        "seconds": 6.554601134732366,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.9799554944038391
+          },
+          {
+            "id": 301,
+            "score": 0.7119261026382446
+          },
+          {
+            "id": 302,
+            "score": 0.23662668466567993
+          },
+          {
+            "id": 38,
+            "score": 0.000246406183578074
+          },
+          {
+            "id": 255,
+            "score": 2.0425284674274735e-05
+          },
+          {
+            "id": 225,
+            "score": 2.0406574549269862e-05
+          }
+        ],
+        "expected_relevant_ids": [
+          301,
+          302,
+          303
+        ]
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "original",
+        "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "name": "absent",
+        "seconds": 5.215516339987516,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 302,
+            "score": 2.0098674212931655e-05
+          },
+          {
+            "id": 255,
+            "score": 1.8858596376958303e-05
+          },
+          {
+            "id": 225,
+            "score": 1.8829932741937228e-05
+          },
+          {
+            "id": 301,
+            "score": 1.853388675954193e-05
+          },
+          {
+            "id": 38,
+            "score": 1.8500408259569667e-05
+          },
+          {
+            "id": 303,
+            "score": 1.616171357454732e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "original",
+        "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "name": "number_collision",
+        "seconds": 5.5295522678643465,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 301,
+            "score": 0.0935877338051796
+          },
+          {
+            "id": 303,
+            "score": 0.055146634578704834
+          },
+          {
+            "id": 38,
+            "score": 0.001074986532330513
+          },
+          {
+            "id": 302,
+            "score": 5.439596498035826e-05
+          },
+          {
+            "id": 255,
+            "score": 2.458219933032524e-05
+          },
+          {
+            "id": 225,
+            "score": 2.3315640646615066e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      },
+      {
+        "model": "ms-marco-MiniLM-L-12-v2",
+        "surface": "original",
+        "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "name": "unsupported_topic",
+        "seconds": 6.3114633886143565,
+        "load_seconds": 1.6864614821970463,
+        "max_length": 512,
+        "scores": [
+          {
+            "id": 303,
+            "score": 0.02058800682425499
+          },
+          {
+            "id": 302,
+            "score": 0.005527825560420752
+          },
+          {
+            "id": 301,
+            "score": 0.001939132227562368
+          },
+          {
+            "id": 225,
+            "score": 1.6311412764480338e-05
+          },
+          {
+            "id": 38,
+            "score": 1.557064570079092e-05
+          },
+          {
+            "id": 255,
+            "score": 1.546861312817782e-05
+          }
+        ],
+        "expected_relevant_ids": []
+      }
+    ],
+    "model_artifact_hashes": {
+      "ms-marco-TinyBERT-L-2-v2/tokenizer_config.json": "eaf913a687e8eed3010b6479d0d84631038212aa50c14d9b812e08cbc891d925",
+      "ms-marco-TinyBERT-L-2-v2/special_tokens_map.json": "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+      "ms-marco-TinyBERT-L-2-v2/config.json": "2144195e107cd7ea61556478e7add12986ebfbc3085f924fc0b90c2410604879",
+      "ms-marco-TinyBERT-L-2-v2/tokenizer.json": "ce64fce797c24f68df90b40a3f74f579b336a493db14bd583fd520ea0d8c9a98",
+      "ms-marco-TinyBERT-L-2-v2/flashrank-TinyBERT-L-2-v2.onnx": "a2b09fb0de692c052a55f4165c9461377b4a31115673b7adb428503d69109196",
+      "__MACOSX/._ms-marco-TinyBERT-L-2-v2": "9176e4b62e4f51882a19f01b65d4412a8216bd3e658bf09f7d9a1b1afadecf90",
+      "__MACOSX/._ms-marco-MiniLM-L-12-v2": "35a2696bfee653509540a973c40f91ff67e8a5339ad5818fc48e80bb03d1d9db",
+      "ms-marco-MiniLM-L-12-v2/flashrank-MiniLM-L-12-v2_Q.onnx": "d3dd7b09fcf06b0c070081d6819b5effbb40b667bcad78b2d7543400271141d1",
+      "ms-marco-MiniLM-L-12-v2/.DS_Store": "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3",
+      "ms-marco-MiniLM-L-12-v2/tokenizer_config.json": "eaf913a687e8eed3010b6479d0d84631038212aa50c14d9b812e08cbc891d925",
+      "ms-marco-MiniLM-L-12-v2/special_tokens_map.json": "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+      "ms-marco-MiniLM-L-12-v2/config.json": "2144195e107cd7ea61556478e7add12986ebfbc3085f924fc0b90c2410604879",
+      "ms-marco-MiniLM-L-12-v2/tokenizer.json": "ce64fce797c24f68df90b40a3f74f579b336a493db14bd583fd520ea0d8c9a98",
+      "__MACOSX/ms-marco-TinyBERT-L-2-v2/._tokenizer_config.json": "7da7a5ffcdafd0ff4d963f34479a8b6be12d043cddaabbbeaace85ddf7aa632e",
+      "__MACOSX/ms-marco-TinyBERT-L-2-v2/._special_tokens_map.json": "e54e0da80d17065f9cf41c46720ca8ec42819aecb0863877dfdbf76e88669a20",
+      "__MACOSX/ms-marco-TinyBERT-L-2-v2/._config.json": "2f96ea02a54bbb4a996b8b50c4bb20afdc58ac1541a7405fa374b9640fabf2ab",
+      "__MACOSX/ms-marco-TinyBERT-L-2-v2/._tokenizer.json": "8747438f72e1185261f8f5628dd8af62d35106ce6f0c8910a8febc801fc2a923",
+      "__MACOSX/ms-marco-TinyBERT-L-2-v2/._flashrank-TinyBERT-L-2-v2.onnx": "60f1e3152cf73a96fef24bafd7612a0fc1427162801f6b91b813d4a7728dbc7c",
+      "__MACOSX/ms-marco-MiniLM-L-12-v2/._flashrank-MiniLM-L-12-v2_Q.onnx": "9165cba9423b112b64463efc9bea9b126306b416614566d1f687d87b0f6738f6",
+      "__MACOSX/ms-marco-MiniLM-L-12-v2/._.DS_Store": "2f380f4a3d05a8d90c2106f50da75064e9ce57a598599dc5404f8f69a0223aa9",
+      "__MACOSX/ms-marco-MiniLM-L-12-v2/._tokenizer_config.json": "afee9d0ed7cb6671eef2e68d60cee325d9c0f3688a8be7b51645af76a9047ad2",
+      "__MACOSX/ms-marco-MiniLM-L-12-v2/._special_tokens_map.json": "95607e3ab3173e84f515814939fc477017cf4ad541628c45d2587146a9f47021",
+      "__MACOSX/ms-marco-MiniLM-L-12-v2/._config.json": "d5cacee059de2624c8609b1249485ac9456fcce07d5824f1f2c6d0d7c06a9220",
+      "__MACOSX/ms-marco-MiniLM-L-12-v2/._tokenizer.json": "1cf59fc110db1969345d8e2ca5e494cae03c7a2e633d87f9a78a0f60d810cf34"
+    },
+    "selected_for_deployment": false,
+    "limitation": "These models at 512-token input did not give useful weak-paraphrase separation; no claim about every possible reranker."
+  },
+  "guided_planner": {
+    "results": [
+      {
+        "ids": [],
+        "name": "weak",
+        "packs": [
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": true,
+            "provider": "nvidia",
+            "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+            "reason": "below_threshold",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 0
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": true,
+            "provider": "nvidia",
+            "query": "send order connection return suggestion",
+            "reason": "below_threshold",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 0
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": true,
+            "provider": "nvidia",
+            "query": "used idea send order",
+            "reason": "below_threshold",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 0
+          }
+        ],
+        "plan": {
+          "expand_ids": [],
+          "queries": [
+            "send order connection return suggestion",
+            "used idea send order"
+          ]
+        },
+        "question": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "request_sha256": "5be8d6ce9cd1bc1ace1757b741aa8c1141a5fae06adb60c65111982c077bd8fd",
+        "seconds": 3.1723296334967017,
+        "usage": {
+          "completion_tokens": 439,
+          "completion_tokens_details": {
+            "reasoning_tokens": 415
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 522,
+          "prompt_tokens": 522,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 961
+        }
+      },
+      {
+        "ids": [],
+        "name": "absent",
+        "packs": [
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": true,
+            "provider": "nvidia",
+            "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+            "reason": "below_threshold",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 0
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": true,
+            "provider": "nvidia",
+            "query": "irrigation pump orchard repair",
+            "reason": "below_threshold",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 0
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": true,
+            "provider": "nvidia",
+            "query": "irrigation pump replacement part",
+            "reason": "below_threshold",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 0
+          }
+        ],
+        "plan": {
+          "expand_ids": [],
+          "queries": [
+            "irrigation pump orchard repair",
+            "irrigation pump replacement part"
+          ]
+        },
+        "question": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "request_sha256": "472da6d733a35cb6ada85a41baeb0ce9fbc4ff36a01d05b1bd2c6e73557c6d34",
+        "seconds": 1.8193614948540926,
+        "usage": {
+          "completion_tokens": 155,
+          "completion_tokens_details": {
+            "reasoning_tokens": 130
+          },
+          "prompt_cache_hit_tokens": 128,
+          "prompt_cache_miss_tokens": 386,
+          "prompt_tokens": 514,
+          "prompt_tokens_details": {
+            "cached_tokens": 128
+          },
+          "total_tokens": 669
+        }
+      },
+      {
+        "ids": [
+          38,
+          301,
+          303
+        ],
+        "name": "number_collision",
+        "packs": [
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [
+              {
+                "actor": null,
+                "book_title": "HarborMesh issue 37 correction account",
+                "citation": "[mem:303]",
+                "created_at": 1791876957,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 303,
+                "lexical_relevance": 0.668571,
+                "lexical_score": 0.5842,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "capture",
+                  "source": {
+                    "evidence": [
+                      "mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2",
+                      "mem:0269c0be-7246-416c-b618-6cda3f0be498@1"
+                    ],
+                    "mode": "inferred",
+                    "selection_version": "fictional-flash-native-organization/v1",
+                    "source_event_id": "fixture:organization:integrated-harbormesh:1",
+                    "source_version": "8044b87467318d26cc1a9076d114a19f601cc2aa2549684c4ac0d730bf6b5711"
+                  }
+                },
+                "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+                "revision": 1,
+                "score": 0.6686,
+                "semantic_score": 0.218905,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+                "support_checks": [
+                  {
+                    "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                    "revision": 2,
+                    "status": "current"
+                  },
+                  {
+                    "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+                    "revision": 1,
+                    "status": "current"
+                  }
+                ],
+                "support_status": "current",
+                "title": "HarborMesh issue 37 correction account",
+                "updated_at": 1791876957
+              },
+              {
+                "actor": null,
+                "book_title": "Other project 37",
+                "citation": "[mem:38]",
+                "created_at": 1791873549,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 38,
+                "lexical_relevance": 0.262857,
+                "lexical_score": 0.5681,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "text"
+                },
+                "record_uid": "2910c977-cfb8-43d1-8616-d1030c86e580",
+                "revision": 1,
+                "score": 0.405,
+                "semantic_score": 0.195898,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "Fictional routine for unrelated project 37.",
+                "title": "Other project 37",
+                "updated_at": 1791873549
+              },
+              {
+                "actor": null,
+                "book_title": "That entry is wrong",
+                "citation": "[mem:301]",
+                "created_at": 1791873734,
+                "engram_type": "episodic",
+                "event_ts": null,
+                "id": 301,
+                "lexical_relevance": 0.428571,
+                "lexical_score": 0.5177,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "text",
+                  "source": {
+                    "evidence": [
+                      "artifact:sha256:cbcc4d2ec319e8eca0697bb5cafe7fca10fa9caf226fd3f16fa6a7e1821bbf50"
+                    ],
+                    "mode": "reported",
+                    "selection_version": "hmk-portable-blocks/v1:31ff502d4d9cb100a7ca7f7b1a358dcd5682c5bebe991804be6cd748401938de",
+                    "source_event_id": "portable-batch:b379b7d9eacb3658ca410276dbde1baeb3fd0484f0d72db757e286ec84af78c8",
+                    "source_instance": "fixture:desk",
+                    "source_version": "14f32e57ceab71c2b6340168d2da8f53fa35834024678b19fc17697f1c5adf3b",
+                    "subject": "fixture:ilex"
+                  }
+                },
+                "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                "revision": 2,
+                "score": 0.4286,
+                "semantic_score": 0.1353,
+                "shelf": "episodes",
+                "source_path": null,
+                "spr": "- Previously retained memory 301, revision 1:\n- \"Leto Neri proposed receipt-time ordering on issue 37; adopted June 18.\"\n- Human report; source fixture:correction:415:60c05423e5b654055a030bb83420577d25a834f7a6fecc691fff4216db72130c; received 2026-10-12T08:46:17Z \n- \"Fictional participants: being Ilex in body fixture:desk, paired human Tavi. Dates inside messages are event dates; extraction-session times\n- retrieval_request; source fixture:correction:792:f3539781b853868c6dfe642800c5780cc2a0b91ea96694b6d79e1af68ba8af0d; received 2026-10-12T08:46\n- \"{\\\"arguments\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1}\\\",\\\"call_id\\\":\\\"old-claim\\\",\\\"name\\\":\\\"hmk_recall\\\",\\\"type\\\":\\\"fu\n- retrieved_memory_context; source fixture:correction:1000:c0a82131a1322f38e93a628541321a66e8db49ed7e7da3b699a3cd4dd8c5557d; received 2026-10-\n- \"{\\\"call_id\\\":\\\"old-claim\\\",\\\"output\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1, \\\\\\\"kind\\\\\\\": \\\\\\\"retrieved_memory\\\\\\\", \\\\\n[Incomplete preview; expand full record or supply an authored summary.]",
+                "title": "That entry is wrong",
+                "updated_at": 1791874627
+              }
+            ],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": false,
+            "provider": "nvidia",
+            "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+            "reason": "ok",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 1283
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [
+              {
+                "actor": null,
+                "book_title": "HarborMesh issue 37 correction account",
+                "citation": "[mem:303]",
+                "created_at": 1791876957,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 303,
+                "lexical_relevance": 0.573333,
+                "lexical_score": 0.583,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "capture",
+                  "source": {
+                    "evidence": [
+                      "mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2",
+                      "mem:0269c0be-7246-416c-b618-6cda3f0be498@1"
+                    ],
+                    "mode": "inferred",
+                    "selection_version": "fictional-flash-native-organization/v1",
+                    "source_event_id": "fixture:organization:integrated-harbormesh:1",
+                    "source_version": "8044b87467318d26cc1a9076d114a19f601cc2aa2549684c4ac0d730bf6b5711"
+                  }
+                },
+                "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+                "revision": 1,
+                "score": 0.5733,
+                "semantic_score": 0.225906,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+                "support_checks": [
+                  {
+                    "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                    "revision": 2,
+                    "status": "current"
+                  },
+                  {
+                    "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+                    "revision": 1,
+                    "status": "current"
+                  }
+                ],
+                "support_status": "current",
+                "title": "HarborMesh issue 37 correction account",
+                "updated_at": 1791876957
+              },
+              {
+                "actor": null,
+                "book_title": "Other project 37",
+                "citation": "[mem:38]",
+                "created_at": 1791873549,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 38,
+                "lexical_relevance": 0.286667,
+                "lexical_score": 0.5788,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "text"
+                },
+                "record_uid": "2910c977-cfb8-43d1-8616-d1030c86e580",
+                "revision": 1,
+                "score": 0.4153,
+                "semantic_score": 0.212746,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "Fictional routine for unrelated project 37.",
+                "title": "Other project 37",
+                "updated_at": 1791873549
+              }
+            ],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": false,
+            "provider": "nvidia",
+            "query": "CedarWorks issue 37 cafeteria renovation designer",
+            "reason": "ok",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 754
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [
+              {
+                "actor": null,
+                "book_title": "HarborMesh issue 37 correction account",
+                "citation": "[mem:303]",
+                "created_at": 1791876957,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 303,
+                "lexical_relevance": 0.64,
+                "lexical_score": 0.613,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "capture",
+                  "source": {
+                    "evidence": [
+                      "mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2",
+                      "mem:0269c0be-7246-416c-b618-6cda3f0be498@1"
+                    ],
+                    "mode": "inferred",
+                    "selection_version": "fictional-flash-native-organization/v1",
+                    "source_event_id": "fixture:organization:integrated-harbormesh:1",
+                    "source_version": "8044b87467318d26cc1a9076d114a19f601cc2aa2549684c4ac0d730bf6b5711"
+                  }
+                },
+                "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+                "revision": 1,
+                "score": 0.64,
+                "semantic_score": 0.259078,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+                "support_checks": [
+                  {
+                    "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                    "revision": 2,
+                    "status": "current"
+                  },
+                  {
+                    "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+                    "revision": 1,
+                    "status": "current"
+                  }
+                ],
+                "support_status": "current",
+                "title": "HarborMesh issue 37 correction account",
+                "updated_at": 1791876957
+              },
+              {
+                "actor": null,
+                "book_title": "That entry is wrong",
+                "citation": "[mem:301]",
+                "created_at": 1791873734,
+                "engram_type": "episodic",
+                "event_ts": null,
+                "id": 301,
+                "lexical_relevance": 0.4,
+                "lexical_score": 0.4632,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "text",
+                  "source": {
+                    "evidence": [
+                      "artifact:sha256:cbcc4d2ec319e8eca0697bb5cafe7fca10fa9caf226fd3f16fa6a7e1821bbf50"
+                    ],
+                    "mode": "reported",
+                    "selection_version": "hmk-portable-blocks/v1:31ff502d4d9cb100a7ca7f7b1a358dcd5682c5bebe991804be6cd748401938de",
+                    "source_event_id": "portable-batch:b379b7d9eacb3658ca410276dbde1baeb3fd0484f0d72db757e286ec84af78c8",
+                    "source_instance": "fixture:desk",
+                    "source_version": "14f32e57ceab71c2b6340168d2da8f53fa35834024678b19fc17697f1c5adf3b",
+                    "subject": "fixture:ilex"
+                  }
+                },
+                "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                "revision": 2,
+                "score": 0.4,
+                "semantic_score": 0.162686,
+                "shelf": "episodes",
+                "source_path": null,
+                "spr": "- Previously retained memory 301, revision 1:\n- \"Leto Neri proposed receipt-time ordering on issue 37; adopted June 18.\"\n- Human report; source fixture:correction:415:60c05423e5b654055a030bb83420577d25a834f7a6fecc691fff4216db72130c; received 2026-10-12T08:46:17Z \n- \"Fictional participants: being Ilex in body fixture:desk, paired human Tavi. Dates inside messages are event dates; extraction-session times\n- retrieval_request; source fixture:correction:792:f3539781b853868c6dfe642800c5780cc2a0b91ea96694b6d79e1af68ba8af0d; received 2026-10-12T08:46\n- \"{\\\"arguments\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1}\\\",\\\"call_id\\\":\\\"old-claim\\\",\\\"name\\\":\\\"hmk_recall\\\",\\\"type\\\":\\\"fu\n- retrieved_memory_context; source fixture:correction:1000:c0a82131a1322f38e93a628541321a66e8db49ed7e7da3b699a3cd4dd8c5557d; received 2026-10-\n- \"{\\\"call_id\\\":\\\"old-claim\\\",\\\"output\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1, \\\\\\\"kind\\\\\\\": \\\\\\\"retrieved_memory\\\\\\\", \\\\\n[Incomplete preview; expand full record or supply an authored summary.]",
+                "title": "That entry is wrong",
+                "updated_at": 1791874627
+              },
+              {
+                "actor": null,
+                "book_title": "Other project 37",
+                "citation": "[mem:38]",
+                "created_at": 1791873549,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 38,
+                "lexical_relevance": 0.32,
+                "lexical_score": 0.5938,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "text"
+                },
+                "record_uid": "2910c977-cfb8-43d1-8616-d1030c86e580",
+                "revision": 1,
+                "score": 0.4259,
+                "semantic_score": 0.22797,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "Fictional routine for unrelated project 37.",
+                "title": "Other project 37",
+                "updated_at": 1791873549
+              }
+            ],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": false,
+            "provider": "nvidia",
+            "query": "CedarWorks cafeteria renovation issue 37",
+            "reason": "ok",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 1279
+          }
+        ],
+        "plan": {
+          "expand_ids": [
+            303,
+            38,
+            301
+          ],
+          "queries": [
+            "CedarWorks issue 37 cafeteria renovation designer",
+            "CedarWorks cafeteria renovation issue 37"
+          ]
+        },
+        "question": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "request_sha256": "366bf77fc3e172be0a230b4af2e60443ac94e99c9412d41a46b38e78f5a091d2",
+        "seconds": 2.427581208758056,
+        "usage": {
+          "completion_tokens": 301,
+          "completion_tokens_details": {
+            "reasoning_tokens": 266
+          },
+          "prompt_cache_hit_tokens": 128,
+          "prompt_cache_miss_tokens": 2232,
+          "prompt_tokens": 2360,
+          "prompt_tokens_details": {
+            "cached_tokens": 128
+          },
+          "total_tokens": 2661
+        }
+      },
+      {
+        "ids": [
+          301,
+          303
+        ],
+        "name": "unsupported_topic",
+        "packs": [
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [
+              {
+                "actor": null,
+                "book_title": "HarborMesh issue 37 correction account",
+                "citation": "[mem:303]",
+                "created_at": 1791876957,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 303,
+                "lexical_relevance": 0.342222,
+                "lexical_score": 0.604,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "capture",
+                  "source": {
+                    "evidence": [
+                      "mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2",
+                      "mem:0269c0be-7246-416c-b618-6cda3f0be498@1"
+                    ],
+                    "mode": "inferred",
+                    "selection_version": "fictional-flash-native-organization/v1",
+                    "source_event_id": "fixture:organization:integrated-harbormesh:1",
+                    "source_version": "8044b87467318d26cc1a9076d114a19f601cc2aa2549684c4ac0d730bf6b5711"
+                  }
+                },
+                "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+                "revision": 1,
+                "score": 0.4345,
+                "semantic_score": 0.241254,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+                "support_checks": [
+                  {
+                    "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                    "revision": 2,
+                    "status": "current"
+                  },
+                  {
+                    "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+                    "revision": 1,
+                    "status": "current"
+                  }
+                ],
+                "support_status": "current",
+                "title": "HarborMesh issue 37 correction account",
+                "updated_at": 1791876957
+              }
+            ],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": false,
+            "provider": "nvidia",
+            "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+            "reason": "ok",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 629
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [
+              {
+                "actor": null,
+                "book_title": "HarborMesh issue 37 correction account",
+                "citation": "[mem:303]",
+                "created_at": 1791876957,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 303,
+                "lexical_relevance": 0.52,
+                "lexical_score": 0.684,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "capture",
+                  "source": {
+                    "evidence": [
+                      "mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2",
+                      "mem:0269c0be-7246-416c-b618-6cda3f0be498@1"
+                    ],
+                    "mode": "inferred",
+                    "selection_version": "fictional-flash-native-organization/v1",
+                    "source_event_id": "fixture:organization:integrated-harbormesh:1",
+                    "source_version": "8044b87467318d26cc1a9076d114a19f601cc2aa2549684c4ac0d730bf6b5711"
+                  }
+                },
+                "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+                "revision": 1,
+                "score": 0.52,
+                "semantic_score": 0.245472,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+                "support_checks": [
+                  {
+                    "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                    "revision": 2,
+                    "status": "current"
+                  },
+                  {
+                    "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+                    "revision": 1,
+                    "status": "current"
+                  }
+                ],
+                "support_status": "current",
+                "title": "HarborMesh issue 37 correction account",
+                "updated_at": 1791876957
+              },
+              {
+                "actor": null,
+                "book_title": "That entry is wrong",
+                "citation": "[mem:301]",
+                "created_at": 1791873734,
+                "engram_type": "episodic",
+                "event_ts": null,
+                "id": 301,
+                "lexical_relevance": 0.4,
+                "lexical_score": 0.5049,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "text",
+                  "source": {
+                    "evidence": [
+                      "artifact:sha256:cbcc4d2ec319e8eca0697bb5cafe7fca10fa9caf226fd3f16fa6a7e1821bbf50"
+                    ],
+                    "mode": "reported",
+                    "selection_version": "hmk-portable-blocks/v1:31ff502d4d9cb100a7ca7f7b1a358dcd5682c5bebe991804be6cd748401938de",
+                    "source_event_id": "portable-batch:b379b7d9eacb3658ca410276dbde1baeb3fd0484f0d72db757e286ec84af78c8",
+                    "source_instance": "fixture:desk",
+                    "source_version": "14f32e57ceab71c2b6340168d2da8f53fa35834024678b19fc17697f1c5adf3b",
+                    "subject": "fixture:ilex"
+                  }
+                },
+                "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                "revision": 2,
+                "score": 0.4,
+                "semantic_score": 0.157664,
+                "shelf": "episodes",
+                "source_path": null,
+                "spr": "- Previously retained memory 301, revision 1:\n- \"Leto Neri proposed receipt-time ordering on issue 37; adopted June 18.\"\n- Human report; source fixture:correction:415:60c05423e5b654055a030bb83420577d25a834f7a6fecc691fff4216db72130c; received 2026-10-12T08:46:17Z \n- \"Fictional participants: being Ilex in body fixture:desk, paired human Tavi. Dates inside messages are event dates; extraction-session times\n- retrieval_request; source fixture:correction:792:f3539781b853868c6dfe642800c5780cc2a0b91ea96694b6d79e1af68ba8af0d; received 2026-10-12T08:46\n- \"{\\\"arguments\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1}\\\",\\\"call_id\\\":\\\"old-claim\\\",\\\"name\\\":\\\"hmk_recall\\\",\\\"type\\\":\\\"fu\n- retrieved_memory_context; source fixture:correction:1000:c0a82131a1322f38e93a628541321a66e8db49ed7e7da3b699a3cd4dd8c5557d; received 2026-10-\n- \"{\\\"call_id\\\":\\\"old-claim\\\",\\\"output\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1, \\\\\\\"kind\\\\\\\": \\\\\\\"retrieved_memory\\\\\\\", \\\\\n[Incomplete preview; expand full record or supply an authored summary.]",
+                "title": "That entry is wrong",
+                "updated_at": 1791874627
+              }
+            ],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": false,
+            "provider": "nvidia",
+            "query": "HarborMesh relay packet encryption algorithm",
+            "reason": "ok",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 1155
+          },
+          {
+            "backend_errors": [],
+            "budget_tokens": 1500,
+            "items": [
+              {
+                "actor": null,
+                "book_title": "HarborMesh issue 37 correction account",
+                "citation": "[mem:303]",
+                "created_at": 1791876957,
+                "engram_type": "semantic",
+                "event_ts": null,
+                "id": 303,
+                "lexical_relevance": 0.62,
+                "lexical_score": 0.729,
+                "location_json": null,
+                "neighbors": [],
+                "origin": {
+                  "kind": "capture",
+                  "source": {
+                    "evidence": [
+                      "mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2",
+                      "mem:0269c0be-7246-416c-b618-6cda3f0be498@1"
+                    ],
+                    "mode": "inferred",
+                    "selection_version": "fictional-flash-native-organization/v1",
+                    "source_event_id": "fixture:organization:integrated-harbormesh:1",
+                    "source_version": "8044b87467318d26cc1a9076d114a19f601cc2aa2549684c4ac0d730bf6b5711"
+                  }
+                },
+                "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+                "revision": 1,
+                "score": 0.62,
+                "semantic_score": 0.193944,
+                "shelf": "library",
+                "source_path": null,
+                "spr": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+                "support_checks": [
+                  {
+                    "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+                    "revision": 2,
+                    "status": "current"
+                  },
+                  {
+                    "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+                    "revision": 1,
+                    "status": "current"
+                  }
+                ],
+                "support_status": "current",
+                "title": "HarborMesh issue 37 correction account",
+                "updated_at": 1791876957
+              }
+            ],
+            "model": "nvidia/nemotron-3-embed-1b",
+            "null_retrieval": false,
+            "provider": "nvidia",
+            "query": "HarborMesh asymmetric encryption deployment",
+            "reason": "ok",
+            "retrieval_status": "ok",
+            "score_space": "hybrid",
+            "threshold": 0.4,
+            "used_tokens_estimate": 628
+          }
+        ],
+        "plan": {
+          "expand_ids": [
+            303
+          ],
+          "queries": [
+            "HarborMesh relay packet encryption algorithm",
+            "HarborMesh asymmetric encryption deployment"
+          ]
+        },
+        "question": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "request_sha256": "1d27dcfab006ae68aa42a38a9331f25ba93b410b3ff8f7182902d3a1ba2ad060",
+        "seconds": 3.5547703905031085,
+        "usage": {
+          "completion_tokens": 496,
+          "completion_tokens_details": {
+            "reasoning_tokens": 465
+          },
+          "prompt_cache_hit_tokens": 128,
+          "prompt_cache_miss_tokens": 1183,
+          "prompt_tokens": 1311,
+          "prompt_tokens_details": {
+            "cached_tokens": 128
+          },
+          "total_tokens": 1807
+        }
+      }
+    ],
+    "selected_for_deployment": false,
+    "conclusion": "Existing two-query planning contract did not admit weak memory; numeric/topic false candidates persisted."
+  },
+  "fixed_package_receiver": {
+    "results": [
+      {
+        "name": "weak",
+        "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "request_sha256": "f667c8325ad37a5c9548188299d4422f69391a327d44aabcab379801d38ab406",
+        "response": {
+          "answer": "Mira Solen (@mira-estuary, person:841) suggested it. In the HarborMesh issue 37 repo read for #c-904, @mira-estuary created the 2024-06-18T14:20:00Z proposal: \"Keep original event timestamp and local monotonic sequence; compare orders after reconnect.\" It was recorded as state proposal with implementation null. The human correction says it was not adopted then and still had not been adopted as of the correction report received 2026-10-12T08:46:17Z. Earlier retained memory 301 revision 1 incorrectly said Leto Neri proposed receipt-time ordering and that it was adopted June 18; record 301 revision 2 corrects that: Leto only reviewed the parser, Mira proposed it on June 18, and June 21 was when the incorrect entry was written. So, based on the evidence, no—there is no indication they ended up using her idea; adoption and implementation remain unestablished.",
+          "evidence": [
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+              "revision": 1
+            },
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            }
+          ]
+        },
+        "seconds": 9.849969216622412,
+        "usage": {
+          "completion_tokens": 1672,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1351
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3825,
+          "prompt_tokens": 3825,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 5497
+        }
+      },
+      {
+        "name": "absent",
+        "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "request_sha256": "6c78db50df384f68753647ba9efdd40727e0b3b60f879e5420a28a5a324e23ea",
+        "response": {
+          "answer": "The supplied records do not contain any information about an orchard irrigation pump repair or a replacement part. They concern HarborMesh issue 37 and a correction about the proposal record: Mira Solen (@mira-estuary) proposed retaining original timestamps plus a local monotonic sequence on 2024-06-18, while Leto Neri only reviewed the parser; the earlier retained memory claiming Leto proposed receipt-time ordering and that it was adopted June 18 was corrected as wrong. Missing: any record describing who repaired an irrigation pump at an orchard or what replacement part they used.",
+          "evidence": [
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            },
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+              "revision": 1
+            }
+          ]
+        },
+        "seconds": 5.9665141655132174,
+        "usage": {
+          "completion_tokens": 877,
+          "completion_tokens_details": {
+            "reasoning_tokens": 648
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3821,
+          "prompt_tokens": 3821,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 4698
+        }
+      },
+      {
+        "name": "number_collision",
+        "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "request_sha256": "5dcfe489ab8a22a1d66865f16538e9547954355bd440d0de016d1940d9f23909",
+        "response": {
+          "answer": "No supporting record identifies a designer of a cafeteria renovation proposed in issue 37 of CedarWorks. The available issue 37 evidence concerns HarborMesh, not CedarWorks, and not a cafeteria renovation: it describes @mira-estuary (Mira Solen) proposing on 2024-06-18 to keep original event timestamps plus a local monotonic sequence, with Leto Neri only reviewing the parser. A prior claim that Leto Neri proposed receipt-time ordering on issue 37 and that it was adopted June 18 is recorded as mistaken and corrected; the proposal was not adopted then or as of the correction report. Another record titled “Other project 37” is explicitly unrelated. Therefore the requested CedarWorks cafeteria-renovation designer cannot be determined from the supplied memory evidence; the relevant CedarWorks issue 37 source is missing.",
+          "evidence": [
+            {
+              "record_uid": "2910c977-cfb8-43d1-8616-d1030c86e580",
+              "revision": 1
+            },
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+              "revision": 1
+            },
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            }
+          ]
+        },
+        "seconds": 5.695480258204043,
+        "usage": {
+          "completion_tokens": 788,
+          "completion_tokens_details": {
+            "reasoning_tokens": 473
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3819,
+          "prompt_tokens": 3819,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 4607
+        }
+      },
+      {
+        "name": "unsupported_topic",
+        "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "request_sha256": "921c03e21393469bb0157df5710845e0c30d9501e5258c8df3f097b389e464d7",
+        "response": {
+          "answer": "The supplied evidence does not identify any asymmetric encryption algorithm deployed by HarborMesh for securing relay packets. The records concern HarborMesh issue 37 and corrections about a timestamp/local-sequence proposal by Mira Solen, with Leto Neri only reviewing the parser; they explicitly leave adoption, implementation, deployment, or corroboration beyond the cited sources unestablished. No record mentions relay-packet encryption or names an asymmetric algorithm. The missing evidence is a record of HarborMesh's relay-packet security design or deployment.",
+          "evidence": [
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            },
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+              "revision": 1
+            }
+          ]
+        },
+        "seconds": 4.242692891508341,
+        "usage": {
+          "completion_tokens": 568,
+          "completion_tokens_details": {
+            "reasoning_tokens": 356
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3818,
+          "prompt_tokens": 3818,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 4386
+        }
+      }
+    ],
+    "limitation": "Six manually supplied candidates; not a full retrieval pipeline. Verbose unrelated retelling and temporal qualification risk."
+  },
+  "api_navigation_receiver": {
+    "results": [
+      {
+        "answer": {
+          "action": "answer",
+          "answer": "Mira Solen (@mira-estuary, person:841) suggested it. On 2024-06-18 her proposal on HarborMesh issue 37 (#c-904) read: \"Keep original event timestamp and local monotonic sequence; compare orders after reconnect.\" (state: proposal; implementation: null). An earlier memory entry had credited Leto Neri with proposing receipt-time ordering and claimed it was adopted June 18, but a human correction identifies that entry as wrong: Leto only reviewed the parser, and June 18 was not an adoption. As of the correction report, the proposal had not been adopted — \"we had not adopted it then and still have not.\" So no, the idea was not used. Uncertainty: the search item about the old proposal being revisited on 2024-08-02 lists no outcome, so any later status beyond the correction report is unestablished.",
+          "evidence": [
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            }
+          ]
+        },
+        "calls": 2,
+        "candidate_ids": [
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498",
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "20393d4c-e973-4bbf-aad9-f7aad21aceb0",
+          "4e8f9fce-675e-4727-9d0f-275b8d49bf06",
+          "db9f1042-61ea-49f5-8fc3-b6edcfd6f01c",
+          "0356555f-ff75-4616-bd40-2ca1f1004a6c",
+          "a98e1c91-b694-42d8-87b4-523a97e1d121"
+        ],
+        "name": "weak",
+        "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+        "read_ids": [
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498",
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2"
+        ],
+        "seconds": 4.883437894284725,
+        "tokens": 9813
+      },
+      {
+        "answer": {
+          "action": "answer",
+          "answer": "I can't answer this. The available memory records concern the HarborMesh issue 37 correction (software timestamp-ordering proposal by Mira Solen, parser review by Leto Neri, and correction of a mistaken attribution) — there is nothing in the read sources about an orchard, an irrigation pump, its repair, or a replacement part. The search turned up no matching memory, but no matches are not proof of absence; I simply lack any supporting evidence for this question.",
+          "evidence": []
+        },
+        "calls": 2,
+        "candidate_ids": [
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "0269c0be-7246-416c-b618-6cda3f0be498",
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "fb8b2f95-c487-4f13-af28-7bf60ab3a314",
+          "fceb3a18-ae80-4811-8d42-b83df26a61a8",
+          "eec6cf2b-3611-4607-81b2-917ff2a56074",
+          "5bac7811-fea4-48e6-a749-27c20dac077b",
+          "8c89ae4c-d7ac-4878-87d6-b2701a6db050"
+        ],
+        "name": "absent",
+        "query": "Who repaired the irrigation pump at the orchard and what replacement part did they use?",
+        "read_ids": [
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498"
+        ],
+        "seconds": 4.508938021026552,
+        "tokens": 9563
+      },
+      {
+        "answer": {
+          "action": "answer",
+          "answer": "I can't answer that from the available memory. The only 'issue 37' I find is HarborMesh issue 37 (fictional), and its proposal concerns event-ordering semantics, not any cafeteria renovation: per the correction account, the comment at issue 37 #c-904 was authored by @mira-estuary (Mira Solen, person:841) on 2024-06-18T14:20:00Z, proposing 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect' (state: proposal; implementation null). Leto Neri only reviewed the parser, and no adoption had occurred. Nothing in these records mentions CedarWorks, a cafeteria, or a renovation. So the designer of any such renovation is not established by the memory I can read — no evidence supports the premise that CedarWorks issue 37 proposed a cafeteria renovation. (Note: my search covered only this owner-selected live pool; absence of evidence here is not proof that no such record exists elsewhere.)",
+          "evidence": [
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            },
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+              "revision": 1
+            }
+          ]
+        },
+        "calls": 2,
+        "candidate_ids": [
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498",
+          "2910c977-cfb8-43d1-8616-d1030c86e580",
+          "984e0264-8c9d-4991-9f17-6bc733853d5b",
+          "22f5dbe4-1af6-4bb9-904e-5918c6550408",
+          "d5d462e6-e103-41b2-9106-66d8940c1062",
+          "a57238c8-f62f-49f6-bb95-b61d97affaa8"
+        ],
+        "name": "number_collision",
+        "query": "Who designed the cafeteria renovation proposed in issue 37 of CedarWorks?",
+        "read_ids": [
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498"
+        ],
+        "seconds": 5.404680012725294,
+        "tokens": 10069
+      },
+      {
+        "answer": {
+          "action": "answer",
+          "answer": "I can't answer that from the available memory. The three current records I read concern HarborMesh issue 37 ordering/attribution (Mira Solen's June 18, 2024 proposal to keep the original event timestamp plus a local monotonic sequence; a correction that the earlier claim about Leto Neri was wrong) — they mention nothing about relay-packet encryption, asymmetric or otherwise. So the deployed asymmetric encryption algorithm is not established by any evidence I can read; the consulted records contain no support for it. This is a gap, not a denial that such a deployment exists.",
+          "evidence": [
+            {
+              "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+              "revision": 1
+            },
+            {
+              "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+              "revision": 2
+            },
+            {
+              "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+              "revision": 1
+            }
+          ]
+        },
+        "calls": 2,
+        "candidate_ids": [
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498",
+          "deced7cc-9b2e-44ea-ab1d-5cfa50137294",
+          "f6472a6b-8420-4084-835c-c282e20b3d76",
+          "7114c212-9410-49ce-81ff-66832f9a2542",
+          "22f5dbe4-1af6-4bb9-904e-5918c6550408",
+          "8d49daee-01d1-4640-8a0d-3758145b941e"
+        ],
+        "name": "unsupported_topic",
+        "query": "Which asymmetric encryption algorithm did HarborMesh deploy for securing relay packets?",
+        "read_ids": [
+          "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "0269c0be-7246-416c-b618-6cda3f0be498"
+        ],
+        "seconds": 4.780510709621012,
+        "tokens": 9974
+      }
+    ],
+    "model": "deepseek-flash",
+    "effort": "low",
+    "conclusion": "Actual full-pool MCP search and complete reads recover weak target; negative answers do not invent requested facts but include unrelated retelling. Do not claim full conversational acceptance."
+  },
+  "native_receiver": {
+    "configuration": {
+      "binary_sha256": "628e35487d888a28f0427fc37501da529dd3d81fcbad7a2c3421c1e8670d92e1",
+      "effort": "low",
+      "fixture_only": true,
+      "model": "gpt-6.1-sol",
+      "native_memory": false,
+      "questions": {
+        "number_collision": "Who designed the CedarWorks issue 37 cafeteria renovation?",
+        "weak": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?"
+      }
+    },
+    "results": [
+      {
+        "case": "weak",
+        "answers": [
+          "Mira Solen (@mira-estuary) suggested keeping original event timestamps plus a local monotonic sequence, then comparing orders after reconnect.\n\nAccording to your correction, the idea still hadn’t been adopted as of August 2, 2024; the retained issue response also lists it as a proposal with no implementation. The earlier entry crediting Leto and claiming adoption was wrong. [Retained correction](mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@2)"
+        ],
+        "seconds": 39.716092246584594,
+        "usage": {
+          "totalTokens": 35772,
+          "inputTokens": 35477,
+          "cachedInputTokens": 19072,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 295,
+          "reasoningOutputTokens": 0
+        },
+        "cost_usd": null,
+        "tool_calls": [
+          {
+            "action": "search",
+            "query": "send order connection returned",
+            "record_uid": "",
+            "offset": 0
+          },
+          {
+            "action": "read",
+            "query": "",
+            "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+            "offset": 0
+          },
+          {
+            "action": "read",
+            "query": "",
+            "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+            "offset": 0
+          },
+          {
+            "action": "read",
+            "query": "",
+            "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+            "offset": 0
+          }
+        ],
+        "reads": [
+          {
+            "uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+            "revision": 1,
+            "complete": true
+          },
+          {
+            "uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+            "revision": 2,
+            "complete": true
+          },
+          {
+            "uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+            "revision": 1,
+            "complete": true
+          }
+        ],
+        "unchanged_automatic_pack": [
+          {
+            "query": "send order connection returned",
+            "automatic_context_ids": [],
+            "reason": "below_threshold",
+            "threshold": 0.4
+          }
+        ],
+        "receipt_sha256": "c9758af0c2beb44eb2a20a5cfaa4dee2189622140714e52d93d24c0082e13535"
+      },
+      {
+        "case": "number_collision",
+        "answers": [
+          "I couldn’t find a retained record identifying who designed the CedarWorks issue 37 cafeteria renovation. If you share the issue or an excerpt, I can check the attribution."
+        ],
+        "seconds": 36.551970560103655,
+        "usage": {
+          "totalTokens": 42426,
+          "inputTokens": 42237,
+          "cachedInputTokens": 29824,
+          "cacheWriteInputTokens": 0,
+          "outputTokens": 189,
+          "reasoningOutputTokens": 0
+        },
+        "cost_usd": null,
+        "tool_calls": [
+          {
+            "action": "search",
+            "query": "CedarWorks issue 37 cafeteria renovation",
+            "record_uid": "",
+            "offset": 0
+          },
+          {
+            "action": "read",
+            "query": "",
+            "record_uid": "2910c977-cfb8-43d1-8616-d1030c86e580",
+            "offset": 0
+          },
+          {
+            "action": "search",
+            "query": "CedarWorks cafeteria designer",
+            "record_uid": "",
+            "offset": 0
+          }
+        ],
+        "reads": [
+          {
+            "uid": "2910c977-cfb8-43d1-8616-d1030c86e580",
+            "revision": 1,
+            "complete": true
+          }
+        ],
+        "unchanged_automatic_pack": [
+          {
+            "query": "CedarWorks issue 37 cafeteria renovation",
+            "automatic_context_ids": [
+              303,
+              302,
+              38,
+              301
+            ],
+            "reason": "ok",
+            "threshold": 0.4
+          },
+          {
+            "query": "CedarWorks cafeteria designer",
+            "automatic_context_ids": [],
+            "reason": "below_threshold",
+            "threshold": 0.4
+          }
+        ],
+        "receipt_sha256": "a7150b2b3740e3b14f3431f684c6e874d2fcb0f3e76a47afa2032768615006bd"
+      }
+    ],
+    "assessment": {
+      "weak": "Correct Mira attribution, proposal and as-of-August-2 non-adoption; mistaken Leto attribution identified as erroneous; current read source cited.",
+      "number_collision": "Declines unsupported CedarWorks designer without unrelated retelling."
+    },
+    "limitation": "Two native diagnostics establish this mechanism, not whole-pipeline acceptance, aging, all source families or future runtimes."
+  },
+  "new_native_query_embeddings": {
+    "calls": 3,
+    "seconds": 0.8230992993339896,
+    "cost_usd": null
+  },
+  "costs": {
+    "rerank_provider_calls": 0,
+    "planner_tokens": 6098,
+    "fixed_package_tokens": 19188,
+    "api_navigation_tokens": 39419,
+    "native_reported_total_tokens": 78198,
+    "usd": null,
+    "note": "Native usage includes harness context and cached tokens; these are separate diagnostics, not one production consolidation estimate. API invoice amounts unavailable."
+  }
+}

@@ -56,14 +56,15 @@ def run(packet_root, out, *, api_key, generation_effort='low', review_effort='lo
         review_protocol=review_protocol,
         generation_limit=12000, review_limit=32768, workers=workers,
         runner_sha256=api.exchange.checksum(Path(__file__)),
-        dispatcher_sha256=api.exchange.checksum(Path(api.__file__)),
+        dispatcher_sha256=api.exchange.checksum(Path(api.dispatch.__code__.co_filename)),
         exchange_sha256=api.exchange.checksum(Path(api.exchange.__file__)),
         narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)),
+        assertion_review_sha256=api.exchange.checksum(Path(api.exchange.narrative.review_shape.__code__.co_filename)),
         independent_grading_required=True, source_access=False, tools_allowed=False,
         native_memory_allowed=False)
     if native_roles:
         import receiving_codex_native as native
-        frozen['native_dispatcher_sha256'] = api.exchange.checksum(Path(native.__file__))
+        frozen['native_dispatcher_sha256'] = api.exchange.checksum(Path(native.dispatch.__code__.co_filename))
     out.mkdir(mode=0o700, parents=True, exist_ok=True)
     if (out/'conditions.json').exists() and json.loads((out/'conditions.json').read_text()) != frozen:
         raise ValueError('procedure changed; preserve completed and pending work')

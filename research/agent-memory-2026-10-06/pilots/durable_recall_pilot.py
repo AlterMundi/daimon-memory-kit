@@ -859,6 +859,7 @@ def main():
         conditions['narrative_reasoning_budget'] = args.narrative_reasoning_budget
         conditions['narrative_max_tokens'] = args.narrative_max_tokens
         conditions['narrative_sha256'] = hashlib.sha256(Path(narrative_recall.__file__).read_bytes()).hexdigest()
+        conditions['assertion_review_sha256'] = hashlib.sha256(Path(narrative_recall.review_shape.__code__.co_filename).read_bytes()).hexdigest()
     conditions['complete_diagnostics'] = args.complete_diagnostics
     conditions['recall_cases'] = args.recall_case
     conditions['review_capture'] = args.review_capture
@@ -885,7 +886,7 @@ def main():
             if previous.get(field, False) != conditions[field]:
                 parser.error('resume cannot change frozen model, guidance or fixtures')
         if args.narrative and any(previous.get(field) != conditions[field]
-                                 for field in ('narrative_sha256', 'narrative_reasoning_effort', 'narrative_reasoning_budget', 'narrative_max_tokens')):
+                                 for field in ('narrative_sha256', 'assertion_review_sha256', 'narrative_reasoning_effort', 'narrative_reasoning_budget', 'narrative_max_tokens')):
             parser.error('resume cannot change the frozen semantic narrative procedure')
         resumed = previous.get('resumes', [])
         resumed.append(conditions)

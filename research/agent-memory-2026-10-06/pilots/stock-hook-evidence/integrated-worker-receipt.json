@@ -1,0 +1,167 @@
+{
+  "schema": "hmk.foreground-worker-diagnostic/v1",
+  "fictional": true,
+  "production_changed": false,
+  "full_pipeline_qualified": false,
+  "purpose": "Reuse the completed source-window capture and verify selected index work plus a fresh explicit invocation without re-selection or duplicate embedding.",
+  "first": {
+    "state": "pending",
+    "steps": 5,
+    "phases": {
+      "capture": {
+        "processed_through": 2,
+        "proposer_invoked": false,
+        "state": "idle"
+      },
+      "index": {
+        "indexed_through": 2,
+        "state": "idle"
+      },
+      "organization": {
+        "reason_code": "organization_adapter_unconfigured",
+        "state": "pending"
+      }
+    },
+    "wall_seconds": 22.008936390280724,
+    "phase_seconds": 14.284406251,
+    "outcomes": [
+      {
+        "phase": "capture",
+        "result": {
+          "processed_through": 2,
+          "proposer_invoked": false,
+          "state": "idle"
+        }
+      },
+      {
+        "phase": "organization",
+        "result": {
+          "reason_code": "organization_adapter_unconfigured",
+          "state": "pending"
+        }
+      },
+      {
+        "phase": "index",
+        "result": {
+          "indexed_through": 1,
+          "processed": 0,
+          "space": {
+            "model": "nvidia/nemotron-3-embed-1b",
+            "output_dimensionality": null,
+            "provider": "nvidia"
+          },
+          "state": "complete"
+        }
+      },
+      {
+        "phase": "index",
+        "result": {
+          "indexed_through": 2,
+          "processed": 1,
+          "space": {
+            "model": "nvidia/nemotron-3-embed-1b",
+            "output_dimensionality": null,
+            "provider": "nvidia"
+          },
+          "state": "complete"
+        }
+      },
+      {
+        "phase": "index",
+        "result": {
+          "indexed_through": 2,
+          "space": {
+            "model": "nvidia/nemotron-3-embed-1b",
+            "output_dimensionality": null,
+            "provider": "nvidia"
+          },
+          "state": "idle"
+        }
+      }
+    ]
+  },
+  "restart": {
+    "state": "pending",
+    "steps": 3,
+    "phases": {
+      "capture": {
+        "processed_through": 2,
+        "proposer_invoked": false,
+        "state": "idle"
+      },
+      "index": {
+        "indexed_through": 2,
+        "state": "idle"
+      },
+      "organization": {
+        "reason_code": "organization_adapter_unconfigured",
+        "state": "pending"
+      }
+    },
+    "wall_seconds": 0.536299086175859,
+    "phase_seconds": 0.504763167,
+    "outcomes": [
+      {
+        "phase": "capture",
+        "result": {
+          "processed_through": 2,
+          "proposer_invoked": false,
+          "state": "idle"
+        }
+      },
+      {
+        "phase": "organization",
+        "result": {
+          "reason_code": "organization_adapter_unconfigured",
+          "state": "pending"
+        }
+      },
+      {
+        "phase": "index",
+        "result": {
+          "indexed_through": 2,
+          "space": {
+            "model": "nvidia/nemotron-3-embed-1b",
+            "output_dimensionality": null,
+            "provider": "nvidia"
+          },
+          "state": "idle"
+        }
+      }
+    ]
+  },
+  "selection_calls": 0,
+  "embedding_calls": 1,
+  "embedding": {
+    "request": {
+      "input_type": "passage",
+      "model": "nvidia/nemotron-3-embed-1b",
+      "output_dimensionality": null,
+      "provider": "nvidia",
+      "text_hashes": [
+        "e7a65cf4c66a1f6ff1244fa0c7477ff51d5aa38a4e4ec7f5eeefb555dc43801e"
+      ]
+    },
+    "seconds": 0.33900266606360674,
+    "vectors": 1,
+    "dimensions": 2048
+  },
+  "cost_usd": null,
+  "evidence_sha256": {
+    "3042f845001fd4d7bbabec422642f6409af89e2554fdb6038dc556ef6c7fa2a6.json": "f3531c341b55b310e1d0571f78202a0ab53d8fce144889dea121dfde4334256c",
+    "first.json": "c9c31f1a18584a21587c5d7559c60885f9d0e13955810d52c19a193b2b8b9173",
+    "restart.json": "fb7551fd7d7d0a0b7ca300c8273f4259a2a3f457d8e2025f9a0a24295c3e037b"
+  },
+  "checks": {
+    "affected_tests_passed": 34,
+    "source_window_previously_qualified": true,
+    "missing_organization_remains_pending": true,
+    "uncertain_provider_dispatch_not_retried": true
+  },
+  "limits": [
+    "Organization adapter is not installed; no full-flow acceptance.",
+    "Status is a last observation, not proof that a worker is currently alive.",
+    "Telegram delivery and Sessions supervision belong to Telecodex #82 and were not exercised.",
+    "No production trigger, rollout or native learning activation."
+  ]
+}
