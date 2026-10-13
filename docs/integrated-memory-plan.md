@@ -1,6 +1,6 @@
 # Integrated operational memory
 
-Active work: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). This document records unfinished implementation, not operational qualification.
+Active work: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). PR #114 is merged. The CLI and hybrid reader are deployed to all three receivers; automatic capture/batching and real Alerts observation are still pending. The goal is active, not complete.
 
 ## Outcome
 
@@ -464,3 +464,59 @@ its own path syntax, verifies parser warnings as failures, and sets an accessibl
 working directory. Eko's initial local-model diagnostic ran from an inaccessible
 container directory; the receiver's actual selected working directory resolves
 that failure without changing the embedding model or its stored space.
+
+### Merged delivery and actual receiving access — 2026-10-13
+
+[PR #114](https://github.com/nicoechaniz/hermes-memory-kit/pull/114) merged at
+`103a5a0f5b90fc0d794a9909c2db00f0ce282de6`. CompAII, Eko and Oliva now use this
+release through their existing CLI and native MCP configuration. The actual
+native servers accepted hot reload; no global Stop, daemon restart, native
+memory activation or session-history import was performed. The receiving
+backends retain NVIDIA for CompAII/Oliva and local Model2Vec for Eko's two pools.
+
+All three actual Codex receivers searched and read through HMK when answering
+the previously selected meaningful memory question. The human questions did not
+instruct them to call HMK. Their answers recovered a shared idea and its evolution,
+a continuity agreement distinguished from present access, and an attributed
+interface idea with its unresolved implementation details. This is receiving
+access acceptance; it does not prove that the unactivated daily producer runs.
+The original semantic pipeline evidence remains qualified and was not repeated.
+
+The [safe adoption receipt](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-access-adoption.json)
+records actual search/read completion, all four live pools logically identical
+to their verified preparation snapshots, and native memory remaining off.
+Rollback on copies preserved independent later configuration and a later-memory
+witness. Real databases were never replaced with backups. CompAII's neutral
+wrapper/manifest were updated through their owning Matrix render functions;
+identity, capabilities and signed authority were unchanged.
+
+Native receiving turns took 24.541, 44.662 and 32.712 seconds. Reported native
+usage was 113,717, 90,785 and 93,564 total tokens, including 93,824, 76,544 and
+70,016 cached input tokens. These include the actual harness/tool interaction,
+not a daily consolidation charge. Invoice cost is unknown. Raw answers, prompts,
+source references and snapshots remain private on their respective bodies.
+
+Prepared but inactive: per-body provider environment references, fixed isolated
+reviewer binaries, forward-only Stop/SessionEnd capture bindings, finite worker
+profiles, systemd service/timer candidates and recovery instructions. CompAII
+uses user systemd; Eko/Oliva use their established system service manager with
+`User=agent`. The daily cadence candidate is midnight UTC. The source boundary is
+inert until specifically selected at activation; no old session can be admitted
+by a later hook event. No capture hook or timer has been installed by this rollout.
+
+Exact continuation:
+
+1. Resolve the pending human activation/scope question: candidate sources are
+   new sessions in CompAII's HMK checkout and Eko/Oliva's existing being workspace.
+   Broader scopes require explicit selection; these candidates do not imply
+   all private conversations are authorized. Keep the boundary at actual activation.
+2. Connect the real per-body finite-worker observations through the existing
+   Alerts owner, including system/user supervisor differences. The oneshot
+   handoff in Telecodex #82 is still pending and must not be reported as delivery.
+3. After the selected activation, verify the actual new-source capture and one
+   supervised resumable processing cycle on each authorized receiver, plus
+   visible failure/recovery through the installed observer. Reuse all closed
+   preservation, semantic and replay evidence. Do not restart old queues or
+   rerun comparisons merely to populate another receipt.
+
+The operational goal remains open until these runtime effects are established.
