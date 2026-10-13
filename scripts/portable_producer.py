@@ -103,8 +103,20 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             for source, row in latest.items():
                 snapshot = inbox.restore(row['revision'])
                 previous = index['source_revisions'].get(source)
-                normalized = selection.codex_sources(snapshot, source=source,
-                    previous=inbox.restore(previous) if previous else None)
+                prior = inbox.restore(previous) if previous else None
+                dependencies = [r['revision'] for r in observations
+                                if r['source'] == source and r['revision'] is not None]
+                # A late older capture or in-place rewrite cannot erase an
+                # intermediate acknowledged source or reset the novelty baseline.
+                # Stock rollouts in this profile are append-only. Preserve any
+                # divergent branch as pending until explicitly reconciled.
+                if (prior is not None and not snapshot.startswith(prior)) or any(
+                        not snapshot.startswith(inbox.restore(revision))
+                        for revision in dependencies):
+                    return {'state':'deferred','reason':'source revision branch requires reconciliation',
+                            'source':source,'processed_through':index['after'],
+                            'proposer_invoked':False}
+                normalized = selection.codex_sources(snapshot, source=source, previous=prior)
                 if normalized['unsupported']:
                     return {'state':'deferred','reason':'unsupported source items',
                             'source':source,'details':normalized['unsupported'],

@@ -161,3 +161,19 @@ def test_lost_source_dependency_detected_and_recovered_from_verified_snapshot(se
     shutil.copy2(backup,inbox.path)
     assert run(setup)['state']=='complete'
     assert inbox.restore(1)==raw
+
+
+def test_out_of_order_source_cannot_hide_newer_pending_bytes(setup):
+    memory,inbox,state,propose,binding,calls,raw=setup
+    newer=raw+(json.dumps({'type':'response_item','payload':{'type':'message','role':'user','content':[{'type':'input_text','text':'Jo later corrected the clamp account.'}]}})+'\n').encode()
+    inbox.observe('session-a',{'hook_event_name':'Stop','turn_id':'newer'},newer)
+    inbox.observe('session-a',{'hook_event_name':'Stop','turn_id':'late-old'},raw)
+    result=run(setup)
+    assert result['state']=='deferred' and 'branch' in result['reason']
+    assert not calls and not (state/'index.json').exists()
+    # A recovered complete snapshot covers both earlier acknowledged versions.
+    inbox.observe('session-a',{'hook_event_name':'Stop','turn_id':'recovered'},newer)
+    assert run(setup)['processed_through']==4
+    assert len(calls)==1
+    sources=json.loads(calls[0]['messages'][1]['content'])['sources']
+    assert any('corrected' in s['content'] for s in sources)
