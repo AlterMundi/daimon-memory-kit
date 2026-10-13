@@ -125,3 +125,40 @@ class Alerts:
                 # uncertain notice. No source work is acknowledged by this path.
                 continue
         return self.status()
+
+
+def safe_projection(inbox, *, after=0, limit=100):
+    """Bounded read-only Alerts projection for the independent receiving observer.
+
+    The caller supplies a read-only, binding-checked inbox connection. This reads
+    the producer's operational outbox, never canonical memory or source bytes.
+    Exporters own monotonic HTTP revisions; updated_ns remains source evidence.
+    Service acceptance is not recorded as Telegram delivery in this journal.
+    """
+    if type(after) is not int or after < 0 or type(limit) is not int or not 1 <= limit <= 100:
+        raise ValueError('bounded operational projection required')
+    with inbox.connect() as con:
+        rows=con.execute('''SELECT rowid,id,operation_key,phase,problem_json,state,
+            created_ns,updated_ns FROM operational_alerts WHERE rowid>?
+            ORDER BY rowid LIMIT ?''',(after,limit+1)).fetchall()
+    more=len(rows)>limit
+    rows=rows[:limit]
+    items=[]
+    for row in rows:
+        problem=json.loads(row['problem_json'])
+        code=problem.get('code')
+        phase=row['phase']
+        if code not in ACTIONS or phase not in {'capture','selection','organization','consolidation','index'}:
+            raise ValueError('unsupported operational projection')
+        if row['state'] not in {'open','resolved'}:
+            raise ValueError('unsupported processing state')
+        created=row['created_ns']//1_000_000_000
+        updated=row['updated_ns']//1_000_000_000
+        items.append(dict(incident_id=digest(['hmk-alert',row['id']]),
+            operation_id=digest(['hmk-operation',row['operation_key']]),phase=phase,
+            severity='error' if row['state']=='open' else 'info',problem_code=code,
+            summary=(f'Memory {phase} pending: {code.replace("_"," ")}.' if row['state']=='open'
+                     else f'Memory {phase} completed after explicit producer recovery.'),
+            action=ACTIONS[code],source_at=created,updated_at=max(created,updated),
+            processing_state=row['state'],work_preserved=True))
+    return dict(items=items,next_cursor=rows[-1]['rowid'] if more else None)
