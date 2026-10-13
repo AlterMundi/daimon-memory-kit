@@ -341,24 +341,85 @@ new model calls, changes to canonical database bytes or changes to retained
 provider dispatches. This establishes fresh-process reentry only; it does not
 claim fresh-source selection or conversational quality.
 
-Next uncertainties and required work:
+### Integrated correction, failed action and aged receiving comparison
 
-1. Qualify a meaningful current-source-to-conversation path through the new
-   launcher, with the relevant receiving/correction/failed-action cases. Reuse
-   completed capture, source-window, organization/replay and index evidence;
-   do not repeat already-valid consolidations or model comparisons.
-2. Connect the receiving launcher to the established credential facility and
-   explicit supervised invocation. This body's DeepSeek account is in its
-   existing Hermes pool, not its embedding environment file. No secret is copied
-   into repository profiles. Existing Alerts supervision can consume HMK status;
-   Telegram delivery, Sessions presentation and independent observation remain
-   owned by Telecodex #82. Its independently qualified fictional deployment is
-   not proof that these real HMK bindings are adopted. No HMK transport work is
-   pending here.
-3. After whole-flow acceptance, publish one coordinated merge/deployment. Adopt
-   on each authorized receiver with verified backup, rollback preserving later
-   writes and real receiving evidence. Current provider work is installable code,
-   not an activated service or demonstrated three-being rollout.
+The [integrated-flow receipt](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-flow-receipt.json)
+records one new fictional source through the actual capture handler, finite
+runtime, account reconciliation, indexing and source-free native receiving. It
+reuses the 303-record corpus. Tavi corrects seven lost readings to nine and asks
+Ilex to notify Mira; the tool attempt fails with `permission_denied` and
+`delivered=false`. A temporary terminal-color instruction is not selected.
+
+The first run exposed an integration defect: source selection directly updated
+an inferred account, replacing its source-support metadata with reported-source
+metadata. Organization then falsely found no work. Capture now rejects such
+updates and directs selection to the original source. Derived accounts retain
+reconciliation ownership. Free-form selector link notes also remain in the exact
+formation artifact instead of becoming unsupported canonical assertions; links
+remain navigation associations to inspect against originals.
+
+The corrected run updated original 301 to revision 4, retained failed action 304,
+and reconciled account 303 to revision 3 with current support references. The
+first native review supported every claim but required the full issue URL in the
+account; one bounded revision supplied it and passed final review. Source bytes,
+prior original/account revisions, all 300 distractors and SQLite integrity are
+verified. Reported experience and inferred understanding retain separate modes.
+No temporary preference was admitted as a record.
+
+A second demonstrated wiring defect was an import-time default provider leaking
+into navigation despite the selected runtime's valid embedding configuration.
+`Reader.live_pool` now accepts that configured backend; the producer supplies the
+same backend it uses for indexing. This preserves per-receiver provider/space
+selection without changing global process configuration. The formation above
+used the then-visible lexical fallback; it is not relabeled as healthy hybrid
+formation. The corrected backend path has direct regression coverage, and both
+receivers below use actual healthy hybrid retrieval with no backend errors.
+
+Two fresh isolated Codex Sol 6.1 low receivers answered the identical question
+under identical conditions: retrieval clock advanced ten years, all 300
+unrelated records dated recently in the receiving copies, relevant timestamps
+unchanged, native memory off and no source sessions or hidden rubric available.
+Before capture: Mira and her ordering proposal, seven lost readings per Tavi's
+old report, no confirmed delivery. After capture: the same person/proposal,
+**nine** lost readings explicitly correcting seven, dated limited trial and
+same-day rollback, plus the rejected comment and unconfirmed alternate contact.
+Both distinguished Tavi's report from Ilex operating the canary. Direct inspection
+found no unsupported final assertion. Stable identity and full world pointers
+remain in the retained originals/account even when the conversational answer uses
+names, handles and record citations.
+
+The qualified receiver turns took 34.81 and 19.40 seconds; aggregate native usage
+was 55,834 and 39,486 tokens respectively, including cached/context tokens. The
+corrected formation/reconciliation path used seven model calls, 103,314 reported
+tokens and 274.56 dispatch seconds. This includes source navigation and the one
+review/revision cycle, not a per-turn operating charge. The retained failed
+integration cost 42,983 tokens; its failure is not counted as success. Embedding
+and query timings are recorded separately; USD billing remains unknown. These
+are development/correction measurements, not a routine daily workload estimate.
+
+46 focused checks passed after the backend fix, covering capture ownership,
+source navigation, direct reader/backend routing, runtime and producer behavior.
+The account-reconciliation checks also passed before that routing-only change.
+This closes the identified new-source/correction/failed-action receiving case;
+reuse it and the earlier qualified cases. Another broad formation, consolidation
+or narrator comparison is not the next task.
+
+Exact continuation toward deployment:
+
+1. Connect the receiving launcher to the established credential facility and
+   supervised batching/activation. This body's DeepSeek account is in its Hermes
+   pool, not its embedding environment file. Use the existing supervisor and
+   keep the processing state/notification distinction. Prepare any activation
+   requiring additional authorization completely before requesting that decision.
+2. Complete the coordinated merge and adoption on CompAII, Eko and Oliva, with
+   each body's selected source bindings, backups, configuration rollback that
+   preserves later writes and a small actual receiving check. Keep their separate
+   existing pools and current memory access. No extra research branch or prompt
+   comparison is required before this operational work.
+3. Bind the deployed worker status to the established Alerts observer. Telegram
+   and Sessions presentation remain owned by Telecodex #82; its fictional and
+   installed read-only receiving evidence does not establish adoption of these
+   real HMK bindings. Do not build an HMK notification transport.
 
 Production remains unchanged. No old queues were resumed; no real conversations
 were ingested. The earlier stock-hook and six-case producer evidence stays valid

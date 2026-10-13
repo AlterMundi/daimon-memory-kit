@@ -225,6 +225,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 try:
                     proposal, dispatches = selection_navigation.advance(job,job_path,work,proposer,
                         database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval,
+                        backend=memory,
                         source_reader=source_windows.ContextReader(source_groups,source_budget_bytes))
                 except ProviderProblem as failure:
                     alerts=Alerts(inbox)

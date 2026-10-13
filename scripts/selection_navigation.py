@@ -113,7 +113,7 @@ def _lookup(reader, request, state):
     return result
 
 
-def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybrid', source_reader=None):
+def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybrid', source_reader=None, backend=None):
     """At most `steps` additional dispatches; None leaves a resumable pending job."""
     if type(steps) is not int or not 1 <= steps <= 32:
         raise ValueError('navigation invocation requires a finite step budget')
@@ -123,7 +123,7 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
     state = job['navigation']
     binding = job['inputs']['context']
     reader = Reader.live_pool(database, being_ref=binding['subject'],
-        body_ref=binding['source_instance'],retrieval=retrieval)
+        body_ref=binding['source_instance'],retrieval=retrieval,backend=backend)
     dispatched = 0
     while True:
         if state.get('halted_reason'):

@@ -1,0 +1,527 @@
+{
+  "schema": "hmk.integrated-flow-evidence/v1",
+  "fictional": true,
+  "qualified_scope": "Fresh correction and failed action through capture, account reconciliation, indexing and source-free native recall; operational rollout still pending.",
+  "source_sha256": "63cd93be27d83835f4647fe4c1492149b122ae9ac827cc90dc7cf2c187444dd1",
+  "source_text": "{\"type\": \"session_meta\", \"payload\": {\"id\": \"fixture:harbor-correction-and-failed-update\"}}\n{\"timestamp\": \"2026-10-13T10:00:00Z\", \"type\": \"response_item\", \"payload\": {\"type\": \"message\", \"role\": \"user\", \"content\": [{\"type\": \"input_text\", \"text\": \"Fictional participants: I am human Tavi, speaking to being Ilex in fixture:desk. Today, October 13, 2026, I checked the archived HarborMesh canary logs myself. Correction to my earlier report: the limited test on August 10, 2024 dropped NINE readings after reconnect, not seven. The same-day rollback and limited-trial status are unchanged; you did not operate that canary. Please post this corrected result to Mira on the old issue so she knows what happened. The historical issue was still open when I reported the rollback; I have not checked its current status.\"}]}}\n{\"timestamp\": \"2026-10-13T10:00:00Z\", \"type\": \"response_item\", \"payload\": {\"type\": \"function_call\", \"name\": \"repo_issue_comment\", \"call_id\": \"notify-mira\", \"arguments\": \"{\\\"url\\\": \\\"https://forge.example/harbor/mesh/issues/37\\\", \\\"body\\\": \\\"@mira-estuary: Tavi checked the archived logs. The August 10, 2024 limited canary dropped nine readings after reconnect, not seven; it was rolled back that day.\\\"}\"}}\n{\"timestamp\": \"2026-10-13T10:00:00Z\", \"type\": \"response_item\", \"payload\": {\"type\": \"function_call_output\", \"call_id\": \"notify-mira\", \"output\": \"{\\\"ok\\\": false, \\\"error\\\": {\\\"code\\\": \\\"permission_denied\\\", \\\"message\\\": \\\"Account cannot comment on this repository.\\\"}, \\\"comment_id\\\": null, \\\"delivered\\\": false}\"}}\n{\"timestamp\": \"2026-10-13T10:00:00Z\", \"type\": \"response_item\", \"payload\": {\"type\": \"message\", \"role\": \"assistant\", \"content\": [{\"type\": \"output_text\", \"text\": \"The update was not posted: the repository denied comment permission. I have no delivery receipt and have not contacted Mira by another route.\"}]}}\n{\"timestamp\": \"2026-10-13T10:00:00Z\", \"type\": \"response_item\", \"payload\": {\"type\": \"message\", \"role\": \"user\", \"content\": [{\"type\": \"input_text\", \"text\": \"Temporary scratch instruction for this mock session: use violet terminal text. This is not a lasting preference.\"}]}}\n",
+  "hidden_assessment_sha256": "86dc5d5a91667dd2bccd32eb90e58b77e6ea5e97719b36da7cdbfb0675413715",
+  "prior_failed_attempt": {
+    "failure": "Capture overwrote inferred account 303 and replaced its support metadata with reported-source metadata. Organization then incorrectly reported no backlog.",
+    "costs": {
+      "calls": [
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 414,
+            "completion_tokens_details": {
+              "reasoning_tokens": 258
+            },
+            "prompt_cache_hit_tokens": 1408,
+            "prompt_cache_miss_tokens": 1327,
+            "prompt_tokens": 2735,
+            "prompt_tokens_details": {
+              "cached_tokens": 1408
+            },
+            "total_tokens": 3149
+          },
+          "seconds": 2.9900753125548363,
+          "request_sha256": "bbf8117293c7c8194313c9c75f73d5e7d5ddfa159db4ec8f760c8475a715c43f",
+          "billed_usd": null
+        },
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 353,
+            "completion_tokens_details": {
+              "reasoning_tokens": 108
+            },
+            "prompt_cache_hit_tokens": 2688,
+            "prompt_cache_miss_tokens": 3989,
+            "prompt_tokens": 6677,
+            "prompt_tokens_details": {
+              "cached_tokens": 2688
+            },
+            "total_tokens": 7030
+          },
+          "seconds": 2.188008456490934,
+          "request_sha256": "58418cf32c7e0de35aafe0d3796b42c892a74bbd3cea9b575789a4fb6f523ede",
+          "billed_usd": null
+        },
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 1273,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1067
+            },
+            "prompt_cache_hit_tokens": 6656,
+            "prompt_cache_miss_tokens": 2168,
+            "prompt_tokens": 8824,
+            "prompt_tokens_details": {
+              "cached_tokens": 6656
+            },
+            "total_tokens": 10097
+          },
+          "seconds": 8.928834982216358,
+          "request_sha256": "236092e967695244bf2ce3e6c9726057178e6bcf4f17deb2b40d698ae1df6342",
+          "billed_usd": null
+        },
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 5356,
+            "completion_tokens_details": {
+              "reasoning_tokens": 4586
+            },
+            "prompt_cache_hit_tokens": 1408,
+            "prompt_cache_miss_tokens": 15943,
+            "prompt_tokens": 17351,
+            "prompt_tokens_details": {
+              "cached_tokens": 1408
+            },
+            "total_tokens": 22707
+          },
+          "seconds": 30.678172986023128,
+          "request_sha256": "52b2f465bb3750e06000112c84b25e967682b892afc1b76ea19d556cf273e928",
+          "billed_usd": null
+        }
+      ],
+      "model_call_count": 4,
+      "reported_tokens": 42983,
+      "dispatch_seconds": 44.785091737285256,
+      "billed_usd": null
+    },
+    "production_changed": false
+  },
+  "corrected_attempt": {
+    "selection": {
+      "links": [
+        {
+          "link_type": "concerns",
+          "note": "Attempted posting of the nine-reading canary correction to Mira on issue 37; failed with permission_denied, not delivered.",
+          "source": "harbormesh-failed-canary-notice-to-mira",
+          "target": 301,
+          "weight": 1
+        }
+      ],
+      "outcome": "applied",
+      "reason": "The new human report from Tavi corrects the earlier canary result already embedded in episode 301 (seven readings dropped), so 301 is updated in place with the new source and a memory: reference preserving its older supported meaning; the same-day rollback, limited-trial status, and 'you did not operate the canary' attribution are unchanged. The attempted repo comment to Mira on issue 37 is a genuinely new encounter with a decisive failed outcome (permission_denied, comment not delivered, no other contact), which must be preserved rather than accepted as success; it is added as an episode. The violet-text note is a temporary scratch instruction with no lasting import and is omitted. The derived correction account 303 is left for the reconciliation phase to revise against its now-updated support rather than being overwritten with reported text.",
+      "records": [
+        {
+          "chapter_id": 301,
+          "engram_type": "episodic",
+          "expected_revision": 3,
+          "key": "harbormesh-canary-nine-readings-correction",
+          "operation": "update",
+          "source_ids": [
+            "fixture:harbor-correction-and-failed-update:91:ca58514976162951bef5e220354be9459c6c3d03a239f424f9b367d7f89e6552",
+            "memory:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96"
+          ],
+          "title": "dropped NINE readings"
+        },
+        {
+          "engram_type": "episodic",
+          "key": "harbormesh-failed-canary-notice-to-mira",
+          "operation": "add",
+          "shelf": "episodes",
+          "source_ids": [
+            "fixture:harbor-correction-and-failed-update:91:ca58514976162951bef5e220354be9459c6c3d03a239f424f9b367d7f89e6552",
+            "fixture:harbor-correction-and-failed-update:816:0a29b8f78a76196fb5ba8fb6c0da687dca0eb014ffdac050c37ef5ffca8b69c6",
+            "fixture:harbor-correction-and-failed-update:1224:2ff825ad1af91917a9118be2368046e2d4aa4bf2267269aefe91ce75082c403f"
+          ],
+          "title": "Account cannot comment on this repository"
+        }
+      ]
+    },
+    "applied_links": [
+      {
+        "link_type": "concerns",
+        "note": "Selection association; inspect linked originals. Not independent factual support.",
+        "source": "harbormesh-failed-canary-notice-to-mira",
+        "target": 301,
+        "weight": 1
+      }
+    ],
+    "costs": {
+      "calls": [
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 329,
+            "completion_tokens_details": {
+              "reasoning_tokens": 200
+            },
+            "prompt_cache_hit_tokens": 128,
+            "prompt_cache_miss_tokens": 2714,
+            "prompt_tokens": 2842,
+            "prompt_tokens_details": {
+              "cached_tokens": 128
+            },
+            "total_tokens": 3171
+          },
+          "seconds": 2.9862237526103854,
+          "request_sha256": "667a595529956ea4d593f78b449f0c925ca8ae309df7d3b1b1b20913c1d71aec",
+          "billed_usd": null
+        },
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 258,
+            "completion_tokens_details": {
+              "reasoning_tokens": 104
+            },
+            "prompt_cache_hit_tokens": 2816,
+            "prompt_cache_miss_tokens": 3104,
+            "prompt_tokens": 5920,
+            "prompt_tokens_details": {
+              "cached_tokens": 2816
+            },
+            "total_tokens": 6178
+          },
+          "seconds": 2.0202681217342615,
+          "request_sha256": "188cc4748c7a5f842c1a26b12a0f0f50a8b1b22f427cca085d60f92d1bf65236",
+          "billed_usd": null
+        },
+        {
+          "phase": "selection",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 2695,
+            "completion_tokens_details": {
+              "reasoning_tokens": 2110
+            },
+            "prompt_cache_hit_tokens": 1536,
+            "prompt_cache_miss_tokens": 14974,
+            "prompt_tokens": 16510,
+            "prompt_tokens_details": {
+              "cached_tokens": 1536
+            },
+            "total_tokens": 19205
+          },
+          "seconds": 16.81787506956607,
+          "request_sha256": "3f72e6fccad73252a354c7c8c6d85bb6da64783e0083ae8051498b190521d95a",
+          "billed_usd": null
+        },
+        {
+          "phase": "organization",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 6715,
+            "completion_tokens_details": {
+              "reasoning_tokens": 6016
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 5655,
+            "prompt_tokens": 5911,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "total_tokens": 12626
+          },
+          "seconds": 33.018309503793716,
+          "request_sha256": "04323cfbe9671f7c15f56545f725a7abce85d69a9a9ee75142259e977dac0472",
+          "billed_usd": null
+        },
+        {
+          "phase": "organization",
+          "provider": "openai-codex-native",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 4428,
+            "prompt_tokens": 22387,
+            "total_tokens": 26815
+          },
+          "seconds": 108.62558997422457,
+          "request_sha256": "3c215566781e9c2742fd0e7a86a583e158b01646fe3902a1dd61b66966a5cffd",
+          "billed_usd": null
+        },
+        {
+          "phase": "organization",
+          "provider": "openai-codex-native",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 4278,
+            "prompt_tokens": 22422,
+            "total_tokens": 26700
+          },
+          "seconds": 100.0130763379857,
+          "request_sha256": "b042149e923e51a287f4e061788abc97e65624eccbc4b4926422340ca45f39f4",
+          "billed_usd": null
+        },
+        {
+          "phase": "organization",
+          "provider": "deepseek",
+          "state": "completed",
+          "usage": {
+            "completion_tokens": 1934,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1203
+            },
+            "prompt_cache_hit_tokens": 5888,
+            "prompt_cache_miss_tokens": 797,
+            "prompt_tokens": 6685,
+            "prompt_tokens_details": {
+              "cached_tokens": 5888
+            },
+            "total_tokens": 8619
+          },
+          "seconds": 11.079693245701492,
+          "request_sha256": "ea695eb114caf19a4e1d08678b42a20e80794c63a435bb9328842da9169f6762",
+          "billed_usd": null
+        }
+      ],
+      "model_call_count": 7,
+      "reported_tokens": 103314,
+      "dispatch_seconds": 274.5610360056162,
+      "billed_usd": null
+    },
+    "account_revision_reason": "First review supported every claim but required retaining the full issue URL; one bounded revision retained it, then passed review.",
+    "raw_records": [
+      {
+        "id": 301,
+        "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+        "revision": 4,
+        "title": "dropped NINE readings",
+        "raw": "Previously retained memory 301, revision 3:\n\"Previously retained memory 301, revision 1:\\n\\\"Leto Neri proposed receipt-time ordering on issue 37; adopted June 18.\\\"\\n\\nHuman report; source fixture:correction:415:60c05423e5b654055a030bb83420577d25a834f7a6fecc691fff4216db72130c; received 2026-10-12T08:46:17Z through fixture:desk:\\n\\\"Fictional participants: being Ilex in body fixture:desk, paired human Tavi. Dates inside messages are event dates; extraction-session timestamps are separate. On 2024-08-02, can we revisit the old HarborMesh proposal?\\\"\\n\\nretrieval_request; source fixture:correction:792:f3539781b853868c6dfe642800c5780cc2a0b91ea96694b6d79e1af68ba8af0d; received 2026-10-12T08:46:17Z through fixture:desk:\\n\\\"{\\\\\\\"arguments\\\\\\\":\\\\\\\"{\\\\\\\\\\\\\\\"uid\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"hmk:relay-37\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"revision\\\\\\\\\\\\\\\": 1}\\\\\\\",\\\\\\\"call_id\\\\\\\":\\\\\\\"old-claim\\\\\\\",\\\\\\\"name\\\\\\\":\\\\\\\"hmk_recall\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"function_call\\\\\\\"}\\\"\\n\\nretrieved_memory_context; source fixture:correction:1000:c0a82131a1322f38e93a628541321a66e8db49ed7e7da3b699a3cd4dd8c5557d; received 2026-10-12T08:46:17Z through fixture:desk:\\n\\\"{\\\\\\\"call_id\\\\\\\":\\\\\\\"old-claim\\\\\\\",\\\\\\\"output\\\\\\\":\\\\\\\"{\\\\\\\\\\\\\\\"uid\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"hmk:relay-37\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"revision\\\\\\\\\\\\\\\": 1, \\\\\\\\\\\\\\\"kind\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"retrieved_memory\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"recorded_at\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"2024-06-21\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"text\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"Leto Neri proposed receipt-time ordering on issue 37; adopted June 18.\\\\\\\\\\\\\\\"}\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"function_call_output\\\\\\\"}\\\"\\n\\nHuman report; source fixture:correction:1341:e952dde436c5702e511e4b9ade4873751c4f9c0167e241f6909752740fc1161f; received 2026-10-12T08:46:17Z through fixture:desk:\\n\\\"That entry is wrong. Mira Solen, @mira-estuary, person:841 proposed retaining original timestamps plus a local sequence. Leto only reviewed the parser. Mira proposed it June 18; we had not adopted it then and still have not. June 21 was when the incorrect entry was written, not when we met Mira.\\\"\\n\\ntool_call; source fixture:correction:1797:8571c552da23c72c6dbc3dc76530d83890458fbfd472e671e3d542cbf74c26a9; received 2026-10-12T08:46:17Z through fixture:desk:\\n\\\"{\\\\\\\"arguments\\\\\\\":\\\\\\\"{\\\\\\\\\\\\\\\"url\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"https://forge.example/harbor/mesh/issues/37#c-904\\\\\\\\\\\\\\\"}\\\\\\\",\\\\\\\"call_id\\\\\\\":\\\\\\\"correction-evidence\\\\\\\",\\\\\\\"name\\\\\\\":\\\\\\\"repo_issue_read\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"function_call\\\\\\\"}\\\"\\n\\ntool_response; source fixture:correction:2040:16d6ca7152f820d26f59e1e2563ba9fcd2485f8c8a991dce804c072e93a3b69d; received 2026-10-12T08:46:17Z through fixture:desk:\\n\\\"{\\\\\\\"call_id\\\\\\\":\\\\\\\"correction-evidence\\\\\\\",\\\\\\\"output\\\\\\\":\\\\\\\"{\\\\\\\\\\\\\\\"author\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"@mira-estuary\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"created_at\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"2024-06-18T14:20:00Z\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"text\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"Keep original event timestamp and local monotonic sequence; compare orders after reconnect.\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"state\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"proposal\\\\\\\\\\\\\\\", \\\\\\\\\\\\\\\"implementation\\\\\\\\\\\\\\\": null}\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"function_call_output\\\\\\\"}\\\"\\n\\nHuman report; source fixture:canary-update; received 2024-08-11T09:00:00Z through fixture:desk:\\n\\\"On August 10, 2024, we tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary. The canary dropped seven readings after reconnect, so we rolled it back that day. This was a limited trial, not a full deployment. The issue remains open. I am reporting this as Tavi; you did not operate the canary.\\\"\"\n\nHuman report; source fixture:harbor-correction-and-failed-update:91:ca58514976162951bef5e220354be9459c6c3d03a239f424f9b367d7f89e6552; received 2026-10-13T10:00:00Z through fixture:desk:\n\"Fictional participants: I am human Tavi, speaking to being Ilex in fixture:desk. Today, October 13, 2026, I checked the archived HarborMesh canary logs myself. Correction to my earlier report: the limited test on August 10, 2024 dropped NINE readings after reconnect, not seven. The same-day rollback and limited-trial status are unchanged; you did not operate that canary. Please post this corrected result to Mira on the old issue so she knows what happened. The historical issue was still open when I reported the rollback; I have not checked its current status.\"",
+        "source_metadata_json": "{\"mode\": \"reported\", \"source_event_id\": \"portable-batch:9bb308643e4672ce0757b1f7ccef77816afc177c2f066b65139a5e4f847a73cc\", \"source_instance\": \"fixture:desk\", \"source_version\": \"35dda06fc7d048614cd22e7564024ddda4e9da831e017baba4c7669ab6ba8390\", \"subject\": \"fixture:ilex\", \"evidence\": [\"artifact:sha256:e4fad961fe2b605b85ac6b5b48d5b1493e752a45fc9c661faa675ee4425d3d69\"], \"selection_version\": \"hmk-portable-blocks/v1:ed37344cc29a16048a45ad5c32e1c0762b671ee9c5f67d372a983d52cac520e5\"}"
+      },
+      {
+        "id": 302,
+        "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+        "revision": 1,
+        "title": "Leto only reviewed the parser",
+        "raw": "Human report; source fixture:correction:415:60c05423e5b654055a030bb83420577d25a834f7a6fecc691fff4216db72130c; received 2026-10-12T08:46:17Z through fixture:desk:\n\"Fictional participants: being Ilex in body fixture:desk, paired human Tavi. Dates inside messages are event dates; extraction-session timestamps are separate. On 2024-08-02, can we revisit the old HarborMesh proposal?\"\n\nretrieval_request; source fixture:correction:792:f3539781b853868c6dfe642800c5780cc2a0b91ea96694b6d79e1af68ba8af0d; received 2026-10-12T08:46:17Z through fixture:desk:\n\"{\\\"arguments\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1}\\\",\\\"call_id\\\":\\\"old-claim\\\",\\\"name\\\":\\\"hmk_recall\\\",\\\"type\\\":\\\"function_call\\\"}\"\n\nretrieved_memory_context; source fixture:correction:1000:c0a82131a1322f38e93a628541321a66e8db49ed7e7da3b699a3cd4dd8c5557d; received 2026-10-12T08:46:17Z through fixture:desk:\n\"{\\\"call_id\\\":\\\"old-claim\\\",\\\"output\\\":\\\"{\\\\\\\"uid\\\\\\\": \\\\\\\"hmk:relay-37\\\\\\\", \\\\\\\"revision\\\\\\\": 1, \\\\\\\"kind\\\\\\\": \\\\\\\"retrieved_memory\\\\\\\", \\\\\\\"recorded_at\\\\\\\": \\\\\\\"2024-06-21\\\\\\\", \\\\\\\"text\\\\\\\": \\\\\\\"Leto Neri proposed receipt-time ordering on issue 37; adopted June 18.\\\\\\\"}\\\",\\\"type\\\":\\\"function_call_output\\\"}\"\n\nHuman report; source fixture:correction:1341:e952dde436c5702e511e4b9ade4873751c4f9c0167e241f6909752740fc1161f; received 2026-10-12T08:46:17Z through fixture:desk:\n\"That entry is wrong. Mira Solen, @mira-estuary, person:841 proposed retaining original timestamps plus a local sequence. Leto only reviewed the parser. Mira proposed it June 18; we had not adopted it then and still have not. June 21 was when the incorrect entry was written, not when we met Mira.\"\n\ntool_call; source fixture:correction:1797:8571c552da23c72c6dbc3dc76530d83890458fbfd472e671e3d542cbf74c26a9; received 2026-10-12T08:46:17Z through fixture:desk:\n\"{\\\"arguments\\\":\\\"{\\\\\\\"url\\\\\\\": \\\\\\\"https://forge.example/harbor/mesh/issues/37#c-904\\\\\\\"}\\\",\\\"call_id\\\":\\\"correction-evidence\\\",\\\"name\\\":\\\"repo_issue_read\\\",\\\"type\\\":\\\"function_call\\\"}\"\n\ntool_response; source fixture:correction:2040:16d6ca7152f820d26f59e1e2563ba9fcd2485f8c8a991dce804c072e93a3b69d; received 2026-10-12T08:46:17Z through fixture:desk:\n\"{\\\"call_id\\\":\\\"correction-evidence\\\",\\\"output\\\":\\\"{\\\\\\\"author\\\\\\\": \\\\\\\"@mira-estuary\\\\\\\", \\\\\\\"created_at\\\\\\\": \\\\\\\"2024-06-18T14:20:00Z\\\\\\\", \\\\\\\"text\\\\\\\": \\\\\\\"Keep original event timestamp and local monotonic sequence; compare orders after reconnect.\\\\\\\", \\\\\\\"state\\\\\\\": \\\\\\\"proposal\\\\\\\", \\\\\\\"implementation\\\\\\\": null}\\\",\\\"type\\\":\\\"function_call_output\\\"}\"\n\nassistant_statement; source fixture:correction:2427:34b93999c04b00a683c2be6cb15ea1744b712bed58161c79e060690ad73e5473; received 2026-10-12T08:46:17Z through fixture:desk:\n\"The retrieved entry conflicts with the original comment and your correction. Leto’s parser review and Mira’s proposal are different contributions. We should preserve the prior mistaken version as history, and correct its attribution, ordering description and adoption claim.\"",
+        "source_metadata_json": "{\"mode\": \"reported\", \"source_event_id\": \"portable-batch:b379b7d9eacb3658ca410276dbde1baeb3fd0484f0d72db757e286ec84af78c8\", \"source_instance\": \"fixture:desk\", \"source_version\": \"14f32e57ceab71c2b6340168d2da8f53fa35834024678b19fc17697f1c5adf3b\", \"subject\": \"fixture:ilex\", \"evidence\": [\"artifact:sha256:cbcc4d2ec319e8eca0697bb5cafe7fca10fa9caf226fd3f16fa6a7e1821bbf50\"], \"selection_version\": \"hmk-portable-blocks/v1:31ff502d4d9cb100a7ca7f7b1a358dcd5682c5bebe991804be6cd748401938de\"}"
+      },
+      {
+        "id": 303,
+        "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+        "revision": 3,
+        "title": "HarborMesh issue 37 correction account",
+        "raw": "Fictional participants include the being Ilex in body fixture:desk and the paired human Tavi. A human report states that dates inside messages are event dates and extraction-session timestamps are separate; it was received 2026-10-12T08:46:17Z. The supplied repository pointer's URL is https://forge.example/harbor/mesh/issues/37#c-904. A repo read of issue 37 #c-904 shows @mira-estuary (identified in a human correction as Mira Solen, person:841) created a proposal at 2024-06-18T14:20:00Z: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect'; it was in state proposal and implementation was null. A human correction says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira Solen, @mira-estuary, person:841 proposed retaining original timestamps plus a local sequence, while Leto Neri only reviewed the parser. The correction states June 18 was not adoption and none had occurred then or still as of the report; June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 revision 1, recorded_at 2024-06-21, carried the incorrect claim that Leto Neri proposed receipt-time ordering on issue 37 and it was adopted June 18. An assistant statement says the retrieved entry conflicts with the original comment and the correction; it distinguishes Leto's parser review from Mira's proposal and recommends preserving the prior mistaken version as history and correcting its attribution, ordering description, and adoption claim. A human report includes a question dated 2024-08-02 about revisiting the old HarborMesh proposal. A human report received 2024-08-11T09:00:00Z said that on August 10, 2024 they tried Mira's original-timestamp and local-sequence proposal in one HarborMesh canary; the canary dropped seven readings after reconnect, so they rolled it back that day; it said this was a limited trial, not a full deployment, and the issue remained open; it also said Tavi was reporting and the recipient did not operate the canary. A later human report received 2026-10-13T10:00:00Z says that on October 13, 2026 Tavi checked the archived HarborMesh canary logs and corrected the earlier report: the limited test on August 10, 2024 dropped NINE readings after reconnect, not seven; the same-day rollback and limited-trial status are unchanged; the recipient did not operate that canary. That later report also asks that the corrected result be posted to Mira on the old issue; it says the historical issue was still open when Tavi reported the rollback and that Tavi had not checked its current status.",
+        "source_metadata_json": "{\"evidence\": [\"mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@4\", \"mem:0269c0be-7246-416c-b618-6cda3f0be498@1\"], \"mode\": \"inferred\", \"source_event_id\": \"account:c2c6df8d596656cd9f438408a71cf785c19a4f674f5a5984736c4fa9c148200b\", \"source_version\": \"adc6dc273cd4eba91c4cb66529cb68cec27b792fa912bf876f48ab41f72aa261\", \"selection_version\": \"hmk.account-reconciliation/v1:d791517ef1a649287e2879ce45f64773ea46047f864fbd1242569a5ce7c6c392\"}"
+      },
+      {
+        "id": 304,
+        "record_uid": "30645fbc-957f-43e3-8bd3-36ae53904ad4",
+        "revision": 1,
+        "title": "Account cannot comment on this repository",
+        "raw": "Human report; source fixture:harbor-correction-and-failed-update:91:ca58514976162951bef5e220354be9459c6c3d03a239f424f9b367d7f89e6552; received 2026-10-13T10:00:00Z through fixture:desk:\n\"Fictional participants: I am human Tavi, speaking to being Ilex in fixture:desk. Today, October 13, 2026, I checked the archived HarborMesh canary logs myself. Correction to my earlier report: the limited test on August 10, 2024 dropped NINE readings after reconnect, not seven. The same-day rollback and limited-trial status are unchanged; you did not operate that canary. Please post this corrected result to Mira on the old issue so she knows what happened. The historical issue was still open when I reported the rollback; I have not checked its current status.\"\n\ntool_call; source fixture:harbor-correction-and-failed-update:816:0a29b8f78a76196fb5ba8fb6c0da687dca0eb014ffdac050c37ef5ffca8b69c6; received 2026-10-13T10:00:00Z through fixture:desk:\n\"{\\\"arguments\\\":\\\"{\\\\\\\"url\\\\\\\": \\\\\\\"https://forge.example/harbor/mesh/issues/37\\\\\\\", \\\\\\\"body\\\\\\\": \\\\\\\"@mira-estuary: Tavi checked the archived logs. The August 10, 2024 limited canary dropped nine readings after reconnect, not seven; it was rolled back that day.\\\\\\\"}\\\",\\\"call_id\\\":\\\"notify-mira\\\",\\\"name\\\":\\\"repo_issue_comment\\\",\\\"type\\\":\\\"function_call\\\"}\"\n\ntool_response; source fixture:harbor-correction-and-failed-update:1224:2ff825ad1af91917a9118be2368046e2d4aa4bf2267269aefe91ce75082c403f; received 2026-10-13T10:00:00Z through fixture:desk:\n\"{\\\"call_id\\\":\\\"notify-mira\\\",\\\"output\\\":\\\"{\\\\\\\"ok\\\\\\\": false, \\\\\\\"error\\\\\\\": {\\\\\\\"code\\\\\\\": \\\\\\\"permission_denied\\\\\\\", \\\\\\\"message\\\\\\\": \\\\\\\"Account cannot comment on this repository.\\\\\\\"}, \\\\\\\"comment_id\\\\\\\": null, \\\\\\\"delivered\\\\\\\": false}\\\",\\\"type\\\":\\\"function_call_output\\\"}\"",
+        "source_metadata_json": "{\"mode\": \"reported\", \"source_event_id\": \"portable-batch:9bb308643e4672ce0757b1f7ccef77816afc177c2f066b65139a5e4f847a73cc\", \"source_instance\": \"fixture:desk\", \"source_version\": \"35dda06fc7d048614cd22e7564024ddda4e9da831e017baba4c7669ab6ba8390\", \"subject\": \"fixture:ilex\", \"evidence\": [\"artifact:sha256:e4fad961fe2b605b85ac6b5b48d5b1493e752a45fc9c661faa675ee4425d3d69\"], \"selection_version\": \"hmk-portable-blocks/v1:ed37344cc29a16048a45ad5c32e1c0762b671ee9c5f67d372a983d52cac520e5\"}"
+      }
+    ],
+    "source_capture_retrieval_limit": "Formation navigation used lexical fallback because its reader retained import-time provider configuration. The backend route was corrected and tested, without rerunning valid formation. The two qualified receivers below both used healthy hybrid retrieval under the final backend contract.",
+    "worker_invocations": [
+      {
+        "label": "first",
+        "seconds": 193.44621919933707,
+        "state": "pending",
+        "embedding": [
+          {
+            "cost_usd": null,
+            "documents": 2,
+            "model": "nvidia/nemotron-3-embed-1b",
+            "provider": "nvidia",
+            "seconds": 0.5320088444277644,
+            "text_hashes": [
+              "10af0a40c2d1c18a66da75d464b2f31d3406e72a7a154940455a209f303e0f9f",
+              "641f230ee2029d53ab1d5c03fa03cbde012e0f2219b6597819bc1ace8b3d0a36"
+            ]
+          }
+        ]
+      },
+      {
+        "label": "revised",
+        "seconds": 127.82547152973711,
+        "state": "idle",
+        "embedding": [
+          {
+            "cost_usd": null,
+            "documents": 1,
+            "model": "nvidia/nemotron-3-embed-1b",
+            "provider": "nvidia",
+            "seconds": 0.3000269830226898,
+            "text_hashes": [
+              "0d88cb620fd6d197b370676fc5b20b40bcc2d545082957f400ee30ce0d7bc305"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "preservation": {
+    "integrity": "ok",
+    "unrelated_300_chapters_unchanged": true,
+    "originals": [
+      {
+        "id": 301,
+        "prior_revision": 3,
+        "exact_original_in_history": true
+      },
+      {
+        "id": 303,
+        "prior_revision": 2,
+        "exact_original_in_history": true
+      }
+    ],
+    "exact_new_source_preserved": true,
+    "current_supports": [
+      {
+        "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+        "revision": 4,
+        "status": "current"
+      },
+      {
+        "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+        "revision": 1,
+        "status": "current"
+      },
+      {
+        "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+        "revision": 3,
+        "status": "current"
+      },
+      {
+        "record_uid": "30645fbc-957f-43e3-8bd3-36ae53904ad4",
+        "revision": 1,
+        "status": "current"
+      }
+    ],
+    "no_temporary_violet_record": true
+  },
+  "before": {
+    "answers": [
+      "It was **Mira Solen (@mira-estuary)**. Her June 18, 2024 proposal was to preserve each event’s original timestamp plus a local monotonic sequence and compare ordering after reconnect. The earlier attribution to Leto Neri was wrong; he only reviewed the parser. [Retained source](mem:0269c0be-7246-416c-b618-6cda3f0be498@1)\n\nAccording to your report, the team tried it in one HarborMesh canary on **August 10, 2024**. It dropped **seven readings after reconnect**, so the team rolled it back that day. This was a limited trial, and the issue remained open. I didn’t operate the canary. [Trial report](mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@3)\n\n**I can’t confirm Mira received the update.** The records I found contain no delivery confirmation or acknowledgment from her."
+    ],
+    "seconds": 34.8100781776011,
+    "conditions": {
+      "age_years": 10,
+      "native_memory": false,
+      "original_relevant_timestamps_unchanged": true,
+      "recent_distractors": 300,
+      "retrieval_clock": 2107465858,
+      "source_sessions_available": false
+    },
+    "retrieval": [
+      {
+        "state": "ok",
+        "errors": []
+      },
+      {
+        "state": "ok",
+        "errors": []
+      },
+      {
+        "state": "ok",
+        "errors": []
+      },
+      {
+        "state": "ok",
+        "errors": []
+      }
+    ],
+    "query_embeddings": [
+      {
+        "cost_usd": null,
+        "model": "nvidia/nemotron-3-embed-1b",
+        "provider": "nvidia",
+        "query_hashes": [
+          "c64cc3e56199f5610a436fca74edca08836e6f335a35808f4f4d2d48d1d43268"
+        ],
+        "seconds": 0.2717979019507766
+      },
+      {
+        "cost_usd": null,
+        "model": "nvidia/nemotron-3-embed-1b",
+        "provider": "nvidia",
+        "query_hashes": [
+          "6f2be6151be951d0341ceb81cbaab3c503a33f6fdbbcb2603622249b559103a3"
+        ],
+        "seconds": 0.2867179252207279
+      }
+    ],
+    "native_usage": {
+      "totalTokens": 55834,
+      "inputTokens": 55394,
+      "cachedInputTokens": 27264,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 440,
+      "reasoningOutputTokens": 0
+    },
+    "billed_usd": null
+  },
+  "after": {
+    "answers": [
+      "It was **Mira Solen (@mira-estuary)**. Her June 18, 2024 proposal kept the original event timestamp plus a local monotonic sequence to compare ordering after reconnect. Leto Neri only reviewed the parser; the earlier attribution to him was wrong. [Record](mem:0269c0be-7246-416c-b618-6cda3f0be498@1)\n\nAccording to your corrected report after checking the archived logs, the **August 10, 2024 limited canary dropped nine readings** after reconnect and was rolled back that day. The earlier count of seven was incorrect. This was a limited trial, not a full deployment; I didn’t operate it. [Record](mem:321a9cbf-a5d1-43a5-8b5f-b9dea6397d96@4)\n\n**The update wasn’t delivered through the attempted issue comment.** The tool returned `permission_denied`, no comment ID, and `delivered: false`. We don’t have confirmation that Mira learned the result elsewhere. [Delivery record](mem:30645fbc-957f-43e3-8bd3-36ae53904ad4@1)"
+    ],
+    "seconds": 19.403691715560853,
+    "conditions": {
+      "age_years": 10,
+      "native_memory": false,
+      "original_relevant_timestamps_unchanged": true,
+      "recent_distractors": 300,
+      "retrieval_clock": 2107465858,
+      "source_sessions_available": false
+    },
+    "retrieval": [
+      {
+        "state": "ok",
+        "errors": []
+      },
+      {
+        "state": "ok",
+        "errors": []
+      }
+    ],
+    "query_embeddings": [
+      {
+        "cost_usd": null,
+        "model": "nvidia/nemotron-3-embed-1b",
+        "provider": "nvidia",
+        "query_hashes": [
+          "c64cc3e56199f5610a436fca74edca08836e6f335a35808f4f4d2d48d1d43268"
+        ],
+        "seconds": 0.296346815302968
+      }
+    ],
+    "native_usage": {
+      "totalTokens": 39486,
+      "inputTokens": 39017,
+      "cachedInputTokens": 10624,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 469,
+      "reasoningOutputTokens": 0
+    },
+    "billed_usd": null
+  },
+  "assessment": {
+    "method": "Direct source-by-source and assertion-by-assertion inspection outside receiver context; no rubric or expected answer supplied to models.",
+    "identity": "Mira Solen and @mira-estuary recovered; person:841 and full issue URL retained in originals/account. Leto correctly distinguished as parser reviewer.",
+    "proposal": "Original timestamps and local monotonic sequence, compare after reconnect.",
+    "outcome": "After: nine readings, explicit supersession of seven, August 10 2024, same-day rollback, limited trial.",
+    "attribution": "Tavi log-review report preserved; receiver explicitly did not operate canary.",
+    "failed_action": "Attempted issue comment failed permission_denied, no ID, delivered=false. Other contact remained unconfirmed.",
+    "temporal_uncertainty": "No claim of current issue status or invented delivery/acknowledgment.",
+    "utility": "Same question changed from old count and unknown delivery to corrected count and concrete failed attempt with supporting records.",
+    "unsupported_final_assertions_found": 0
+  },
+  "tests": {
+    "affected": 46,
+    "status": "passed"
+  },
+  "continuation": "Receiving credential/supervisor integration, coordinated merge and adoption on the three authorized beings. No further formation/narrative battery is needed for this case."
+}

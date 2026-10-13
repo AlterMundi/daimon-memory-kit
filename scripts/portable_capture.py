@@ -105,6 +105,14 @@ different namespace and never justify updating canon on their own. Existing cano
 attendance, and a separate being's experience is not our own. Keep attribution and
 uncertainty in source evidence rather than resolving it by invention.
 
+Inferred/generated accounts belong to the reconciliation phase, not direct source
+capture. Read their support references to find the relevant original. When a new
+report corrects that original, update it with the new source and memory:<original>
+so its earlier meaning stays available; reconciliation then updates dependent
+accounts with reviewed prose. Do not replace a derived account with reported text.
+Link types are navigation associations, not factual proof. Free-form link notes
+are kept only in formation evidence; do not rely on them to preserve facts.
+
 Every record requires key, operation, title and source_ids. operation is add or
 update. For add include shelf (episodes for encounters, library for accounts or
 learning). For update use supplied integer chapter_id and expected_revision;
@@ -196,6 +204,11 @@ def selected_decision(value, sources, canon):
             original = current.get(record.get('chapter_id'))
             if original is None or record.get('expected_revision') != original['revision']:
                 raise ValueError('update requires a completely read current canonical record')
+            metadata = json.loads(original.get('source_metadata_json') or '{}')
+            if metadata.get('mode') in {'inferred','generated'}:
+                raise ValueError('capture cannot overwrite an inferred/generated account; read and update '
+                    'the relevant original source with its new correction, preserving memory:<source>; '
+                    'account reconciliation owns derived prose and its support history')
         if any(available.get(ref, {}).get('retrieved_context') for ref in record.get('source_ids', [])):
             raise ValueError('retrieved memory is context, not selectable intake evidence')
         if not allowed.intersection(record.get('source_ids', [])):
@@ -247,6 +260,10 @@ def selected_decision(value, sources, canon):
     links = []
     for link in decision.get('links', []):
         link = dict(link)
+        # Free-form model notes are not source blocks. Keep their untouched
+        # proposal in the formation artifact, not as unsupported canonical facts.
+        # Associations remain navigation hints; linked originals establish meaning.
+        link['note'] = 'Selection association; inspect linked originals. Not independent factual support.'
         link['source'] = aliases.get(link['source'], link['source'])
         link['target'] = aliases.get(link['target'], link['target'])
         if link['source'] != link['target'] and link not in links:

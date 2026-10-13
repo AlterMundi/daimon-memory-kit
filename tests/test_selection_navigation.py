@@ -13,6 +13,25 @@ def lookup(action='search', query='Jo clamp', uid='', offset=0, revision=0):
         record_uid=uid,offset=offset,expected_revision=revision)]}}
 
 
+def test_navigation_uses_launchers_backend_not_import_time_provider(setup,monkeypatch):
+    import memory_navigation
+    import deep_recall
+    memory,inbox,state,_,binding,_,_=setup
+    assert memory is not deep_recall.memory
+    observed=[]
+    def search(backend,query,**kwargs):
+        observed.append(backend)
+        assert backend is memory
+        return dict(items=[],historical_matches=[],retrieval_status='ok',backend_errors=[],coverage='fixture')
+    monkeypatch.setattr(memory_navigation,'search',search)
+    calls=[]
+    def propose(request,directory):
+        calls.append(request)
+        return lookup() if len(calls)==1 else {'selection':dict(outcome='omitted',reason='Fixture',records=[],links=[])}
+    assert process_once(memory,inbox,state,propose,binding)['state']=='complete'
+    assert observed==[memory]
+
+
 def correcting_selector(cid, uid, calls):
     def propose(request, directory):
         calls.append(request)

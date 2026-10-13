@@ -95,7 +95,7 @@ class Reader:
         self.retrieval = retrieval
 
     @classmethod
-    def live_pool(cls, database, *, being_ref, body_ref, max_bytes=12000, retrieval='lexical'):
+    def live_pool(cls, database, *, being_ref, body_ref, max_bytes=12000, retrieval='lexical', backend=None):
         """One request against an owner-selected live pool, including later writes.
 
         Applicability stays unknown unless retained explicitly. Matrix rows keep
@@ -106,6 +106,10 @@ class Reader:
         if not all(isinstance(x, str) and x for x in (being_ref, body_ref)):
             raise ValueError("explicit owner/body binding required")
         result = cls.__new__(cls)
+        # The owning launcher may select a separately configured provider/space.
+        # Reuse that same backend for navigation and indexing; an import-time
+        # default must not silently select another credential environment.
+        result.backend = backend if backend is not None else memory
         result.database = database
         result.selection = dict(being_ref=being_ref, body_ref=body_ref)
         result.entries = {}
@@ -145,6 +149,7 @@ class Reader:
 
     def call(self, arguments):
         started = time.monotonic()
+        memory = getattr(self, 'backend', globals()['memory'])
         try:
             if (
                 not isinstance(arguments, dict)

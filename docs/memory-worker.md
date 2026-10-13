@@ -189,3 +189,22 @@ exit is a completed invocation, not a missing long-running daemon. Preserve inbo
 canonical pool, worker directory and private profile across process restarts and
 configuration rollback. Do not add `Restart=always` to retry failed paid work.
 This delivery installs no service, timer, hook or source capture binding.
+
+
+## Source ownership and configured retrieval
+
+Source-block capture may update original reported records, retaining earlier
+meaning and history. It cannot overwrite an inferred/generated account and erase
+its support metadata; such accounts belong to the reviewed reconciliation phase.
+Selector link prose remains in formation evidence. Canonical link notes identify
+navigation associations, not independent factual support.
+
+The runtime supplies its configured memory backend to navigation as well as
+indexing. A reader imported before the private profile was selected must not use
+an unrelated default credential environment. `Reader.live_pool(..., backend=...)`
+provides this explicit binding; existing default-reader callers remain compatible.
+
+The integrated fictional correction/failed-action case and ten-year-clock
+receiving comparison are qualified in `integrated-memory-plan.md`. Receiving
+supervision, secret routing and the three live installations remain the next
+work; repeating that completed semantic case is unnecessary.
