@@ -1,6 +1,6 @@
 # Durable recall across a being's bodies
 
-Current native-producer goal: the [2026-10-12 V1/V2 quality gate](../research/agent-memory-2026-10-06/pilots/2026-10-12-native-producer-qualification.md) selects V2 for a bounded extraction-only durable handoff. V1 omitted the encounter and failed communication; V2 preserved all four sources. PR #106 delivers experimental receiving intake through existing HMK APIs, with interrupted-delivery/replay/correction checks. The native extraction-only producer is being compiled and qualified; the integrated native-to-HMK closing test remains next. No production activation or completed bridge is claimed.
+Current native-producer delivery, 2026-10-13: [the bounded native-to-HMK handoff is qualified](../research/agent-memory-2026-10-06/pilots/2026-10-13-native-candidate-delivery.md). Reuse the four-case V1/V2 quality gate and the compiled two-case delivery: immutable originals, interrupted intake/replay, explicit correction/history, novel-only selection, restart/configuration rollback and source-free conversational recall passed. Selection used existing APIs under explicit evaluator control; no automatic selector or production rollout is claimed. The next optional delivery is a bounded owner-approved selection policy and explicit coordinator, with archive lifecycle and current official Codex integration addressed before separately authorized real-source adoption. Production CompAII/Eko/Oliva remains unchanged; native generation stays off.
 
 Current delivery, 2026-10-12: [contextual HMK recall is adopted](../research/agent-memory-2026-10-06/pilots/2026-10-12-live-mcp-adoption.md)
 for CompAII, Eko and Oliva through native MCP over their own live pools. All three
@@ -14,7 +14,7 @@ and all stage evidence. See the [current continuation](codex-hmk-provider-plan.m
 and HMK #11: investigate a demonstrated everyday retrieval/capture gap next,
 without reopening valid comparisons or Telecodex's separate `/merge` work.
 
-Follow-up diagnosis, 2026-10-12: [native extraction into HMK](codex-native-producer-diagnostic.md)
+Historical diagnosis, 2026-10-12 (superseded by the qualified delivery above): [native extraction into HMK](codex-native-producer-diagnostic.md)
 has a concrete transaction seam, but no established hook or working automatic
 adapter. The next proposed goal tests actual fictional extraction quality first;
 reliable delivery is conditional on useful results. Production learning remains

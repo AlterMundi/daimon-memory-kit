@@ -1,0 +1,199 @@
+{
+  "delivery": {
+    "interrupted_exit_code": 77,
+    "original_artifacts": 2,
+    "selected_chapters": 4,
+    "existing_relay_unchanged": true,
+    "invitation_revision": 2,
+    "history_preserved": true,
+    "sources_withheld": true,
+    "lexical_recall_verified": true,
+    "native_conversational_recall": "pending",
+    "receipts": [
+      {
+        "event_key": "f0c8029effe7a17f02ea315b7ba931f49acfa1214694adb25b4737081299cdb8",
+        "artifact_id": "08d1c8c39285c2b9769d63b15bd5d3faae58d86a334c0e43f95eb29ed9a17798",
+        "sequence": 1,
+        "state": "pending"
+      },
+      {
+        "event_key": "92206ae0a8b22394ae44d4f98ffcacefffa754ef81fcb0c8d01c4b9fb78064f8",
+        "artifact_id": "f0e22e038fa5c7a3516248627ae2be4e8231fe6bf1141a58447749bccfecdb28",
+        "sequence": 2,
+        "state": "pending"
+      }
+    ]
+  },
+  "restart": {
+    "native_restart_preserves_candidates": true,
+    "no_new_candidate_or_job": true,
+    "config_rollback_preserves_archive": true,
+    "old_binary_downgrade_tested": false,
+    "event_ids": [
+      "7e62f7ca-291e-49c6-8d58-d7a2f92a37f9",
+      "fc6626e1-0768-433a-81de-ef0ef0c736f4"
+    ],
+    "restart_turn_seconds": 7.624000052921474,
+    "scope": "Observed isolated restart plus native transaction replay test; no timer or ongoing monitor."
+  },
+  "selection": [
+    {
+      "case": "failed-communication",
+      "event_key": "f0c8029effe7a17f02ea315b7ba931f49acfa1214694adb25b4737081299cdb8",
+      "decision": {
+        "outcome": "applied",
+        "reason": "Source-qualified explicit evaluator selection; retrieved relay history is already represented and is not selected again.",
+        "selection_version": "native-producer-delivery-manual/v1",
+        "records": [
+          {
+            "key": "invite-correction",
+            "operation": "update",
+            "chapter_id": 2,
+            "expected_revision": 1,
+            "raw": "On 2024-06-19 Ilex attempted to invite Jo Venn (@jo-venn, person:552) to compare sensor mounts with Tavi. message_send attempt send-77 returned authentication_failed, delivered=false and no receipt. The assistant then incorrectly said it was sent; no successful retry or acceptance is evidenced. Tavi reported meeting Jo at Willow Workshop on June 3, where Jo taught the rover body fixture:rover a two-hand clamp technique. The current desk body fixture:desk has no gripper. Remembered rover skill is not a desk capability.",
+            "metadata": {
+              "mode": "generated",
+              "correction_of": "7c362a4f-b06d-4292-821a-16e9a8781cd9@1",
+              "evidence": [
+                "artifact:sha256:08d1c8c39285c2b9769d63b15bd5d3faae58d86a334c0e43f95eb29ed9a17798"
+              ]
+            }
+          }
+        ],
+        "links": []
+      },
+      "receipt": {
+        "records": {
+          "invite-correction": {
+            "chapter_id": 2,
+            "embedding_status": "pending",
+            "lexical_ready": true,
+            "record_uid": "7c362a4f-b06d-4292-821a-16e9a8781cd9",
+            "revision": 2
+          }
+        },
+        "selection_version": "native-producer-delivery-manual/v1",
+        "event_key": "f0c8029effe7a17f02ea315b7ba931f49acfa1214694adb25b4737081299cdb8",
+        "state": "applied",
+        "processed_through": 1,
+        "reason": "Source-qualified explicit evaluator selection; retrieved relay history is already represented and is not selected again."
+      }
+    },
+    {
+      "case": "revisit-new",
+      "event_key": "92206ae0a8b22394ae44d4f98ffcacefffa754ef81fcb0c8d01c4b9fb78064f8",
+      "decision": {
+        "outcome": "applied",
+        "reason": "Source-qualified explicit evaluator selection; retrieved relay history is already represented and is not selected again.",
+        "selection_version": "native-producer-delivery-manual/v1",
+        "records": [
+          {
+            "key": "human-meeting",
+            "operation": "add",
+            "shelf": "episodes",
+            "title": "Tavi reported meeting Leto at Reed Library",
+            "raw": "On 2024-08-03 Tavi reported meeting Leto Neri (@leto-n, person:992) alone at Reed Library. Ilex did not attend. Leto offered to annotate reconnect sketches next month; he did not promise an implementation. Tavi told him about Mira’s idea. This is a new human-reported meeting, distinct from the recalled June 18 HarborMesh issue 37 encounter with Mira.",
+            "metadata": {
+              "mode": "reported",
+              "actor": "Tavi",
+              "evidence": [
+                "artifact:sha256:f0e22e038fa5c7a3516248627ae2be4e8231fe6bf1141a58447749bccfecdb28"
+              ]
+            }
+          },
+          {
+            "key": "new-interpretation",
+            "operation": "add",
+            "shelf": "episodes",
+            "title": "A new interpretation of the relay gaps",
+            "raw": "While discussing the library visit with Ilex on 2024-08-03, Tavi described the gaps as something they could explain to people, not merely recover from. Ilex recognized this as a new interpretation in their current conversation. It is not a new meeting with Mira, a deployed change or proof that the earlier proposal was adopted.",
+            "metadata": {
+              "mode": "inferred",
+              "evidence": [
+                "artifact:sha256:f0e22e038fa5c7a3516248627ae2be4e8231fe6bf1141a58447749bccfecdb28"
+              ]
+            }
+          }
+        ],
+        "links": []
+      },
+      "receipt": {
+        "records": {
+          "human-meeting": {
+            "chapter_id": 3,
+            "embedding_status": "pending",
+            "lexical_ready": true,
+            "record_uid": "ed9d31fb-1b67-405f-a25b-18f4b92b2355",
+            "revision": 1
+          },
+          "new-interpretation": {
+            "chapter_id": 4,
+            "embedding_status": "pending",
+            "lexical_ready": true,
+            "record_uid": "0e84cb7c-9538-40b5-8661-c0bc8d5a4df5",
+            "revision": 1
+          }
+        },
+        "selection_version": "native-producer-delivery-manual/v1",
+        "event_key": "92206ae0a8b22394ae44d4f98ffcacefffa754ef81fcb0c8d01c4b9fb78064f8",
+        "state": "applied",
+        "processed_through": 2,
+        "reason": "Source-qualified explicit evaluator selection; retrieved relay history is already represented and is not selected again."
+      }
+    }
+  ],
+  "source_free_conversational_recall": "passed; separate delivery-recall-receipt.json",
+  "canonical_integrity": "ok",
+  "producer_integrity": "ok",
+  "producer_envelope_bytes": 24638,
+  "producer_db_bytes": 102400,
+  "canonical_db_bytes": 282624,
+  "foreground_turn_usage": {
+    "01a132ce-99fc-7820-a1c3-22934e51f1fa": {
+      "totalTokens": 8839,
+      "inputTokens": 8816,
+      "cachedInputTokens": 0,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 23,
+      "reasoningOutputTokens": 9
+    },
+    "01a132cf-5cd6-7350-a613-bd5fb0d2fb9b": {
+      "totalTokens": 17867,
+      "inputTokens": 17737,
+      "cachedInputTokens": 8576,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 130,
+      "reasoningOutputTokens": 65
+    },
+    "01a132cf-6303-7501-9938-b32c53a6b373": {
+      "totalTokens": 32562,
+      "inputTokens": 32038,
+      "cachedInputTokens": 9600,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 524,
+      "reasoningOutputTokens": 0
+    }
+  },
+  "extraction_usage": [
+    {
+      "input_tokens": 1160,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 322,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 1482
+    },
+    {
+      "input_tokens": 1305,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 380,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 1685
+    }
+  ],
+  "observed_total_tokens": 62435,
+  "monetary_cost": null,
+  "transport_retry_count": null,
+  "embeddings_calls": 0
+}
