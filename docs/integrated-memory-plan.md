@@ -143,12 +143,24 @@ compact current account may improve their representation; this remains a
 hypothesis for the existing consolidation path, not a reason to lower thresholds.
 No broad comparison, aging run or production acceptance is claimed here.
 
+A [single follow-up consolidation](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-account-receipt.json)
+reused the existing native organization contract and `consolidationctl` API.
+Outside clause inspection found the account supported; replay and isolated
+rollback verified original/history preservation. Only its new vector was added;
+both frozen query vectors and the threshold were reused. Targeted recall surfaces
+the new account, but the weak paraphrase still returns below threshold. This
+rejects compactness alone as a sufficient fix. One DeepSeek call used 8,257 tokens
+and 21.30 seconds HTTP, plus one document embedding; no further consolidation
+passes or narrative calls were run. Candidate relevance/reranking is the next
+component to diagnose; this finding does not qualify the account for deployment.
+
 Next uncertainties and required work:
 
-1. Integrate supported compact accounts through the existing consolidation API
-   and compare sparse recall against the now-indexed unchanged diagnostic. Resolve
-   numeric distractor admission without weakening relevance. Do not repeat the
-   successful capture or initial fixture indexing.
+1. Diagnose candidate relevance/reranking using the retained query vectors and
+   positive/negative controls. Relevant candidates are found but not admitted;
+   one source-supported compact account did not resolve that failure. Resolve
+   weak recall and numeric distractor admission without lowering criteria. Do not
+   repeat the successful capture, initial index build or this consolidation.
 2. Integrate bounded source-delta context and useful dependent-account
    consolidation through existing APIs; wire the selected index phase into the launcher. Define launcher
    ownership, batching and backlog handling before automatic processing.

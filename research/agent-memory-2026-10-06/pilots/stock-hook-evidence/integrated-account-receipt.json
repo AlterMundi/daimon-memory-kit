@@ -1,0 +1,162 @@
+{
+  "schema": "hmk.integrated-account-diagnostic/v1",
+  "fictional": true,
+  "qualification": false,
+  "hypothesis": "A source-supported compact current account improves sparse retrieval while retaining original history.",
+  "source_ids": [
+    301,
+    302
+  ],
+  "proposal": {
+    "decision": {
+      "links": [],
+      "outcome": "applied",
+      "reason": "No current account exists; add a compact semantic HarborMesh project account from manifest records 301 and 302, preserving the earlier mistaken memory, later human correction, repo evidence, and Ilex-subject assistant statement without treating correction receipt as new observation.",
+      "records": [
+        {
+          "engram_type": "semantic",
+          "key": "account",
+          "metadata": {
+            "mode": "inferred"
+          },
+          "operation": "add",
+          "raw": "HarborMesh project (fictional). Human report lists participants: being Ilex in body fixture:desk and paired human Tavi; dates in messages are event dates, while receipt via fixture:desk is 2026-10-12T08:46:17Z. Issue 37 #c-904 repo read shows @mira-estuary (Mira Solen, person:841) created 2024-06-18T14:20:00Z proposal: 'Keep original event timestamp and local monotonic sequence; compare orders after reconnect.' State proposal; implementation null. A human correction (source 1341) says retained memory 301's claim—'Leto Neri proposed receipt-time ordering on issue 37; adopted June 18'—is wrong: Mira proposed retaining original timestamps plus a local sequence; Leto only reviewed the parser; June 18 was not adoption, and none had occurred then or still as of report. June 21 was when the incorrect entry was written, not when they met Mira. Retrieved hmk:relay-37 rev1 (recorded_at 2024-06-21) carried the incorrect claim. Assistant statement (source 2427, subject fixture:ilex) says retrieved entry conflicts with original comment and correction; distinguishes Leto's parser review from Mira's proposal; recommends preserving prior mistaken version as history and correcting attribution, ordering, adoption claim. A human report includes a 2024-08-02 question to revisit the old HarborMesh proposal; outcome unstated. Limits: Ilex/Tavi meeting, adoption, implementation, deployment, or corroboration beyond cited sources remain unestablished.",
+          "shelf": "library",
+          "title": "HarborMesh issue 37 correction account"
+        }
+      ]
+    },
+    "supports_by_record": {
+      "account": [
+        301,
+        302
+      ]
+    }
+  },
+  "inspection": {
+    "limits": [
+      "Receipt time is retained as receipt, not event time.",
+      "Proposal/non-adoption bounded to the human report.",
+      "Derived account is not independent corroboration.",
+      "Compactness and retrieval utility remain unproven."
+    ],
+    "method": "Direct comparison of every clause with complete manifest outside receiver context",
+    "proposal_hash": "54ec9ef572a61fbe8f1273707ba8576265246570c6928305bb68727a66ca1c8a",
+    "result": "supported"
+  },
+  "application": {
+    "receipt": {
+      "records": {
+        "account": {
+          "chapter_id": 303,
+          "embedding_status": "pending",
+          "lexical_ready": true,
+          "record_uid": "5095791e-be5d-4d71-9d1b-c2c1de54b1b2",
+          "revision": 1
+        }
+      },
+      "selection_version": "fictional-flash-native-organization/v1",
+      "event_key": "4e4059d68fa17ab250fbd306857b8bb515dcd64349aad721ae141a7af554c855",
+      "state": "applied",
+      "processed_through": 1,
+      "reason": "No current account exists; add a compact semantic HarborMesh project account from manifest records 301 and 302, preserving the earlier mistaken memory, later human correction, repo evidence, and Ilex-subject assistant statement without treating correction receipt as new observation."
+    },
+    "replay_equal": true,
+    "rollback_verified": true,
+    "before": {
+      "books": {
+        "rows": 302,
+        "sha256": "d54c09c712a4e7010eb1c1799faf936d5e9ff994ea98a82be6c8eaa9bf38377a"
+      },
+      "chapter_links": {
+        "rows": 2,
+        "sha256": "17e7957275bcdbfe0d8fd4f16b6c52f9d3f713eaee4f4da1d78fcc5b02d611c5"
+      },
+      "chapter_revisions": {
+        "rows": 1,
+        "sha256": "cbd4f78e6832d5f02f24fb020d26d8a73d91428e9177ea25b439497dc7358bdc"
+      },
+      "chapters": {
+        "rows": 302,
+        "sha256": "2dcdea99690404310c82af43406479370445c0248efc4e8656163e4dabbb6190"
+      },
+      "shelves": {
+        "rows": 11,
+        "sha256": "d2253533a2924baafc7cd503b2b654a8906de77fc092ce5c77729600ff237b43"
+      }
+    },
+    "after": {
+      "books": {
+        "rows": 303,
+        "sha256": "ba23687e3d460ca13884bfae845d6a05b848eb5eb707c84ebe2a91e5bcd15098"
+      },
+      "chapter_links": {
+        "rows": 4,
+        "sha256": "da3a03b1e324c65f7720bbb4db950885079d5f990332db7f5af05b09f8bd981b"
+      },
+      "chapter_revisions": {
+        "rows": 1,
+        "sha256": "cbd4f78e6832d5f02f24fb020d26d8a73d91428e9177ea25b439497dc7358bdc"
+      },
+      "chapters": {
+        "rows": 303,
+        "sha256": "87e8c17d9d42536684e2a496b08d0d4f16a799985eb6ae0e5332843c8f160afd"
+      },
+      "shelves": {
+        "rows": 11,
+        "sha256": "d2253533a2924baafc7cd503b2b654a8906de77fc092ce5c77729600ff237b43"
+      }
+    }
+  },
+  "retrieval": [
+    {
+      "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+      "ids": [],
+      "reason": "below_threshold",
+      "threshold": 0.4
+    },
+    {
+      "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+      "ids": [
+        303,
+        301,
+        302
+      ],
+      "reason": "ok",
+      "threshold": 0.4
+    }
+  ],
+  "conditions": {
+    "same_query_vectors": true,
+    "same_embedding_provider_model": true,
+    "same_threshold": true,
+    "existing_records_and_vectors_preserved": true,
+    "old_passes_repeated": false,
+    "production_changed": false
+  },
+  "costs": {
+    "consolidation_model": "deepseek-flash",
+    "reasoning_effort": "low",
+    "calls": 1,
+    "usage": {
+      "prompt_tokens": 4792,
+      "completion_tokens": 3465,
+      "total_tokens": 8257,
+      "prompt_tokens_details": {
+        "cached_tokens": 640
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2995
+      },
+      "prompt_cache_hit_tokens": 640,
+      "prompt_cache_miss_tokens": 4152
+    },
+    "seconds": 21.297301840037107,
+    "cost_usd": null,
+    "additional_embedding_calls": 1,
+    "additional_embedding_seconds": 0.31644098833203316,
+    "additional_query_embedding_calls": 0
+  },
+  "result": "Supported account added through existing API with replay and rollback verification. Targeted recall surfaces it, but weak paraphrase still returns below_threshold. Compact representation alone did not resolve the demonstrated failure.",
+  "next_decision": "Investigate candidate relevance/reranking using retained candidates and positive/negative controls. Do not lower admission criteria or repeat consolidation hoping for a different retrieval outcome."
+}
