@@ -49,6 +49,10 @@ def test_real_stdio_protocol_and_readonly_annotation(setup, tmp_path):
                 result = payload["pools"][0]["result"]
                 assert result["raw"] == "The invitation failed."
                 assert result["complete"] is True
+                checkpoint=await session.call_tool('hmk_recall',dict(action='checkpoint',pool='main',record_uid=uid))
+                metadata=checkpoint.structuredContent or json.loads(checkpoint.content[0].text)
+                assert metadata['pools'][0]['result']['content_loaded'] is False
+                assert metadata['pools'][0]['result']['current_reference']['revision']==1
 
     asyncio.run(exercise())
     assert mc.DB_PATH.read_bytes() == before
@@ -61,6 +65,47 @@ def binding(mc):
         body_ref="fixture:body:voice",
         pools=[dict(name="main", database=str(mc.DB_PATH))],
     )
+
+
+def test_checkpoint_reads_only_revision_not_contents_and_sees_corrections(setup, monkeypatch):
+    mc, _ = setup
+    from deep_recall import Reader
+    cid=mc.add_text('library','Private title','Private original content',metadata={'source_instance':'fixture:private-source'})
+    uid=mc._read_chapter(cid)['record_uid']
+    reader=Reader.live_pool(mc.DB_PATH,being_ref='fixture:being',body_ref='fixture:body',backend=mc)
+    before=mc.DB_PATH.read_bytes()
+    with monkeypatch.context() as patch:
+        patch.setattr(mc,'_read_chapter',lambda *_:pytest.fail('Checkpoint loaded original text'))
+        result=reader.call(dict(action='checkpoint',query='',record_uid=uid,offset=0))
+    assert result['status']=='ok' and result['current_reference']=={'record_uid':uid,'revision':1}
+    assert result['metadata_only'] is True and result['content_loaded'] is False
+    assert not any(key in result for key in ('record','raw','title','neighbors','applicability'))
+    assert mc.DB_PATH.read_bytes()==before
+    mc.update_chapter(cid,content='Corrected private content')
+    changed=reader.call(dict(action='checkpoint',query='',record_uid=uid,offset=0))
+    assert changed['current_reference']['revision']==2
+    assert reader.call(dict(action='checkpoint',query='',record_uid='missing',offset=0))['status']=='not_in_selection'
+    assert reader.call(dict(action='checkpoint',query='unused',record_uid=uid,offset=0))['status']=='invalid_request'
+
+
+def test_checkpoint_pool_revision_guard_and_foreground_cli(setup, tmp_path):
+    import subprocess
+    mc, _ = setup
+    from hmk_mcp import recall
+    cid=mc.add_text('library','Fixture memory','Exact private fixture original')
+    uid=mc._read_chapter(cid)['record_uid'];selected=binding(mc)
+    result=recall(selected,action='checkpoint',pool='main',record_uid=uid)['pools'][0]['result']
+    assert result['current_reference']['revision']==1 and 'raw' not in result
+    assert recall(selected,action='checkpoint',pool='unselected',record_uid=uid)['status']=='invalid_request'
+    assert recall(selected,action='checkpoint',pool='main',record_uid=uid,expected_revision=2)['pools'][0]['result']['status']=='revision_changed'
+    file=tmp_path/'selected.json';file.write_text(json.dumps(selected));file.chmod(0o600)
+    before=mc.DB_PATH.read_bytes()
+    command=[sys.executable,str(Path(__file__).resolve().parents[1]/'scripts/hmk_mcp.py'),'--binding',str(file),'--request-stdin']
+    response=subprocess.run(command,input=json.dumps({'action':'checkpoint','pool':'main','record_uid':uid}),text=True,capture_output=True,check=True)
+    assert json.loads(response.stdout)['pools'][0]['result']['current_reference']['revision']==1
+    assert 'Exact private fixture original' not in response.stdout and mc.DB_PATH.read_bytes()==before
+    denied=subprocess.run(command,input=json.dumps({'action':'checkpoint','pool':'main','record_uid':uid,'database':'another'}),text=True,capture_output=True)
+    assert denied.returncode!=0
 
 
 def test_live_reader_sees_later_writes_corrections_and_history_without_touching(setup):
@@ -139,6 +184,8 @@ def test_matrix_origin_read_is_not_native_admission_or_history(setup):
     ]["result"]
     assert result["record"]["origin"]["kind"] == "daimon-projection"
     assert "no ledger freshness" in result["authority_note"]
+    checkpoint=recall(binding(mc),action='checkpoint',pool='main',record_uid=uid)['pools'][0]['result']
+    assert checkpoint['projection_ledger_freshness']=='unverified' and checkpoint['content_loaded'] is False
     assert (
         recall(binding(mc), action="history", pool="main", record_uid=uid)["pools"][0][
             "result"

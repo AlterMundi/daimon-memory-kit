@@ -74,7 +74,7 @@ receiving behavior rather than assuming a configuration file changed cognition.
 
 ## Read contract
 
-`hmk_recall` offers `search`, `read` and `history`. Search defaults to every bound
+`hmk_recall` offers `search`, `read`, `history` and `checkpoint`. Search defaults to every bound
 pool or one named pool. Read/history use a pool name plus stable record UID.
 Results retain the pool, being and body reference. One unavailable pool does not
 hide successful results from another. Empty results do not prove absence.
@@ -122,3 +122,9 @@ python -m pytest -q tests/test_hmk_mcp.py tests/test_deep_recall.py tests/test_c
 Install the MCP requirements to run the actual stdio test; it explicitly skips
 when the optional SDK is absent. These tests cover transport, later writes,
 corrections, history, multi-pool failure, readonly behavior and pool boundaries.
+
+## Foreground revision checkpoints
+
+`checkpoint` selects one known pool and record UID and returns only its current revision and whether a Matrix projection ledger remains unverified. It reads no chapter text, title, source metadata, neighbor contents, ranking provider or embedding. Missing/inactive/unselected records stay unavailable to that selected reader; checkpoint equality is local revision evidence, not a verified external ledger or semantic freshness claim. An explicitly pinned selection still refuses a changed selected revision.
+
+A finite operator client can call the same adapter without starting MCP: `hmk_mcp.py --binding OWNER_BINDING --request-stdin`, with one bounded JSON recall request on stdin. The same owner-local binding, pool selection, revision guards and response budget apply. Paths cannot come from the request; request sizes and fields are bounded. This introduces no persistent process, reader activation, memory write, observer or model call.
