@@ -1,0 +1,33 @@
+{
+  "schema": "hmk.hook-capture-probe/v1",
+  "receipts": [
+    {
+      "observation_id": 1,
+      "event_key": "4241381203f34890c38e862dfcb9d2d0127d3ebff1e3cdf945e5f4dd7351dd66",
+      "revision": 1,
+      "capture_complete": true,
+      "error": null,
+      "handler_seconds": 1.8773358697071671,
+      "source_bytes": 37440,
+      "source_sha256": "2d75df06456cddee3eed997fb28295859e2a947131225dd273d90f6907b70419"
+    },
+    {
+      "observation_id": 2,
+      "event_key": "af7be29d3bf8c96bff1ff380218161773132a36c24b51ec2e822882ea5b0ff8a",
+      "revision": 2,
+      "capture_complete": true,
+      "error": null,
+      "handler_seconds": 0.11958490684628487,
+      "source_bytes": 38123,
+      "source_sha256": "201217b36d0da0e8264a1d9f2a9266a86f7609561bee6cf5966b3c94fdb877d6"
+    }
+  ],
+  "storage": {
+    "snapshot_bytes": 75563,
+    "stored_delta_bytes": 38123,
+    "observations": 2,
+    "integrity": "ok"
+  },
+  "source_removal": "restored both exact snapshots after deleting selected source",
+  "model_calls_for_capture": 0
+}
