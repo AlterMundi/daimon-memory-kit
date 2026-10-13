@@ -183,3 +183,20 @@ def test_explicit_correction_preserves_history_and_source_free_recall(setup):
     assert candidates.projection.load_learning(memory, receipt["artifact_id"])
     with memory.connect() as con:
         assert con.execute("SELECT count(*) FROM chapters").fetchone()[0] == 1
+
+
+def test_conflicting_binding_receipt_is_rejected_before_staging(setup):
+    memory, _, source = setup
+    with sqlite3.connect(source) as con:
+        con.execute(
+            "UPDATE memory_extraction_events SET acknowledged_receipt='another-binding'"
+        )
+    with pytest.raises(ValueError, match="another receiving binding"):
+        intake(setup)
+    with memory.connect() as con:
+        assert (
+            con.execute(
+                "SELECT name FROM sqlite_master WHERE name='capture_events'"
+            ).fetchone()
+            is None
+        )
