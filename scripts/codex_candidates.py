@@ -203,6 +203,7 @@ def ingest(
             receipt = preservation_receipt(event, bundle)
             # A concurrent changed source must not acquire a receipt for other bytes.
             with source:
+                source.execute("BEGIN IMMEDIATE")
                 current = source.execute(
                     "SELECT * FROM memory_extraction_events WHERE event_id=?",
                     (row["event_id"],),
@@ -215,6 +216,8 @@ def ingest(
                     raise ValueError(
                         "candidate already acknowledged for another receiving binding"
                     )
+                if _fault:
+                    _fault("before_ack_update")
                 source.execute(
                     "UPDATE memory_extraction_events SET acknowledged_receipt=? WHERE event_id=?",
                     (receipt, row["event_id"]),

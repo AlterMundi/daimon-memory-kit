@@ -200,3 +200,28 @@ def test_conflicting_binding_receipt_is_rejected_before_staging(setup):
             ).fetchone()
             is None
         )
+
+
+def test_ack_comparison_and_write_hold_one_native_transaction(setup):
+    _, _, source = setup
+    witnessed = []
+
+    def competing_writer(point):
+        if point == "before_ack_update":
+            with sqlite3.connect(source, timeout=0) as other:
+                with pytest.raises(sqlite3.OperationalError, match="locked"):
+                    other.execute(
+                        "UPDATE memory_extraction_events SET source_updated_at=999"
+                    )
+            witnessed.append(True)
+
+    intake(setup, _fault=competing_writer)
+    assert witnessed == [True]
+    assert ack(source) is not None
+    with sqlite3.connect(source) as con:
+        assert (
+            con.execute(
+                "SELECT source_updated_at FROM memory_extraction_events"
+            ).fetchone()[0]
+            == 10
+        )
