@@ -7,6 +7,7 @@ No native learner, capture, admission, migration or access-counter writes occur.
 from __future__ import annotations
 
 import copy
+from datetime import datetime, timezone
 import json
 import sqlite3
 import time
@@ -267,6 +268,19 @@ class Reader:
                             result["raw"] = result["raw"][: len(result["raw"]) // 2]
                             result["next_offset"] = offset + len(result["raw"])
                             result["complete"] = False
+            if isinstance(result.get("record"), dict):
+                # Preserve original epoch fields and supply their exact calendar
+                # representation; these are local storage times, not event dates.
+                record = result["record"]
+                storage = {}
+                for field in ("created_at", "updated_at", "changed_at"):
+                    value = record.get(field)
+                    if type(value) in {int, float}:
+                        try:
+                            storage[field] = datetime.fromtimestamp(value, timezone.utc).isoformat().replace("+00:00", "Z")
+                        except (OverflowError, OSError, ValueError):
+                            pass
+                result["local_storage_time_utc"] = storage
             result["seconds"] = round(time.monotonic() - started, 6)
             if len(json.dumps(result, ensure_ascii=False).encode()) > self.max_bytes:
                 return self._result(

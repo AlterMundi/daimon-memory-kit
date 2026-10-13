@@ -273,47 +273,7 @@ def supported_answer(value, evidence, binding):
                                'remain distinct from the receiving body.')
 
 
-def source_decision(value, sources, canon):
-    """Select source blocks; never let generated prose become factual raw text.
-
-    This pilot adapter preserves the native writer's closed decision schema.
-    Original blocks remain quoted with their channel/receiver, including their
-    qualifications. Existing memory blocks carry stable ID/revision provenance.
-    """
-    if not isinstance(value, dict) or not isinstance(value.get('records'), list):
-        raise ValueError('source selection needs a records array')
-    available = {s['id']: s for s in sources}
-    available.update({'memory:'+str(r['id']): r for r in canon})
-    decision = json.loads(json.dumps(value))
-    for record in decision['records']:
-        refs = record.pop('source_ids', None)
-        if not isinstance(refs, list) or not refs or any(
-                not isinstance(ref, str) or ref not in available for ref in refs):
-            raise ValueError('each record needs source_ids from supplied sources or memory:<integer ID>')
-        if 'raw' in record or 'summary' in record:
-            raise ValueError('source selection uses source_ids, not generated raw or summary')
-        blocks = []
-        for ref in dict.fromkeys(refs):
-            source = available[ref]
-            if ref.startswith('memory:'):
-                text = source['raw']
-                label = f"Previously retained memory {source['id']}, revision {source['revision']}"
-            else:
-                text = source['content']
-                channel = source.get('channel', 'reported source')
-                role = ('Human report' if channel == 'human_message' else
-                        'Human conversation' if channel == 'human_conversation' else
-                        'Attributed peer communication' if channel == 'authorized_peer_message' else channel)
-                label = (f"{role}; source {ref}; received {source.get('received_at', 'unknown')} "
-                         f"through {source['originating_body']}")
-            blocks.append(label + ':\n' + json.dumps(text, ensure_ascii=False))
-        title = record.get('title')
-        if not isinstance(title, str) or not title.strip() or not any(
-                title in (available[ref].get('content') or available[ref].get('raw', '')) for ref in refs):
-            raise ValueError('title must be an exact recognition phrase in a selected source block')
-        record['raw'] = '\n\n'.join(blocks)
-        record['metadata'] = {'mode':'reported'}
-    return decision
+from source_selection import source_decision
 
 
 def memory_at(pool):

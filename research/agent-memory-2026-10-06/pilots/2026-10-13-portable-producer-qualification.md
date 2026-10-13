@@ -1,0 +1,61 @@
+# Stock Codex capture to portable HMK learning — isolated qualification
+
+Date: 2026-10-13. Owner: HMK #12 under #11. This completes the bounded fictional delivery: official Codex lifecycle capture, a finite resumable HMK-owned processor, automatic selection and source-free receiving. It does not activate production, install a scheduler, establish arbitrary-corpus reliability, or replace every native memory feature.
+
+The implementation contract and invocation are in [portable-producer.md](../../../docs/portable-producer.md). Earlier [hook/proxy evidence](2026-10-13-stock-codex-hook-diagnostic.md), [capture receipts](stock-hook-evidence/capture-replay-receipt.json), native V1/V2 trials and stages 1–4 remain valid and were not repeated. The [closing receipt](stock-hook-evidence/portable-producer-receipt.json) publishes the exact selector packets, decisions, canonical records, source hashes, receiving answers/calls, observed costs and diagnostic dispatch inventory. Only fictional content is published.
+
+## Conditions and comparison
+
+The four existing `native-producer-evidence/*.jsonl` sources are byte-identical to the earlier native extraction trial: encounter, failed communication, correction and revisit. The correction/revisit pools initially contain the earlier record verbatim as returned by their fictional recall event; its source origin is retained, without inventing unavailable prior versions. A routine connection exchange tests omission. A sixth case uses the actual Stop/SessionEnd snapshots produced by official Codex 0.162.1 over its App Server proxy, not a fabricated hook event. Those exact snapshots were preserved before processing.
+
+DeepSeek Flash low performs automatic source-ID selection through stateless text-only requests. The closing run uses one common 12,000-output-token ceiling for all six cases. The coordinator supplies only source evidence, bound fictional participants and the current fictional canon. It supplies no scoring criteria, answers, private conversations, tools or external sources. Formation deterministically preserves selected original blocks and their causal/context dependencies. No evaluator edits a selected historical fact.
+
+Five fresh OpenAI Codex `gpt-6.1-sol` low receivers use the same interpretation contract and read-only HMK tool, with native use/generation disabled. Each receives only a copied canonical database through the host reader, a fictional body binding and an ordinary human question. The process sandbox hides original source sessions, the evaluator and other conversations. The questions do not instruct the model to query HMK. Each receiver spontaneously searches and reads. This is lexical retrieval through the existing deep reader, with embeddings pending; semantic search was neither switched nor newly qualified.
+
+The earlier native V2 extraction preserved the four cases' semantic obligations in rollout summaries; native raw memory was empty and its delivery selection used evaluator decisions. This trial preserves the same underlying meanings through an **automatic portable selector** and supported canonical writes. Different models, representations and operating routes preclude a speed/price superiority claim. Native baseline billing and extraction-token totals remain unknown. No old consolidation queue was resumed.
+
+## Final semantic assessment
+
+The coordinating evaluator reviewed every final historical assertion against selected originals and evaluated present capabilities against the receiving binding. Citations alone were not treated as proof. The following groups cover the required meanings; the full answers remain in the receipt.
+
+| Case | Requirements and observed result |
+|---|---|
+| Encounter | Mira Solen / @mira-estuary / person:841 retained; issue 37 and comment c-904 preserved with world pointer; June 18, 2024 / 14:20 UTC; original timestamp plus local monotonic sequence and comparison after reconnection; Ilex's example attributed to the retained assistant statement; not adopted or tested, with later status left unknown. Weak-cue question recovered the participant and meaning. |
+| Failed communication | Jo / @jo-venn / person:552 retained; June 19 invitation attempted; authentication failure, false delivery, null receipt and attempt send-77 preserved; contradictory assistant success rejected; no invented retry, acceptance or comparison outcome. Willow Workshop / June 3 stays a human report with unspecified year. Rover clamp lesson is remembered without granting the desk actuators or messaging capability. |
+| Correction | Existing record identity retained and revision advanced from 1 to 2, with the mistaken version available in history. Mira's proposal distinguished from Leto's parser review; receipt-order/adoption error corrected. Proposal June 18, incorrect-memory writing June 21, correction August 2 and later storage/receipt dates remain distinct. Original comment pointer and actual proposal state survive. No current adoption claim. |
+| Revisit | Existing issue record remains at revision 1: reading a source revision numbered 2 does not update a different local namespace. One new record retains Tavi's August 3 Reed Library meeting with Leto, Ilex's nonattendance, annotation offer for the following month without implementation promise, and the new conversational interpretation. It links to the earlier issue through `relates_to` and `reinterprets`; it is not a new meeting with Mira or a completed implementation. |
+| Noise | No canonical record, link or original-artifact bundle is admitted. Temporary processing evidence retains the omission decision. |
+| Actual hook case | One selected human-report record; fresh receiver recovers Mira's identity, proposal/date/pointer, reported two-node contribution, unadopted/untested status and Leto's distinct role. The chain starts at the real stock hook capture and ends at spontaneous canonical recall. |
+
+All five closing receiving conversations supplied substantive, source-supported answers. The receiver's exact UTC storage date representation fixed a demonstrated epoch-conversion error; occurrence dates still come from original evidence. This bounded result does not establish zero errors on unseen conversations.
+
+## Diagnoses preserved, not relabeled as passes
+
+- Two early free-prose formation attempts were rejected: invalid writer shape and unsupported attribution/date completion. The implementation reused the previously qualified source-block mechanism instead of iterating prose prompts indefinitely.
+- Initial block selection lost a tool request's world pointer; dependency closure now preserves the call with its response and the turn's date context.
+- Initial receiving collapsed a human report into attendance and supplied an unstated year. The shared interpretation contract now requires attribution and each event's original date precision.
+- One 6,000-token correction attempt used the entire completion allocation for reasoning, returned no answer and wrote nothing. It stayed pending, was explicitly archived by pre-stage reprepare, and was retried with recorded cost and a 12,000 ceiling.
+- A revisit tried to rewrite prior memory solely because it had been retrieved, confusing external/local revisions. Retrieved blocks became non-selectable context, while canon retains its own identifiers and provenance.
+- Removing that context altogether lost known dates needed to interpret corrections. Dependency closure now carries an earlier recall as attributed context of the new statement; it cannot independently qualify as novel evidence. A fixed-proposal replay isolated this change without another selector call, before the final full six-case formation and five-case receiving run.
+- One diagnostic receiver converted an epoch to the wrong calendar date. Exact UTC rendering alongside original epochs corrected the reader interface. No content or scoring threshold was weakened.
+- Model selection rationale can be inaccurate even when the selected originals are faithful. It remains generated audit evidence, never the historical narrative used for recall.
+
+## Persistence, concurrency and rollback
+
+The closing receipt verifies every selected bundle's reconstructed source SHA-256 against its captured revision, available history, revision identity, links and terminal replay. A completed case resumes as idle without invoking its proposer. The source-free receivers only access verified offline SQLite copies. No transcript lookup occurs in the receiver.
+
+Sixty-six relevant tests pass across capture, portable normalization, coordinator, dispatch replay, source-block compatibility, deep reader and proxy framing. They exercise uncertain capture commits; uncertain stage/canonical commits; invalid pre-stage decisions and explicit reprepare; refusal to replace staged work; provider unavailability; preserving/retrying truncated dispatches; concurrent source sessions while one processor holds its lock; prompt completion beyond the batch cursor; altered dependency detection and recovery from a verified snapshot; lifecycle-only no-model processing; correction history; and exact storage-date rendering. These are mechanism tests, distinct from model-quality evaluation.
+
+The [actual isolated rollback](stock-hook-evidence/isolated-hook-rollback-receipt.json) disables the capture hooks and obtains an empty hook list through the stock proxy. Both the capture database and canonical database containing later learning retain identical hashes. Configuration rollback restores no old memory snapshot. No model turn was needed. Existing source-loss capture evidence and restart/compaction/interrupt receipts remain in the earlier deliveries.
+
+## Cost and capacity
+
+The closing six selector requests consumed **30,647 observed tokens** and **111.85 seconds of summed HTTP time** (requests overlapped; this is not wall duration). There were no closing selector retries. The five fresh receiving conversations consumed **164,592 native harness tokens**, including repeated/cached context over tool exchanges; this is not five single model calls. Their individual elapsed times are in the receipt. Across the portable selection diagnostics and closing run, 21 observed DeepSeek dispatches consumed 117,261 tokens, including rejected/truncated attempts. Fixed-proposal replays made no additional selector calls.
+
+Paid USD totals and marginal native-subscription cost are unknown, not zero. Development comparisons and failure diagnosis are separate from operation: the worker batches explicitly, captures without inference, reuses completed responses and skips model work for lifecycle-only deltas. This trial does not forecast daily workload or production bill size. Retained canonical source bundles contain original snapshots; capture delta compression does not imply cross-bundle canonical deduplication. Storage figures are reported separately, including SQLite overhead, and large-corpus indexing/retention remains unqualified.
+
+## Exact continuation
+
+The isolated producer goal is complete once this delivery is merged. Preserve the current production foreground reader and manual learning. The next decision is a separately authorized, limited real-source adoption: define the owning launcher's explicit processing cadence, selected session scope, capability/privacy binding, capacity/retention policy and configuration-only rollback before enabling hooks for any being. No daemon, timer, cross-being pooling, real-source import, native learning, or Matrix authority change follows automatically.
+
+Do not restart the old native extraction or consolidation queues, rerun the qualified comparisons, or adopt the experimental hook configuration merely because the source is merged. Reuse this evidence and address the concrete deployment boundary next.
