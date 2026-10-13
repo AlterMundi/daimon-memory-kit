@@ -37,8 +37,9 @@ account mutation; no new summary is generated merely because a phase runs.
 Index maintenance now consumes both owner-bound capture and organization streams
 with separate checkpoints. Existing capture cursors retain their meaning;
 `organization_indexed_through` reports the other stream. Neither cursor proves
-that unrelated external writes have been indexed. Production provider/launcher
-wiring and whole-flow receiving qualification remain pending.
+that unrelated external writes have been indexed. The installable finite entrypoint
+below connects the providers; receiving supervision, credential routing and
+whole-flow qualification remain prerequisites to production adoption.
 
 `consolidationctl.py reconcile-plan --limit 32` discovers stale existing inferred
 native accounts directly from the canonical support graph. It returns separate
@@ -94,3 +95,97 @@ Reinvocation resumes retained phase work. Configuration rollback preserves the
 capture inbox, canonical database, phase checkpoints and diagnostic evidence;
 restoring an old code/config revision must not restore an old memory snapshot over
 later writes. No production activation is included in this delivery.
+
+## Installable invocation
+
+`scripts/memory_runtime.py` uses only installed `scripts/` modules. The historical
+research clients now delegate their transports to these same implementations;
+current comparison fingerprints pin the implementation files. Existing frozen
+results remain unchanged. The full capture binding (including source roots and
+capture settings) stays separate from model context; subject and source instance
+must agree, and the inbox still validates the complete immutable binding.
+
+Create a private `hmk.worker-profile/v1` JSON file with absolute paths:
+
+```json
+{
+  "schema": "hmk.worker-profile/v1",
+  "database": "/selected/memory/library.db",
+  "memory_base": "/selected/memory",
+  "inbox": "/selected/capture.sqlite",
+  "binding": "/selected/capture-binding.json",
+  "context": {"subject": "fixture:ilex", "source_instance": "fixture:desk"},
+  "state_dir": "/selected/producer",
+  "source_scope": "fictional",
+  "embedding_env_file": "/selected/embedding.env",
+  "generation": {
+    "provider": "deepseek", "model": "deepseek-flash", "effort": "low",
+    "output_token_limit": 12000, "credential_env": "DEEPSEEK_API_KEY"
+  },
+  "review": {
+    "provider": "openai-codex-native", "model": "gpt-6.1-sol", "effort": "low",
+    "catalog": "/selected/tool-disabled-catalog.json"
+  },
+  "budgets": {
+    "max_steps": 6, "capture_limit": 32, "index_limit": 32,
+    "source_budget_bytes": 64000, "navigation_steps": 4
+  }
+}
+```
+
+The example selects fictional sources. Real receiving profiles require
+`human-authorized-selected-context` and previously authorized source bindings;
+setting this label does not itself grant access or import sessions. Database and
+inbox must already exist. The launcher does not initialize a new canonical pool or
+migrate its schema. The native catalog must disable tools; review is a fresh
+ephemeral OpenAI Codex invocation with native memory, instructions and skills
+suppressed by the established adapter. An optional `review.credential_file` may
+select the receiver's existing auth file by reference. No credential value belongs
+in this JSON. Historical fictional Nous comparison support is not a runtime route.
+
+```sh
+hmk memory_runtime.py run --profile /selected/worker.json
+hmk memory_runtime.py status --profile /selected/worker.json
+```
+
+The wrapper must first contain this delivery. `run` exits 0 when its owned phases
+are idle, 2 when work remains, and 1 on launch/configuration failure. Failures emit
+only a safe error class, preserve the previous worker observation and must be
+observed through the receiving supervisor's exit status as well as HMK's journal.
+`status` exits 0 for a successful read even if processing is unhealthy: it does
+not open the canonical pool, read credentials, dispatch models or resume work.
+
+DeepSeek credentials are resolved lazily from the named process environment
+variable. An idle run or successful dispatch replay needs no credential. The
+receiving launcher must obtain it through its established secret facility;
+`embedding_env_file` is HMK's existing embedding configuration, not a new DeepSeek
+credential store. The current body's existing DeepSeek route is its Hermes pool,
+not that embedding environment file. Connecting that receiving secret route and
+supervisor is still adoption work, not evidence of a missing account or quota.
+
+Dispatch receipts pin request, provider/model settings, transport implementations
+and the native catalog. Pending work rejects a silent model change. A missing
+credential leaves an actionable authentication incident without a network attempt;
+fix it and invoke `run` again. A retained failed, incomplete or uncertain paid
+attempt requires explicit reconciliation before a transport retry:
+
+```sh
+hmk memory_runtime.py retry --profile /selected/worker.json \
+  --request /selected/producer/OPERATION/requests/HASH.json \
+  --reason 'Credit restored; retained failed attempt inspected.'
+hmk memory_runtime.py run --profile /selected/worker.json
+```
+
+`retry` takes the same inbox worker lock, validates the established destination,
+and records a decision bound to that exact receipt. It makes no network call.
+The next run writes a separate attempt; it never overwrites the failure or retries
+completed output. If that attempt fails, inspect and select its own retained
+request. Unknown remote completion must remain explicit in the operator's decision.
+Semantic rejection is different: transport retry does not bypass the existing
+selection/reconciliation rules or authorize changing model policy.
+
+A receiving supervisor may invoke this finite command explicitly. A successful
+exit is a completed invocation, not a missing long-running daemon. Preserve inbox,
+canonical pool, worker directory and private profile across process restarts and
+configuration rollback. Do not add `Restart=always` to retry failed paid work.
+This delivery installs no service, timer, hook or source capture binding.

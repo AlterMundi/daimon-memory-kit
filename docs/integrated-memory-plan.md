@@ -306,22 +306,59 @@ review and pilot contracts; 69 targeted checks then passed after the explicit
 native-review CLI and source-envelope adjustments. The real final review evidence
 matches the final source adapter byte-for-byte. Production is unchanged.
 
+### Installable launcher and explicit provider recovery
+
+`scripts/memory_runtime.py` now supplies finite `run`, read-only `status` and an
+explicit `retry` command over the same capture, account and index APIs. It requires
+an existing canonical database and inbox, a private versioned receiving profile,
+minimal model context matching the full capture binding and explicit budgets.
+The operational binding's source roots/settings no longer have to be copied into
+model context. DeepSeek Flash low drafts/revises; isolated native OpenAI Codex Sol
+6.1 low reviews. There is no silent provider substitution. Research compatibility
+entrypoints reuse the extracted transport implementations; current fingerprints
+track those implementation files and historical evidence is untouched.
+
+Credentials are resolved only on a real dispatch. Completed requests replay; an
+uncertain/failed attempt remains visible. `retry` binds an explicit operator
+reconciliation to the exact old receipt under the inbox worker lock, creates no
+network effect itself and preserves failures in a separate attempt chain.
+Successful output cannot be retried as a transport failure. Model-policy changes
+remain an explicit reconciliation rather than an automatic retry. Launch failures
+return nonzero with safe metadata; the supervisor must observe the process exit,
+not assume an old worker-status file is fresh.
+
+46 affected tests passed, including full capture binding with minimal model
+context, capture/index/restart integration, missing credentials, selected-source
+provider routes, actual request replay, credit failure and explicit recovery,
+receipt tampering, changed model policy, historical clients and failure privacy.
+Ruff passed for the changed runtime modules and new tests. These are mechanical
+checks, not further semantic acceptance.
+
+The [fresh-process launcher diagnostic](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-launcher-receipt.json)
+reentered the completed 303-record fictional owner through the installable command
+twice. It reached idle in 8.24 and 2.01 seconds, without a generation credential,
+new model calls, changes to canonical database bytes or changes to retained
+provider dispatches. This establishes fresh-process reentry only; it does not
+claim fresh-source selection or conversational quality.
+
 Next uncertainties and required work:
 
-1. Finish the production provider/launcher wiring using the now-connected capture,
-   reviewed account reconciliation and dual-stream index APIs. Reuse completed
-   capture, source-window, organization/replay and index evidence. The isolated
-   CLI supports the chosen split (Flash draft/revision, native Sol low review);
-   do not mistake that diagnostic adapter for installed receiving supervision.
-   Include meaningful current-source-to-conversation acceptance before rollout,
-   rather than repeating already-valid consolidations or model comparisons.
-2. Expose durable processing status to the receiving adapter described in
-   Telecodex #82. Telegram delivery, Sessions presentation and independent
-   processor/stale-status observation belong to Telecodex. No HMK transport work
-   is pending here; keep adoption readiness distinct from published API work.
-3. Complete meaningful receiving comparison and operational fault cases for the
-   integrated flow; publish one coordinated delivery. Adopt on each authorized
-   receiver with backup, rollback preserving later writes and live evidence.
+1. Qualify a meaningful current-source-to-conversation path through the new
+   launcher, with the relevant receiving/correction/failed-action cases. Reuse
+   completed capture, source-window, organization/replay and index evidence;
+   do not repeat already-valid consolidations or model comparisons.
+2. Connect the receiving launcher to the established credential facility and
+   explicit supervised invocation. This body's DeepSeek account is in its
+   existing Hermes pool, not its embedding environment file. No secret is copied
+   into repository profiles. Existing Alerts supervision can consume HMK status;
+   Telegram delivery, Sessions presentation and independent observation remain
+   owned by Telecodex #82. Its independently qualified fictional deployment is
+   not proof that these real HMK bindings are adopted. No HMK transport work is
+   pending here.
+3. After whole-flow acceptance, publish one coordinated merge/deployment. Adopt
+   on each authorized receiver with verified backup, rollback preserving later
+   writes and real receiving evidence. Current provider work is installable code,
+   not an activated service or demonstrated three-being rollout.
 
 Production remains unchanged. No old queues were resumed; no real conversations
 were ingested. The earlier stock-hook and six-case producer evidence stays valid

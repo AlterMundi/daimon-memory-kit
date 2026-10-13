@@ -39,8 +39,8 @@ class Client:
             operation_model='deepseek-flash',operation_effort=operation_effort,**self.roles,
             narrative_effort='low',review_protocol=review_protocol,
             client_sha256=api.exchange.checksum(Path(__file__)),
-            api_sha256=api.exchange.checksum(Path(api.__file__)),
-            native_sha256=api.exchange.checksum(Path(native.__file__)),
+            api_sha256=api.exchange.checksum(Path(api.dispatch.__code__.co_filename)),
+            native_sha256=api.exchange.checksum(Path(native.dispatch.__code__.co_filename)),
             narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)),
             assertion_review_sha256=api.exchange.checksum(Path(api.exchange.narrative.review_shape.__code__.co_filename)),
             catalog_sha256=api.exchange.checksum(self.catalog),tools_allowed=False,native_memory_allowed=False)

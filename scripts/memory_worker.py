@@ -56,7 +56,8 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
     state_dir=Path(state_dir).absolute()
     if any(p.is_symlink() for p in [state_dir,*state_dir.parents]):
         raise ValueError('worker directory cannot contain symlinks')
-    if any(context.get(k)!=v for k,v in json.loads(inbox.binding).items()):
+    binding=json.loads(inbox.binding)
+    if any(context.get(k)!=binding.get(k) for k in ('subject','source_instance')):
         raise ValueError('worker context differs from capture binding')
     state_dir.mkdir(parents=True,exist_ok=True,mode=0o700)
     owner=digest(dict(database=str(Path(memory.DB_PATH).resolve()),

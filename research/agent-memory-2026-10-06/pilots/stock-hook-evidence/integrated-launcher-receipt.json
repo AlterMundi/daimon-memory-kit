@@ -1,0 +1,86 @@
+{
+  "schema": "hmk.launcher-diagnostic/v1",
+  "fictional": true,
+  "new_model_calls": 0,
+  "canonical_bytes_unchanged": true,
+  "existing_dispatches_unchanged": true,
+  "runs": [
+    {
+      "label": "first",
+      "seconds": 8.237145528197289,
+      "exit_code": 0,
+      "status": {
+        "schema": "hmk.worker-status/v1",
+        "state": "idle",
+        "observed": true,
+        "started_ns": 1791889359774951819,
+        "updated_ns": 1791889367181560944,
+        "phase": null,
+        "steps": 3,
+        "phases": {
+          "capture": {
+            "state": "idle",
+            "processed_through": 0,
+            "proposer_invoked": false
+          },
+          "organization": {
+            "state": "idle",
+            "reason_code": "accounts_current",
+            "ready_accounts": 0,
+            "blocked_accounts": 0,
+            "organized_through": 1
+          },
+          "index": {
+            "state": "idle",
+            "indexed_through": 0,
+            "organization_indexed_through": 1
+          }
+        },
+        "observation": "Last foreground receipt, not proof of current process liveness.",
+        "budget_exhausted": false
+      },
+      "stderr_empty": true
+    },
+    {
+      "label": "restart",
+      "seconds": 2.008366622030735,
+      "exit_code": 0,
+      "status": {
+        "schema": "hmk.worker-status/v1",
+        "state": "idle",
+        "observed": true,
+        "started_ns": 1791889367843900513,
+        "updated_ns": 1791889369151036917,
+        "phase": null,
+        "steps": 3,
+        "phases": {
+          "capture": {
+            "state": "idle",
+            "processed_through": 0,
+            "proposer_invoked": false
+          },
+          "organization": {
+            "state": "idle",
+            "reason_code": "accounts_current",
+            "ready_accounts": 0,
+            "blocked_accounts": 0,
+            "organized_through": 1
+          },
+          "index": {
+            "state": "idle",
+            "indexed_through": 0,
+            "organization_indexed_through": 1
+          }
+        },
+        "observation": "Last foreground receipt, not proof of current process liveness.",
+        "budget_exhausted": false
+      },
+      "stderr_empty": true
+    }
+  ],
+  "scope": "Completed fictional owner reentry only; no new capture or conversational acceptance.",
+  "checks": {
+    "affected_tests_passed": 46,
+    "providers": "Existing completed fictional work reused; no new model quality claim."
+  }
+}

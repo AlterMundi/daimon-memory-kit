@@ -26,7 +26,7 @@ def run(packet_root, out, *, api_key, references=(), max_calls=12, workers=3):
         qualification=False, provider='deepseek', model='deepseek-flash',
         reasoning_effort='low', max_tokens=12000, workers=workers,
         packets_sha256=source['packets_sha256'],
-        dispatcher_sha256=api.exchange.checksum(Path(api.__file__)),
+        dispatcher_sha256=api.exchange.checksum(Path(api.dispatch.__code__.co_filename)),
         diagnostic_sha256=api.exchange.checksum(Path(__file__)),
         narrative_sha256=api.exchange.checksum(Path(api.exchange.narrative.__file__)),
         assertion_review_sha256=api.exchange.checksum(Path(api.exchange.narrative.review_shape.__code__.co_filename)))
