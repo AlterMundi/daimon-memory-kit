@@ -1,0 +1,167 @@
+{
+  "schema": "hmk.integrated-access-adoption/v1",
+  "revision": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+  "production_access_updated": true,
+  "automatic_capture_activated": false,
+  "batch_timer_activated": false,
+  "native_memory_activated": false,
+  "receivers": [
+    {
+      "name": "compaii",
+      "revision": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+      "native_turn_completed": true,
+      "hmk_calls": [
+        {
+          "action": "search",
+          "status": "completed"
+        },
+        {
+          "action": "read",
+          "status": "completed"
+        }
+      ],
+      "pools": [
+        {
+          "pool": "main",
+          "unchanged_since_snapshot": true
+        }
+      ],
+      "usage": [
+        {
+          "total": {
+            "totalTokens": 113717,
+            "inputTokens": 113409,
+            "cachedInputTokens": 93824,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 308,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 31441,
+            "inputTokens": 31317,
+            "cachedInputTokens": 29184,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 124,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 475000
+        }
+      ],
+      "native_memory_disabled": true,
+      "automatic_learning_activated": false,
+      "turn_duration_ms": 24541,
+      "requested_model": "gpt-6.1-sol",
+      "billed_cost_usd": null,
+      "semantic_scope": "One previously selected meaningful receiving question; not a new full pipeline comparison",
+      "rollback_scope": "Configuration rollback on copies preserves later independent configuration and memory sentinel; no live database restored"
+    },
+    {
+      "name": "eko",
+      "revision": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+      "native_turn_completed": true,
+      "hmk_calls": [
+        {
+          "action": "search",
+          "status": "completed"
+        },
+        {
+          "action": "read",
+          "status": "completed"
+        }
+      ],
+      "pools": [
+        {
+          "pool": "store-001",
+          "unchanged_since_snapshot": true
+        },
+        {
+          "pool": "store-002",
+          "unchanged_since_snapshot": true
+        }
+      ],
+      "usage": [
+        {
+          "total": {
+            "totalTokens": 90785,
+            "inputTokens": 90354,
+            "cachedInputTokens": 76544,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 431,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 25753,
+            "inputTokens": 25539,
+            "cachedInputTokens": 23552,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 214,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 475000
+        }
+      ],
+      "native_memory_disabled": true,
+      "automatic_learning_activated": false,
+      "turn_duration_ms": 44662,
+      "requested_model": "gpt-6.1-sol",
+      "billed_cost_usd": null,
+      "semantic_scope": "One previously selected meaningful receiving question; not a new full pipeline comparison",
+      "rollback_scope": "Configuration rollback on copies preserves later independent configuration and memory sentinel; no live database restored"
+    },
+    {
+      "name": "oliva",
+      "revision": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+      "native_turn_completed": true,
+      "hmk_calls": [
+        {
+          "action": "search",
+          "status": "completed"
+        },
+        {
+          "action": "read",
+          "status": "completed"
+        }
+      ],
+      "pools": [
+        {
+          "pool": "store-001",
+          "unchanged_since_snapshot": true
+        }
+      ],
+      "usage": [
+        {
+          "total": {
+            "totalTokens": 93564,
+            "inputTokens": 93238,
+            "cachedInputTokens": 70016,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 326,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 26137,
+            "inputTokens": 26038,
+            "cachedInputTokens": 23680,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 99,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 475000
+        }
+      ],
+      "native_memory_disabled": true,
+      "automatic_learning_activated": false,
+      "turn_duration_ms": 32712,
+      "requested_model": "gpt-6.1-sol",
+      "billed_cost_usd": null,
+      "semantic_scope": "One previously selected meaningful receiving question; not a new full pipeline comparison",
+      "rollback_scope": "Configuration rollback on copies preserves later independent configuration and memory sentinel; no live database restored"
+    }
+  ],
+  "known_limits": [
+    "Source-bound capture and daily processing remain prepared, not activated.",
+    "Actual production worker binding to Alerts remains pending; receiving notification handoff is not delivery evidence.",
+    "Backend availability checks do not prove arbitrary recall; earlier qualified semantic cases retain their original scope.",
+    "Reported native usage includes cached context and harness overhead; invoice costs are unknown."
+  ]
+}
