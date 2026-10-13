@@ -1,0 +1,88 @@
+{
+  "schema": "hmk.capture-adoption-receipt/v1",
+  "release": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+  "human_activation_authorized": true,
+  "source_policy": "New sessions only, receiving selected workspace; separate immutable being/source bindings. No historical import.",
+  "processing_schedule_authorized": "00:00 UTC daily",
+  "processing_schedule_enabled": false,
+  "processing_blocker": "Real per-receiver finite-worker Alerts observation and delivery",
+  "receivers": [
+    {
+      "activated_at": "2026-10-13T18:19:00.979091+00:00",
+      "native_memory": false,
+      "verification": {
+        "capture_observed": true,
+        "events": [
+          "Stop",
+          "SessionEnd"
+        ],
+        "restorable_revisions": [
+          1,
+          2
+        ],
+        "canon_written": false,
+        "scheduled_processing": false
+      },
+      "hook_timeouts": {
+        "sessionEnd": 3,
+        "stop": 10
+      },
+      "receiver": "CompAII"
+    },
+    {
+      "activated_at": "2026-10-13T18:19:31.410139+00:00",
+      "native_memory": false,
+      "verification": {
+        "capture_observed": true,
+        "events": [
+          "Stop",
+          "SessionEnd"
+        ],
+        "restorable_revisions": [
+          1,
+          2
+        ],
+        "canon_written": false,
+        "scheduled_processing": false
+      },
+      "hook_timeouts": {
+        "sessionEnd": 3,
+        "stop": 10
+      },
+      "receiver": "Eko"
+    },
+    {
+      "activated_at": "2026-10-13T18:19:50.619077+00:00",
+      "native_memory": false,
+      "verification": {
+        "capture_observed": true,
+        "events": [
+          "Stop",
+          "SessionEnd",
+          "Stop",
+          "SessionEnd"
+        ],
+        "restorable_revisions": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "canon_written": false,
+        "scheduled_processing": false
+      },
+      "hook_timeouts": {
+        "sessionEnd": 3,
+        "stop": 10
+      },
+      "receiver": "Oliva"
+    }
+  ],
+  "qualification": "Actual stock native hook events and exact transcript reconstruction; operational test turns are transient, not durable autobiographical content.",
+  "limitations": [
+    "No daily producer run or canonical write performed by this activation.",
+    "Oliva initial capture check failed; observed SessionEnd timeout raised from 3 to 10 seconds, then both events captured.",
+    "Paid receiving checks used gpt-6.1-sol low; invoice cost unknown.",
+    "This is not new semantic qualification or completion of the operational goal."
+  ]
+}
