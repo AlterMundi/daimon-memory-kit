@@ -1587,75 +1587,87 @@ def _unlock_maintenance(fd):
         pass
 
 
-def embedding_candidates(provider=None, model=None, limit=0, only_missing=True):
+def embedding_candidates(provider=None, model=None, limit=0, only_missing=True, *, record_uids=None):
+    """Select missing/stale vectors within the requested current canonical scope."""
     provider = normalize_embed_provider(provider)
     model = normalize_embed_model(provider, model)
     init_db()
+    clauses, scope_params = _filter_clauses_and_params(record_uids=record_uids)
+    scope_sql = (' AND ' + ' AND '.join(clauses)) if clauses else ''
     con = connect()
-    sql = """
-        SELECT
-          c.id,
-          c.title,
-          c.spr,
-          c.raw,
-          c.updated_at,
-          b.title AS book_title
-        FROM chapters c
-        JOIN books b ON b.id = c.book_id
+    try:
+        rows = con.execute("""
+            SELECT c.id,c.record_uid,c.revision,c.title,c.spr,c.raw,c.updated_at,
+                   b.title AS book_title,e.input_text_hash
+            FROM chapters c JOIN books b ON b.id=c.book_id
+            LEFT JOIN chapter_embeddings e ON e.chapter_id=c.id AND e.provider=? AND e.model=?
+            LEFT JOIN daimon_projections p ON p.chapter_id=c.id
+            WHERE c.embed_disabled=0 AND (p.active IS NULL OR p.active=1)
+            """ + scope_sql + ' ORDER BY c.id ASC', (provider,model,*scope_params))
+        selected = []
+        for row in rows:
+            item = dict(row)
+            if only_missing and item['input_text_hash'] == text_hash(embed_input_text(item)):
+                continue
+            selected.append(item)
+            if limit and len(selected) >= limit:
+                break
+        return selected
+    finally:
+        con.close()
+
+
+def backfill_embeddings(provider=None, model=None, batch_size=8, limit=0, only_missing=True, *, record_uids=None):
+    """Refresh selected vectors without holding a write lock across provider calls.
+
+    Recheck input and eligibility inside the write transaction. A concurrent
+    correction stays pending instead of acquiring a vector for its former text.
+    Previously committed batches survive failure and are skipped on resume.
     """
-    params = []
-    if only_missing:
-        sql += """
-        LEFT JOIN chapter_embeddings e
-          ON e.chapter_id = c.id AND e.provider = ? AND e.model = ?
-        WHERE c.embed_disabled = 0 AND e.chapter_id IS NULL
-        """
-        params.extend([provider, model])
-    else:
-        sql += """
-        LEFT JOIN chapter_embeddings e
-          ON e.chapter_id = c.id AND e.provider = ? AND e.model = ?
-        WHERE c.embed_disabled = 0
-        """
-        params.extend([provider, model])
-    sql += " ORDER BY c.id ASC"
-    if limit and limit > 0:
-        sql += " LIMIT ?"
-        params.append(limit)
-    rows = con.execute(sql, params).fetchall()
-    con.close()
-    return [dict(r) for r in rows]
-
-
-def backfill_embeddings(provider=None, model=None, batch_size=8, limit=0, only_missing=True):
+    if type(batch_size) is not int or batch_size < 1 or type(limit) is not int or limit < 0:
+        raise ValueError('positive embedding batch size and nonnegative limit required')
     fd = _lock_maintenance()
+    con = None
     try:
         cfg = embeddings_runtime_config(provider=provider, model=model)
-        provider = cfg["provider"]
-        model = cfg["model"]
-        output_dimensionality = cfg["output_dimensionality"]
-        candidates = embedding_candidates(provider=provider, model=model, limit=limit, only_missing=only_missing)
-        if not candidates:
-            return {"processed": 0, "provider": provider, "model": model}
+        provider, model = cfg['provider'], cfg['model']
+        candidates = embedding_candidates(provider=provider, model=model, limit=limit,
+            only_missing=only_missing, record_uids=record_uids)
+        processed, changed = 0, []
         con = connect()
-        processed = 0
         for start in range(0, len(candidates), batch_size):
-            batch = candidates[start : start + batch_size]
+            batch = candidates[start:start + batch_size]
             texts = [embed_input_text(row) for row in batch]
-            vectors = embed_texts(
-                provider,
-                texts,
-                input_type="passage",
-                model=model,
-                output_dimensionality=output_dimensionality,
-            )
+            vectors = embed_texts(provider, texts, input_type='passage', model=model,
+                output_dimensionality=cfg['output_dimensionality'])
+            if (not isinstance(vectors,list) or len(vectors) != len(batch)
+                    or any(not isinstance(v,list) or not v or any(
+                        type(x) not in (int,float) or not math.isfinite(x) for x in v) for v in vectors)
+                    or len({len(v) for v in vectors}) != 1
+                    or (cfg['output_dimensionality'] is not None
+                        and len(vectors[0]) != cfg['output_dimensionality'])):
+                raise EmbeddingBackendError('invalid embedding response shape or dimensions')
+            con.execute('BEGIN IMMEDIATE')
+            dimensions = {r[0] for r in con.execute(
+                'SELECT DISTINCT dims FROM chapter_embeddings WHERE provider=? AND model=?',(provider,model))}
+            if dimensions and dimensions != {len(vectors[0])}:
+                raise EmbeddingBackendError('embedding space dimensions changed; explicit migration required')
             for row, vector, source_text in zip(batch, vectors, texts):
-                upsert_embedding(con, row["id"], provider, model, source_text, vector)
+                current = con.execute("""SELECT c.*,b.title AS book_title FROM chapters c
+                    JOIN books b ON b.id=c.book_id LEFT JOIN daimon_projections p ON p.chapter_id=c.id
+                    WHERE c.record_uid=? AND c.embed_disabled=0 AND (p.active IS NULL OR p.active=1)""",
+                    (row['record_uid'],)).fetchone()
+                if current is None or embed_input_text(dict(current)) != source_text:
+                    changed.append(row['record_uid'])
+                    continue
+                upsert_embedding(con, row['id'], provider, model, source_text, vector)
                 processed += 1
             con.commit()
-        con.close()
-        return {"processed": processed, "provider": provider, "model": model}
+        return {'processed':processed,'provider':provider,'model':model,
+                'changed_during_embedding':changed}
     finally:
+        if con is not None:
+            con.close()
         _unlock_maintenance(fd)
 
 
@@ -1737,6 +1749,7 @@ def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
           n.subject_me_id AS daimon_subject_me_id,
           n.projector_id AS daimon_projector_id,
           n.projector_version AS daimon_projector_version,
+          e.input_text_hash,
           e.embedding_json,
           e.embedding_bin,
           e.dims
@@ -1754,6 +1767,8 @@ def semantic_search(query, limit=8, provider=None, model=None, use_binary=None,
     if not rows:
         return []
 
+    # Older writers may have left stale vectors after a concurrent update.
+    rows = [r for r in rows if r["input_text_hash"] == text_hash(embed_input_text(dict(r)))]
     have_binary = all(r["embedding_bin"] is not None for r in rows)
     use_binary = have_binary if use_binary is None else (use_binary and have_binary)
 
@@ -2917,6 +2932,7 @@ def main():
     p_embed.add_argument("--provider", default=default_embed_provider())
     p_embed.add_argument("--model")
     p_embed.add_argument("--batch-size", type=int, default=8)
+    p_embed.add_argument("--record-uid", action="append", help="Restrict maintenance to selected stable records")
     p_embed.add_argument("--limit", type=int, default=0)
     p_embed.add_argument("--all", action="store_true", help="recompute even if embeddings already exist")
 
@@ -3046,6 +3062,7 @@ def main():
             batch_size=args.batch_size,
             limit=args.limit,
             only_missing=not args.all,
+            record_uids=args.record_uid,
         )
         print(json.dumps(result, indent=2, ensure_ascii=False))
     elif args.command == "semantic-search":

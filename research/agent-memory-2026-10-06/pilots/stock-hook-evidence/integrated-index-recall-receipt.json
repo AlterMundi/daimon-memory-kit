@@ -1,0 +1,242 @@
+{
+  "schema": "hmk.integrated-index-recall-diagnostic/v1",
+  "fictional": true,
+  "qualification": false,
+  "purpose": "Verify selected index maintenance and whether retained correction can be retrieved and narrated; not a full comparison",
+  "embedding_space": {
+    "provider": "nvidia",
+    "model": "nvidia/nemotron-3-embed-1b"
+  },
+  "selected_index": {
+    "indexed_through": 1,
+    "processed": 2,
+    "space": {
+      "model": "nvidia/nemotron-3-embed-1b",
+      "output_dimensionality": null,
+      "provider": "nvidia"
+    },
+    "state": "complete"
+  },
+  "distractor_index": {
+    "changed_during_embedding": [],
+    "model": "nvidia/nemotron-3-embed-1b",
+    "processed": 300,
+    "provider": "nvidia"
+  },
+  "conditions": {
+    "canonical_records": 302,
+    "all_records_embedded": true,
+    "same_space_for_queries": true,
+    "threshold": 0.4,
+    "retrieval_clock": "current; not aged in this diagnostic",
+    "rubric_visible_to_receiver": false,
+    "private_session_or_tools_available": false,
+    "production_changed": false
+  },
+  "retrieval": [
+    {
+      "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+      "ids": [],
+      "status": "ok",
+      "reason": "below_threshold"
+    },
+    {
+      "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+      "ids": [
+        302,
+        38,
+        301
+      ],
+      "status": "ok",
+      "reason": "ok"
+    }
+  ],
+  "ranking_diagnosis": [
+    {
+      "lexical": [],
+      "query": "Who suggested keeping the send order when the connection returned, and did we end up using their idea?",
+      "rerank": "none",
+      "semantic": [
+        {
+          "id": 301,
+          "score": null,
+          "semantic_score": 0.267031,
+          "title": "That entry is wrong"
+        },
+        {
+          "id": 302,
+          "score": null,
+          "semantic_score": 0.256505,
+          "title": "Leto only reviewed the parser"
+        },
+        {
+          "id": 225,
+          "score": null,
+          "semantic_score": 0.020543,
+          "title": "Other project 224"
+        },
+        {
+          "id": 255,
+          "score": null,
+          "semantic_score": 0.020022,
+          "title": "Other project 254"
+        },
+        {
+          "id": 253,
+          "score": null,
+          "semantic_score": 0.01977,
+          "title": "Other project 252"
+        }
+      ]
+    },
+    {
+      "lexical": [
+        {
+          "id": 302,
+          "score": 0.6587,
+          "semantic_score": null,
+          "title": "Leto only reviewed the parser"
+        },
+        {
+          "id": 301,
+          "score": 0.6464,
+          "semantic_score": null,
+          "title": "That entry is wrong"
+        },
+        {
+          "id": 38,
+          "score": 0.5682,
+          "semantic_score": null,
+          "title": "Other project 37"
+        }
+      ],
+      "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+      "rerank": "none",
+      "semantic": [
+        {
+          "id": 302,
+          "score": null,
+          "semantic_score": 0.402814,
+          "title": "Leto only reviewed the parser"
+        },
+        {
+          "id": 301,
+          "score": null,
+          "semantic_score": 0.354212,
+          "title": "That entry is wrong"
+        },
+        {
+          "id": 38,
+          "score": null,
+          "semantic_score": 0.254417,
+          "title": "Other project 37"
+        },
+        {
+          "id": 37,
+          "score": null,
+          "semantic_score": 0.13948,
+          "title": "Other project 36"
+        },
+        {
+          "id": 238,
+          "score": null,
+          "semantic_score": 0.126683,
+          "title": "Other project 237"
+        }
+      ]
+    }
+  ],
+  "narrative": {
+    "query": "HarborMesh issue 37: who proposed the change, who reviewed it, and what happened to it?",
+    "response": {
+      "answer": "On HarborMesh issue 37, the correction says Mira Solen (@mira-estuary, person:841) proposed the change: retain the original event timestamp plus a local monotonic sequence, and compare orders after reconnect. The issue comment evidence shows it was created 2024-06-18T14:20:00Z as a proposal with no implementation. Leto Neri did not propose it; Leto only reviewed the parser. The earlier memory entry claiming Leto Neri proposed receipt-time ordering and that it was adopted June 18 was incorrect, and June 21 was when that incorrect entry was written, not when Mira was met. The proposal was not adopted as of the correction and still had not been adopted.",
+      "evidence": [
+        {
+          "record_uid": "0269c0be-7246-416c-b618-6cda3f0be498",
+          "revision": 1
+        },
+        {
+          "record_uid": "321a9cbf-a5d1-43a5-8b5f-b9dea6397d96",
+          "revision": 2
+        }
+      ]
+    },
+    "request_sha256": "b6d4b2cda525f39876c0dcc11c08eec6e4db60dc524bb6c5e7ed93824f31dc87",
+    "model": "deepseek-flash",
+    "reasoning_effort": "low",
+    "usage": {
+      "prompt_tokens": 3091,
+      "completion_tokens": 1168,
+      "total_tokens": 4259,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 944
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 3091
+    },
+    "seconds": 7.378282506018877,
+    "cost_usd": null,
+    "assessment": {
+      "method": "Direct source-to-claim assessment by evaluator outside receiver context",
+      "claims": [
+        {
+          "requirement": "participant",
+          "claim": "Mira Solen, @mira-estuary, person:841 proposed the change",
+          "support": "Human correction and original comment",
+          "status": "supported"
+        },
+        {
+          "requirement": "proposal",
+          "claim": "Original event timestamp plus local monotonic sequence, compare orders after reconnect",
+          "support": "Original comment",
+          "status": "supported"
+        },
+        {
+          "requirement": "event_date",
+          "claim": "2024-06-18T14:20:00Z",
+          "support": "Original comment created_at",
+          "status": "supported"
+        },
+        {
+          "requirement": "different_contribution",
+          "claim": "Leto Neri reviewed the parser, not the proposal author",
+          "support": "Human correction; prior name retained",
+          "status": "supported"
+        },
+        {
+          "requirement": "outcome",
+          "claim": "Proposal not adopted as of the correction; no implementation evidenced",
+          "support": "Human correction and implementation:null",
+          "status": "supported"
+        },
+        {
+          "requirement": "correction",
+          "claim": "Earlier attribution/adoption claim false; June 21 was erroneous memory write date",
+          "support": "Human correction and retrieved earlier record",
+          "status": "supported"
+        }
+      ],
+      "unsupported_claims_found": [],
+      "irrelevant_distractor_used": false,
+      "scope": "One targeted question, not full conversational acceptance"
+    }
+  },
+  "costs": {
+    "embedding_http_calls": 41,
+    "embedding_http_seconds": 40.33954971283674,
+    "embedding_document_inputs": 302,
+    "embedding_query_inputs": 2,
+    "embedding_cost_usd": null,
+    "narrator_calls": 1
+  },
+  "limitations": [
+    "Weak paraphrase returns no admitted memory despite relevant semantic candidates ranking first; threshold was not relaxed.",
+    "Targeted query also admitted unrelated numeric distractor 38; narrator ignored it.",
+    "Automatic previews emphasize source scaffolding and obsolete claims; compact supported representation is a hypothesis to test through existing consolidation APIs.",
+    "No ten-year aging, new fixture families, production rollout or operational alert delivery qualification in this diagnostic."
+  ],
+  "continuation": "Use existing supported consolidation to test whether compact current accounts improve sparse retrieval without losing originals or admitting noise. Preserve this unchanged baseline; do not repeat successful capture or rebuild all vectors."
+}

@@ -57,7 +57,8 @@ DeepSeek Flash low call (6,853 tokens, 5.79 seconds HTTP time). Intake committed
 revision 2 of target 301 and one source-attributed lesson, retaining revision 1.
 The redundant proposed correction episode was coalesced. Total diagnostic cost:
 seven calls, 39,200 tokens, 56.39 seconds HTTP time; USD price remains unverified.
-Embeddings are still pending. This proves resumed intake, not narrative utility
+At that point embeddings were pending; the index/receiving follow-up below
+records their later status. Resumed intake alone did not prove narrative utility
 or the complete operational pipeline.
 
 Concurrent canonical updates now invalidate the uncommitted selection while
@@ -103,13 +104,53 @@ its own absence. Missing observations must not become a healthy/zero-backlog
 status. Reuse existing monitoring where applicable and qualify the receiving
 route once, including recovery; no timers or services were installed by this work.
 
+### Selected index maintenance and actual receiving diagnostic
+
+`memoryctl.backfill_embeddings(record_uids=...)` and `embed-backfill --record-uid`
+now restrict maintenance to selected stable records. Missing/stale input hashes
+are checked before the work limit; current eligibility/content are checked again
+inside the write transaction after HTTP. Invalid vectors or changed dimensions
+fail visibly. Semantic search excludes stale legacy vectors. Other configured
+spaces and unrelated records remain untouched.
+
+`portable_producer.maintain_index_once` consumes committed capture receipts under
+the producer binding and lock. It has a separate, space-pinned checkpoint and a
+verified pre-index snapshot. Successful batches survive interruption; maintenance
+cannot repeat selection or acknowledge source capture. Embedding-provider errors
+enter the same durable operational incident path. This is an explicit callable
+operation; receiving launcher integration and live notification remain pending.
+The existing fictional pilot CLI accepts `--index-only` with the same selected
+`--inbox`, `--binding`, `--context`, `--canon`, `--state-dir` and
+`--fictional-isolated-profile` arguments. This requires only the configured
+embedding credentials, not a narrator credential. Exit 2 means work is pending;
+reinvoke explicitly after resolving the cause. It never reparses source sessions
+or repeats the selected capture. The API and CLI are finite operations, not a
+new scheduled service.
+
+The [real-provider diagnostic](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-index-recall-receipt.json)
+indexed the two corrected records with the current NVIDIA Nemotron embedding
+model. All 300 distractors were also indexed in that same space before retrieval.
+The targeted question recovered the correction; one isolated DeepSeek Flash low
+narration preserved proposer, reviewer, date, proposal, non-adoption and corrected
+history with no unsupported claim found by direct source assessment (4,259 tokens,
+7.38 seconds HTTP). The unrelated numeric distractor was ignored in narration,
+but its retrieval admission is still a precision concern.
+
+The weak paraphrase returned no admitted memory. The two relevant records ranked
+first semantically, but below the unchanged admission threshold. Their automatic
+previews emphasize source wrappers and the old erroneous claim. A supported,
+compact current account may improve their representation; this remains a
+hypothesis for the existing consolidation path, not a reason to lower thresholds.
+No broad comparison, aging run or production acceptance is claimed here.
+
 Next uncertainties and required work:
 
-1. Qualify current hybrid embeddings separately from the lexical diagnostic and
-   meaningful receiving use of the corrected record/lesson. Intake alone is not
-   demonstrated improvement in recall.
-2. Integrate bounded source-delta context, selected index maintenance and useful
-   dependent-account consolidation through existing APIs. Define launcher
+1. Integrate supported compact accounts through the existing consolidation API
+   and compare sparse recall against the now-indexed unchanged diagnostic. Resolve
+   numeric distractor admission without weakening relevance. Do not repeat the
+   successful capture or initial fixture indexing.
+2. Integrate bounded source-delta context and useful dependent-account
+   consolidation through existing APIs; wire the selected index phase into the launcher. Define launcher
    ownership, batching and backlog handling before automatic processing.
 3. Finish infrastructure-bound observation and actionable delivery for every
    processing phase. Verify real delivery, processor absence and recovery using

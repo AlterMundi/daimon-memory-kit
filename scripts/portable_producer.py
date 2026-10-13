@@ -16,7 +16,7 @@ from codex_coordinator import checkpoint, sync_directory
 import codex_projection as artifacts
 import portable_capture as selection
 import selection_navigation
-from provider_status import Alerts, ProviderProblem
+from provider_status import Alerts, ProviderProblem, classify
 from sqlite_snapshot import verified_snapshot
 
 SCHEMA = 'hmk.portable-producer/v1'
@@ -282,6 +282,79 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         checkpoint(index_path,index)
         return {'state':'complete','processed_through':index['after'],'receipt':receipt,
                 'proposer_invoked':proposer_invoked,'artifact_id':artifact_id}
+
+
+def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, notice_sender=None, _fault=None):
+    """Explicit bounded index work from committed capture receipts, independently resumable.
+
+    This cannot acknowledge capture or invoke selection. The receiving launcher
+    schedules both operations; no native learning, timer or background job starts.
+    """
+    if type(limit) is not int or limit < 1:
+        raise ValueError('positive index work budget required')
+    state_dir = Path(state_dir).absolute()
+    if any(p.is_symlink() for p in [state_dir,*state_dir.parents]):
+        raise ValueError('producer state directory cannot contain symlinks')
+    with open(str(inbox.path)+'.producer.lock','a+b') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with inbox.connect() as con:
+            if not con.execute("SELECT 1 FROM sqlite_master WHERE name='producer_owner'").fetchone():
+                raise ValueError('index work requires an established producer binding')
+            row = con.execute('SELECT value FROM producer_owner').fetchone()
+        owner = json.loads(row[0]) if row else {}
+        if (owner.get('database') != str(Path(memory.DB_PATH).resolve())
+                or owner.get('state_dir') != str(state_dir)
+                or owner.get('capture_binding') != digest(json.loads(inbox.binding))):
+            raise ValueError('index work binding differs')
+        cfg = memory.embeddings_runtime_config()
+        path = state_dir/'embedding-index.json'
+        state = json.loads(path.read_text()) if path.exists() else dict(owner=owner,space=cfg,after=0)
+        if state['owner'] != owner or state['space'] != cfg:
+            raise ValueError('index space or binding changed; explicit migration required')
+        # The canonical ledger is authoritative, even after a crash before the
+        # capture index checkpoint. Never scan other streams or private pools.
+        with memory.connect() as con:
+            row = con.execute("SELECT sequence,state,receipt_json FROM capture_events WHERE stream_id=? AND sequence>? ORDER BY sequence LIMIT 1",
+                ('portable:'+digest(owner),state['after'])).fetchone()
+        if row is None:
+            return dict(state='idle',indexed_through=state['after'],space=cfg)
+        if row['state'] not in {'applied','omitted'}:
+            return dict(state='pending',reason='capture event is not committed',indexed_through=state['after'])
+        receipt = json.loads(row['receipt_json'])
+        uids = sorted({r['record_uid'] for r in receipt['records'].values()})
+        with memory.connect() as con:
+            found = {r[0] for r in con.execute('SELECT record_uid FROM chapters WHERE record_uid IN (SELECT value FROM json_each(?))',(wire(uids),))}
+        if found != set(uids):
+            return dict(state='pending',reason='committed records missing',indexed_through=state['after'])
+        operation = 'embedding:'+digest([owner,row['sequence'],cfg])
+        if not path.exists():
+            checkpoint(path,state)  # Pin the space before any paid work, including failures.
+        pending = memory.embedding_candidates(provider=cfg['provider'],model=cfg['model'],record_uids=uids,limit=limit)
+        processed = 0
+        if pending:
+            backup = state_dir/f"embedding-{row['sequence']}-before.sqlite"
+            if not backup.exists():
+                verified_snapshot(memory.DB_PATH,backup)
+            try:
+                result = memory.backfill_embeddings(provider=cfg['provider'],model=cfg['model'],
+                    record_uids=uids,limit=limit,batch_size=batch_size)
+                processed = result['processed']
+            except memory.EmbeddingBackendError as error:
+                problem = classify(error.__cause__ if error.__cause__ is not None else error)
+                alerts = Alerts(inbox)
+                alert_id = alerts.report(operation,'embedding',ProviderProblem(cfg['provider'],operation,problem))
+                status = alerts.deliver(notice_sender) if notice_sender is not None else alerts.status()
+                return dict(state='pending',reason='embedding backend unavailable',provider_problem=problem,
+                    alert_id=alert_id,notification_pending=bool(status['undelivered']),indexed_through=state['after'])
+        if _fault:
+            _fault('after_embedding_commit')
+        pending = memory.embedding_candidates(provider=cfg['provider'],model=cfg['model'],record_uids=uids,limit=1)
+        if pending:
+            return dict(state='pending',reason='index work remains',processed=processed,indexed_through=state['after'])
+        Alerts(inbox).resolve(operation)
+        state['after'] = row['sequence']
+        checkpoint(path,state)
+        return dict(state='complete',processed=processed,indexed_through=state['after'],space=cfg)
 
 
 def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=False):

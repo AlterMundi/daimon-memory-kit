@@ -17,7 +17,7 @@ from capture_inbox import Inbox
 from capturectl import digest
 from codex_coordinator import checkpoint
 from native_producer_delivery import load_memory
-from portable_producer import process_once, reprepare_pending
+from portable_producer import process_once, reprepare_pending, maintain_index_once
 from provider_status import ProviderProblem
 import receiving_text_api as api
 
@@ -70,6 +70,7 @@ def main():
     p.add_argument('--canon',type=Path,required=True)
     p.add_argument('--state-dir',type=Path,required=True)
     p.add_argument('--limit',type=int,default=32)
+    p.add_argument('--index-only',action='store_true',help='Maintain committed selected records without selection or a narrator credential')
     p.add_argument('--output-token-limit',type=int,default=6000)
     p.add_argument('--reprepare-reason')
     p.add_argument('--retry-of',help='Explicit failed/incomplete dispatch hash; originals remain preserved')
@@ -77,11 +78,17 @@ def main():
     a=p.parse_args()
     if not a.inbox.is_file():
         p.error('capture inbox must already exist')
+    if a.index_only and (a.reprepare_reason or a.retry_of):
+        p.error('index-only cannot reprepare selection or retry narrator requests')
+    memory=load_memory(a.canon)
+    inbox=Inbox(a.inbox,json.loads(a.binding.read_text()))
+    if a.index_only:
+        result=maintain_index_once(memory,inbox,a.state_dir,limit=a.limit)
+        print(json.dumps(result))
+        return 0 if result['state'] in {'complete','idle'} else 2
     key=os.environ.get('DEEPSEEK_API_KEY')
     if not key:
         p.error('caller must supply DEEPSEEK_API_KEY')
-    memory=load_memory(a.canon)
-    inbox=Inbox(a.inbox,json.loads(a.binding.read_text()))
     if a.reprepare_reason:
         reprepare_pending(memory,inbox,a.state_dir,a.reprepare_reason)
     result=process_once(memory,inbox,a.state_dir,proposer(key,output_limit=a.output_token_limit,retry_of=a.retry_of),
@@ -92,4 +99,4 @@ def main():
 
 
 if __name__=='__main__':
-    main()
+    raise SystemExit(main())
