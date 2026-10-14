@@ -1,6 +1,6 @@
 # Integrated operational memory
 
-Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. Verified exclusions are resolved through Alerts PR #2; the goal remains open for two unidentified Oliva attempts described below; do not repeat completed semantic or receiving trials.
+Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. Verified exclusions and atomic identity are adopted through Alerts PRs #2/#4; goal closure awaits the decision on two unidentified historical Oliva attempts below; do not repeat completed semantic or receiving trials.
 
 ## Outcome
 
@@ -690,3 +690,51 @@ reading/importing unrelated conversations, guessing identities from timestamps,
 repeating paid work or re-running semantic comparisons. Preserve the uncertain
 Telegram delivery for its existing receiving owner. The goal remains active;
 verified exclusion resolution is complete, unrestricted source recovery is not.
+
+### Atomic capture identity adopted — 2026-10-14
+
+[Alerts PR4](https://github.com/AlterMundi/daimon-alerts/pull/4) fixes the demonstrated
+first-intent identity gap. A process killed immediately after the former first
+write left an unidentifiable attempt. The corrected first durable write includes
+the selected source hash and event, before invoking capture. Native input has a
+bounded wait; missing/unclosed input records an explicit input_timeout without
+import. Eight process checks, five observer/HTTP checks and owning CI38616506012
+passed. This does not claim coverage before the first durable write.
+
+[Adoption evidence](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-atomic-capture-adoption.json)
+records supervisor/projection-reader8ee61d8 on all three bodies, actual service-user
+preflight, verified projection snapshots, trusted native hooks and fresh observer
+receipts. Only independent observers restarted; listeners, workers, memory, source
+bindings and native-memory settings were unchanged. A fresh Oliva native turn
+captured both Stop and SessionEnd and reconstructed both sources. Its live archive
+completion notification was not observed before the diagnostic deadline; actual
+terminal supervisor receipts and inbox snapshots established completion without
+replaying the native turn. The check used21,614 Codex tokens including12,288 cached
+input tokens, with unknown billing; no new selection/consolidation comparison ran.
+
+Bounded historical inspection found no matching native hook log, orphan atomic
+write containing the missing identity, or child completion receipt for either
+legacy attempt. The native history projection contains no hook items. This does
+not establish capture, exclusion or source loss. Both old incidents stay open.
+The new code cannot reconstruct metadata that was never retained.
+
+### Goal evidence check and remaining decision
+
+| Requirement | Current evidence | Result |
+| --- | --- | --- |
+| Old encounters, identity, proposals, failed outcomes and corrections under weak clues | `integrated-flow-receipt.json`: source-free before/after native answers, ten-year retrieval clock,300 recent distractors; complete source/assertion assessment. `integrated-navigation-receiving-receipt.json`: weak-cue recovery and negative collision case. | Qualified on the selected cases; no universal recall claim. |
+| Canon navigation beyond256 records and complete originals before mutation | Source-bound `selection_navigation` and Reader APIs;303-record diagnostics and unchanged admission thresholds. | Implemented and deployed. |
+| Resumable new-source windows, concurrent later input, interruption and replay | `integrated-source-window-receipt.json`, worker/launcher receipts and current retained Eko bounded remainder. | Qualified; normal pending work remains explicit. |
+| Supported account reconciliation and selected indexing | `integrated-flow-receipt.json`, `integrated-reconciliation-receipt.json`; derived-account ownership, current supports and preserved originals. | Qualified and connected to the finite runtime. |
+| Current provider/embedding spaces and one learning owner | Installed receiving profiles use DeepSeek Flash and native OpenAI Sol review, existing embedding spaces, native memory disabled. | Adopted without a competing native writer. |
+| Three-body real adoption, useful recall and preservation | Access/capture/runtime receipts; actual native receiving in all three bodies, Eko's meaningful learned encounter, preserved revisions and rollback copies. | Observed; phone use remains separate and unobserved. |
+| Cadence, failure visibility and explicit provider recovery | Enabled midnight-UTC timers; real controlled installed-worker failure/recovery and receiving receipts in Alerts work record. | Operational; no paid retry follows acknowledgment or notification. |
+| First-intent interruption retains selected source identity | Atomic capture adoption above, process-level kill regression and actual Oliva native capture. | Corrected and deployed; no pre-first-write guarantee. |
+| Prior unidentified attempts and uncertain Telegram delivery | Two legacy attempts lack identity; no matching retained operation evidence. Receiving retains uncertain delivery without retry. | Historical recovery unproven; not marked successful. |
+| Publication, evidence and bounded continuation | HMK PRs114/118/119/120; Alerts PRs2/3/4 and current owning records. | Code and adoption published; this update records the remaining decision. |
+
+No further model comparison, consolidation, repeated native acceptance or speculative
+prompt change can identify the two legacy operations. The human has been asked
+whether to close this operational deployment with those historical incidents left
+open, or keep the goal pending external operation evidence. Until that decision,
+do not mark the goal complete or dismiss the incidents. Reuse all qualified work.

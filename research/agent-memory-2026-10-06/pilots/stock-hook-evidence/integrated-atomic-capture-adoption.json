@@ -1,0 +1,125 @@
+{
+  "schema": "hmk.atomic-capture-identity-adoption/v1",
+  "date": "2026-10-14",
+  "alerts_pr": "https://github.com/AlterMundi/daimon-alerts/pull/4",
+  "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+  "ci_run": "https://github.com/AlterMundi/daimon-alerts/actions/runs/38616506012",
+  "diagnosis": {
+    "previous_first_intent_kill": "reproduced failure: selected event/source absent",
+    "corrected_first_intent_kill": "selected event/source retained before child capture",
+    "missing_native_input": "bounded visible input_timeout, no capture or import",
+    "process_tests": 8,
+    "observer_http_tests": 5,
+    "full_ci": "passed"
+  },
+  "receivers": [
+    {
+      "name": "compaii",
+      "capture-identity-observer-adoption.json": {
+        "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+        "service_user_preflight": true,
+        "fresh_observer_receipt": true,
+        "projection_snapshot_verified": true,
+        "binding_unchanged": true,
+        "native_listener_and_worker_untouched": true
+      },
+      "capture-identity-hook-adoption.json": {
+        "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+        "hook_entries": 2,
+        "trusted": true,
+        "binding_unchanged": true,
+        "native_turns": 0
+      }
+    },
+    {
+      "name": "eko",
+      "capture-identity-observer-adoption.json": {
+        "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+        "service_user_preflight": true,
+        "fresh_observer_receipt": true,
+        "projection_snapshot_verified": true,
+        "binding_unchanged": true,
+        "native_listener_and_worker_untouched": true
+      },
+      "capture-identity-hook-adoption.json": {
+        "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+        "hook_entries": 2,
+        "trusted": true,
+        "binding_unchanged": true,
+        "native_turns": 0
+      }
+    },
+    {
+      "name": "oliva",
+      "capture-identity-observer-adoption.json": {
+        "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+        "service_user_preflight": true,
+        "fresh_observer_receipt": true,
+        "projection_snapshot_verified": true,
+        "binding_unchanged": true,
+        "native_listener_and_worker_untouched": true
+      },
+      "capture-identity-hook-adoption.json": {
+        "release": "8ee61d85bc6d3228a995e6ebeada46b3e786d14d",
+        "hook_entries": 2,
+        "trusted": true,
+        "binding_unchanged": true,
+        "native_turns": 0
+      },
+      "native_capture": {
+        "schema": "hmk.atomic-capture-native-check/v1",
+        "native_source_events": [
+          "Stop",
+          "SessionEnd"
+        ],
+        "selected_attempts_complete": 2,
+        "inbox_observations": 2,
+        "source_reconstructed": true,
+        "native_stop_completed_event": true,
+        "native_session_end_completed_event_observed": false,
+        "observation_timeout_reconciled_from_durable_receipts": true,
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "usage": [
+          {
+            "total": {
+              "totalTokens": 21614,
+              "inputTokens": 21608,
+              "cachedInputTokens": 12288,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 6,
+              "reasoningOutputTokens": 0
+            },
+            "last": {
+              "totalTokens": 21614,
+              "inputTokens": 21608,
+              "cachedInputTokens": 12288,
+              "cacheWriteInputTokens": 0,
+              "outputTokens": 6,
+              "reasoningOutputTokens": 0
+            },
+            "modelContextWindow": 475000
+          }
+        ],
+        "billed_usd": null,
+        "no_native_replay": true
+      }
+    }
+  ],
+  "legacy_forensics": {
+    "unidentified_attempts": 2,
+    "matching_native_hook_logs_in_older_window": 0,
+    "matching_interrupted_atomic_write_artifacts": 0,
+    "matching_child_completion_receipts": 0,
+    "native_history_hook_items": 0,
+    "source_identity_inferred_from_time": false,
+    "incidents_resolved": false
+  },
+  "boundaries": {
+    "no_pre_first_write_coverage_claim": true,
+    "native_memory_enabled": false,
+    "private_sessions_imported": false,
+    "independent_observer_restarts_only": true,
+    "semantic_comparisons_repeated": false
+  }
+}
