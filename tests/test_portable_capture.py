@@ -127,3 +127,32 @@ def test_free_form_link_claims_remain_in_proposal_not_canonical_fact():
     assert 'Not independent factual support' in result['links'][0]['note']
     assert '1990' not in json.dumps(result['links'])
     assert json.dumps(value)==prior
+
+
+def test_injected_instructions_do_not_become_the_encounters_causal_opener():
+    from portable_capture import block_sources
+    def line(p):return (json.dumps(dict(type='response_item',payload=p))+'\n').encode()
+    def message(text):return dict(type='message',role='user',content=[dict(type='input_text',text=text)])
+    injected='# AGENTS.md instructions for /fictional/work\n\n<INSTRUCTIONS>\nExisting identity and private operating context.\n</INSTRUCTIONS>\n<environment_context>fixture</environment_context>'
+    raw=line(message(injected))
+    raw+=line(message('On June 4 Tavi asked about Jo\'s proposal on issue 37.'))
+    raw+=line(dict(type='function_call',call_id='x',name='issue_comment',arguments='{"issue":37}'))
+    raw+=line(dict(type='function_call_output',call_id='x',output='authentication_failed; delivered=false'))
+    blocks=block_sources(codex_sources(raw,source='fixture'),'fixture:desk')
+    assert blocks[0]['status']=='earlier_context'
+    assert blocks[0]['channel']=='harness_instruction_context'
+    assert blocks[0]['content']==injected  # Still available; originals are not deleted.
+    value=dict(outcome='applied',reason='Significant failure',records=[dict(key='x',operation='add',shelf='episodes',title='authentication_failed',source_ids=[blocks[-1]['id']])],links=[])
+    result=selected_decision(value,blocks,[])['records'][0]['raw']
+    assert 'June 4' in result and 'issue_comment' in result and 'delivered=false' in result
+    assert 'Existing identity' not in result and 'AGENTS.md' not in result
+    value['records'][0]['source_ids'].append(blocks[0]['id'])
+    with pytest.raises(ValueError,match='harness instructions'):
+        selected_decision(value,blocks,[])
+
+
+def test_discussion_of_instructions_remains_a_human_source():
+    from portable_capture import instruction_context
+    for text in ['We changed AGENTS.md after the incident.',
+                 '# AGENTS.md instructions\n\n<INSTRUCTIONS>Old rule</INSTRUCTIONS>\nPlease correct this rule.']:
+        assert not instruction_context(dict(type='message',role='user',content=[dict(type='input_text',text=text)]))
