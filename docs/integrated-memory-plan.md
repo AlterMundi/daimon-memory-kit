@@ -1,6 +1,6 @@
 # Integrated operational memory
 
-Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. The goal remains open for the narrowly defined Alerts reconciliation below; do not repeat completed semantic or receiving trials.
+Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. Verified exclusions are resolved through Alerts PR #2; the goal remains open for two unidentified Oliva attempts described below; do not repeat completed semantic or receiving trials.
 
 ## Outcome
 
@@ -657,3 +657,36 @@ native capture acceptance, semantic comparisons, model selection, consolidation
 or the completed repairs. Whole selected tool outputs can still be verbose;
 phone use of Eko/Oliva Sessions remains unobserved. Those limits are not claims
 of universal equivalence to native Codex memory or optimum compression.
+
+### Verified exclusion resolution adopted — 2026-10-14
+
+[Alerts PR2](https://github.com/AlterMundi/daimon-alerts/pull/2) is merged and its
+supervisor/projection reader is installed on Eko and Oliva. Six installed-HMK
+subprocess cases, five observer/HTTP cases and the full owning CI passed. Explicit
+exclusion requires a later skipped receipt with a verified reason under the same
+source/event/binding. It preserves the original failure and does not claim that
+bytes were captured. No source admission, paid call or native turn follows.
+
+The [receiving evidence](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-capture-exclusion-adoption.json)
+records one Eko and twelve Oliva exclusions: the eleven previously identified
+attempts plus two further failures for the same excluded source set. Excluded
+sources still have zero inbox observations. Eko has no remaining open incident.
+Oliva's exclusions are all resolved in the service, with eleven confirmed
+resolution deliveries and one uncertain delivery that was not retried. Backups
+of the observer projection and configuration remain; rollback must preserve an
+exclusion-aware projection reader and all later receipts.
+
+The new executable directory initially inherited a root-only umask. Its traversal
+permission was corrected and execution verified as the receiving service user;
+only the independent observers were restarted. No native listener, worker, core,
+source binding or memory configuration was replaced.
+
+**Remaining continuation:** two Oliva attempts now remain unidentified (both
+predate this code delivery). They were interrupted before source/event metadata
+was retained. A bounded query of native hook logs around the older attempt found
+no operation evidence; this does not establish absence or recovery. Diagnose the
+pre-identity capture boundary and any supported native operation evidence without
+reading/importing unrelated conversations, guessing identities from timestamps,
+repeating paid work or re-running semantic comparisons. Preserve the uncertain
+Telegram delivery for its existing receiving owner. The goal remains active;
+verified exclusion resolution is complete, unrestricted source recovery is not.
