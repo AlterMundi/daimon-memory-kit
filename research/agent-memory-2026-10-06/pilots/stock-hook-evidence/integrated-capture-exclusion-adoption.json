@@ -1,0 +1,162 @@
+{
+  "schema": "hmk.capture-exclusion-adoption/v1",
+  "date": "2026-10-14",
+  "alerts_pr": "https://github.com/AlterMundi/daimon-alerts/pull/2",
+  "qualification_run": "https://github.com/AlterMundi/daimon-alerts/actions/runs/38614597871",
+  "complete_goal": false,
+  "validation": {
+    "installed_hmk_subprocess_tests": 6,
+    "observer_http_tests": 5,
+    "full_ci": "passed"
+  },
+  "receivers": [
+    {
+      "name": "eko",
+      "observed_at": "2026-10-14T18:29:49.618714+00:00",
+      "alerts_release": "e5cb43c61b7d3b56d118bf01af9d30e515ec7928",
+      "service_status": "healthy",
+      "observer_states": [
+        "healthy"
+      ],
+      "excluded_attempts": 1,
+      "excluded_projection_count": 1,
+      "excluded_projections_preserve_false": true,
+      "excluded_projections_resolved": true,
+      "resolution_deliveries": [
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        }
+      ],
+      "open_incidents": 0,
+      "remaining_capture_gaps": [],
+      "native_memory_enabled": false,
+      "scope_expanded": false,
+      "recovery_model_calls": 0,
+      "observer_adoption": {
+        "release": "e5cb43c61b7d3b56d118bf01af9d30e515ec7928",
+        "observer_active": true,
+        "projection_snapshot_verified": true,
+        "observer_binding_unchanged": true,
+        "core_changed": false,
+        "worker_or_listener_restarted": false,
+        "rollback": "Keep an exclusion-aware projection reader once exclusions exist; preserve current projection database and supervisor ledger."
+      },
+      "hook_adoption": {
+        "release": "e5cb43c61b7d3b56d118bf01af9d30e515ec7928",
+        "hook_entries": 2,
+        "trusted": true,
+        "binding_unchanged": true,
+        "native_turns": 0
+      }
+    },
+    {
+      "name": "oliva",
+      "observed_at": "2026-10-14T18:29:50.632317+00:00",
+      "alerts_release": "e5cb43c61b7d3b56d118bf01af9d30e515ec7928",
+      "service_status": "healthy",
+      "observer_states": [
+        "healthy"
+      ],
+      "excluded_attempts": 12,
+      "excluded_projection_count": 12,
+      "excluded_projections_preserve_false": true,
+      "excluded_projections_resolved": true,
+      "resolution_deliveries": [
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "uncertain",
+          "outcome": null
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        },
+        {
+          "state": "delivered",
+          "outcome": "delivered"
+        }
+      ],
+      "open_incidents": 2,
+      "remaining_capture_gaps": [
+        {
+          "has_source": false,
+          "event": null,
+          "reason": "hook_uncertain",
+          "started_ns": 1791962077158307000,
+          "deadline_ns": 1791962080658307000
+        },
+        {
+          "has_source": false,
+          "event": null,
+          "reason": "hook_uncertain",
+          "started_ns": 1792002010923840000,
+          "deadline_ns": 1792002017923840000
+        }
+      ],
+      "native_memory_enabled": false,
+      "scope_expanded": false,
+      "recovery_model_calls": 0,
+      "observer_adoption": {
+        "release": "e5cb43c61b7d3b56d118bf01af9d30e515ec7928",
+        "observer_active": true,
+        "projection_snapshot_verified": true,
+        "observer_binding_unchanged": true,
+        "core_changed": false,
+        "worker_or_listener_restarted": false,
+        "rollback": "Keep an exclusion-aware projection reader once exclusions exist; preserve current projection database and supervisor ledger."
+      },
+      "hook_adoption": {
+        "release": "e5cb43c61b7d3b56d118bf01af9d30e515ec7928",
+        "hook_entries": 2,
+        "trusted": true,
+        "binding_unchanged": true,
+        "native_turns": 0
+      }
+    }
+  ],
+  "preservation": {
+    "original_failures_retained": true,
+    "excluded_conversations_imported": 0,
+    "scope_changed": false,
+    "models_called": 0,
+    "source_identity_guessed": false
+  },
+  "deployment_correction": "The new executable directory initially inherited a root-only umask. Corrected traversal permissions, verified execution as the actual service user and restarted only the independent observers before exclusions. No core, worker, native listener or native goal restart.",
+  "remaining": "Two Oliva attempts lack event/source identity; retained open. One resolution delivery is uncertain and must not be re-sent automatically. No retained native hook log was found in the bounded window of the older unidentified attempt."
+}
