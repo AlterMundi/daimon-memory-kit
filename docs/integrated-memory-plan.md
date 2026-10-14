@@ -556,3 +556,33 @@ Exact continuation:
    preservation and replay evidence; do not reopen comparisons or old queues.
 
 The operational goal remains open until these runtime effects are established.
+
+### Receiving follow-up: instruction context contamination — 2026-10-14
+
+Alerts completed the three separate receiving routes, first real worker runs,
+controlled failure/recovery delivery and authorized daily schedules. Preserve its
+owning `docs/work-record.md` and per-body receipts; no semantic comparison or
+notification fault battery needs repeating. Native capture through the newly
+installed supervisor still needs one selected receiving observation.
+
+Inspection of Eko's committed batches exposed a producer normalization defect:
+Codex serializes its framed AGENTS/SOUL instructions as a user message. The
+normalizer incorrectly made that message the causal opener and appended it to
+selected encounters even when the selector explicitly omitted the instructions.
+Three records carried that extra context. The receiver's timer was disabled for
+this correction; source capture, current memory access and pending work remain.
+
+The correction classifies the exact framed instruction message as harness context,
+retains its original bytes, excludes it as a human-turn opener and rejects its
+explicit selection as new evidence. Ordinary discussion of instructions remains
+selectable. Actual human context, tool calls/results and correction provenance
+continue through the existing dependency rules. The targeted 44 capture/window/
+producer/navigation tests pass, including a failed-action regression preserving
+its date, issue and actual result without copying operating instructions.
+
+Receiving repair reuses the retained selections and exact original snapshots;
+it does not ask a model to reinterpret the encounters. Prior revisions and
+formation artifacts must remain available, and only corrected records need
+reindexing. Do not resume the disabled schedule until this correction is adopted
+and the current bounded remainder has been checked. Private source text and
+record details remain on the receiving body.

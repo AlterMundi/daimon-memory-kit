@@ -9,6 +9,26 @@ from capture_inbox import sha, wire
 from capture_schema import decision_schema
 from source_selection import source_decision
 
+
+def instruction_context(payload):
+    """Recognize Codex's framed instruction message, not ordinary human prose.
+
+    The original stays in the inbox and source packet for interpretation. Its
+    user role is a harness serialization detail, not an autobiographical report.
+    """
+    if payload.get('type') != 'message' or payload.get('role') != 'user':
+        return False
+    text = '\n'.join(c.get('text', '') for c in payload.get('content', []))
+    header, separator, rest = text.partition('\n\n<INSTRUCTIONS>')
+    if not separator or not (header == '# AGENTS.md instructions' or
+                            header.startswith('# AGENTS.md instructions for ')):
+        return False
+    _, closed, tail = rest.partition('</INSTRUCTIONS>')
+    return bool(closed and (not tail.strip() or
+                           (tail.strip().startswith('<environment_context>') and
+                            tail.strip().endswith('</environment_context>'))))
+
+
 def codex_sources(snapshot, *, source, previous=None):
     """Normalize original response items, never compacted replays or system prompts.
 
@@ -54,6 +74,7 @@ def codex_sources(snapshot, *, source, previous=None):
         source_id = source+':'+str(start)+':'+original_sha
         dependencies = []
         is_recall = False
+        is_instruction = instruction_context(payload)
         if kind in {'function_call', 'custom_tool_call'}:
             is_recall = payload.get('name') in {'hmk_recall', 'mcp__hmk__hmk_recall'}
             calls[payload.get('call_id')] = (source_id, is_recall)
@@ -64,18 +85,19 @@ def codex_sources(snapshot, *, source, previous=None):
                 is_recall = call[1]
             else:
                 unsupported.append({'offset': start, 'type': 'unpaired_tool_output'})
-        if kind == 'message' and turn in recalled:
+        if kind == 'message' and not is_instruction and turn in recalled:
             dependencies.append(recalled[turn])
         if is_recall and kind in {'function_call_output','custom_tool_call_output'}:
             recalled[turn] = source_id
-        if kind == 'message' and payload.get('role') == 'user':
+        if kind == 'message' and payload.get('role') == 'user' and not is_instruction:
             openers.setdefault(turn, source_id)
-        if turn in openers and openers[turn] != source_id:
+        if not is_instruction and turn in openers and openers[turn] != source_id:
             dependencies.append(openers[turn])
         items.append({'id':source_id,
                       'recorded_at':row.get('timestamp'), 'original_sha256':original_sha,
-                      'status':'earlier_context' if is_recall or sha(line.rstrip(b'\r\n')) in prior else 'new',
+                      'status':'earlier_context' if is_recall or is_instruction or sha(line.rstrip(b'\r\n')) in prior else 'new',
                       'dependencies': dependencies, 'retrieved_context': is_recall,
+                      'instruction_context': is_instruction,
                       'payload':payload})
     return {'source':source,'sha256':sha(snapshot),'sources':items,'unsupported':unsupported}
 
@@ -132,6 +154,8 @@ def block_sources(normalized, body):
         if p['type'] == 'message':
             content = '\n'.join(c['text'] for c in p['content'])
             channel = 'human_message' if p['role'] == 'user' else 'assistant_statement'
+            if item.get('instruction_context'):
+                channel = 'harness_instruction_context'
         else:
             content = wire(p)
             channel = ('retrieved_memory_context' if item.get('retrieved_context') and p['type'].endswith('_output')
@@ -140,7 +164,8 @@ def block_sources(normalized, body):
         blocks.append({'id': item['id'], 'channel': channel, 'content': content,
                        'originating_body': body, 'received_at': item['recorded_at'],
                        'status': item['status'], 'dependencies': item.get('dependencies', []),
-                       'retrieved_context': item.get('retrieved_context', False)})
+                       'retrieved_context': item.get('retrieved_context', False),
+                       'instruction_context': item.get('instruction_context', False)})
     return blocks
 
 
@@ -211,6 +236,8 @@ def selected_decision(value, sources, canon):
                     'account reconciliation owns derived prose and its support history')
         if any(available.get(ref, {}).get('retrieved_context') for ref in record.get('source_ids', [])):
             raise ValueError('retrieved memory is context, not selectable intake evidence')
+        if any(available.get(ref, {}).get('instruction_context') for ref in record['source_ids']):
+            raise ValueError('harness instructions are context, not selectable intake evidence')
         if not allowed.intersection(record.get('source_ids', [])):
             raise ValueError('a selected record needs genuinely new source bytes')
     for link in value.get('links', []):
