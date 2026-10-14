@@ -1,6 +1,6 @@
 # Integrated operational memory
 
-Active work: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). PR #114 is merged. The CLI and hybrid reader are deployed to all three receivers; forward-only capture is now authorized and configured. Daily processing and real Alerts observation remain pending; the operational goal is not complete.
+Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. The goal remains open for the narrowly defined Alerts reconciliation below; do not repeat completed semantic or receiving trials.
 
 ## Outcome
 
@@ -586,3 +586,74 @@ formation artifacts must remain available, and only corrected records need
 reindexing. Do not resume the disabled schedule until this correction is adopted
 and the current bounded remainder has been checked. Private source text and
 record details remain on the receiving body.
+
+
+### Current receiving continuation — 2026-10-14
+
+This entry supersedes the pending deployment statements above. The
+[runtime evidence](../research/agent-memory-2026-10-06/pilots/stock-hook-evidence/integrated-runtime-adoption.json)
+separates the working route from the remaining incidents. Alerts and Telecodex
+completed separately scoped receiving, actual worker invocations, controlled
+failure/recovery delivery and Sessions backend inspection on all three bodies.
+The original midnight-UTC schedules are enabled. Native Codex learning and memory
+remain disabled; immutable capture cutoffs, source scopes and Matrix authority
+are unchanged. Eko keeps both receiving memory stores.
+
+PR #118's worker release `3957d225b836e77ab62c7bf943441550440d99d3` is installed
+on all three bodies. Reader/capture API remains the qualified `103a5a0` release.
+The three contaminated Eko records now have clean revision 2, the same identities,
+all earlier revisions, formation artifacts and metadata, and current embeddings.
+Reconstruction reused the retained proposals and source snapshots with zero
+selector calls. A verified live snapshot and copy-tested revision rollback are
+retained privately. Rollback means reverting the selected configuration or making
+an explicit new correction; never restore an old database over later memories.
+
+The corrected Eko worker completed three further windows: two applied selections
+and one omitted mechanical orientation, with four new records and updated indices.
+It stopped at its nine-step budget after 203.10 seconds, retaining the explicit
+source-group remainder. This is pending work, not a provider outage or complete
+backlog drain. The next authorized daily run resumes the retained position.
+Organization reported its existing dependent accounts current. No old pilot queue
+or consolidation was repeated. Across both real Eko invocations, retained selection
+responses total 13 DeepSeek Flash calls, 308,862 tokens and 184.09 seconds HTTP time.
+CompAII and Oliva each omitted their transient initial input (one call each,
+11,676/9,311 tokens). Billed USD is unknown; native check usage is separate in the
+receipt. These samples do not establish a universal daily cost.
+
+An actual Eko native receiver recovered the cleaned encounter from a weak clue:
+it supplied the participant and question topics, attributed the memory to the
+human's report and explicitly declined to invent the original wording or prior
+knowledge. Private names and source prose are not published. This is useful real
+receiving evidence, not another complete semantic benchmark.
+
+Actual supervised Stop/SessionEnd capture now succeeds on all three bodies and
+reconstructs the sources. Initial 1.5-second child deadlines failed on the
+containers; Eko's three-second SessionEnd deadline also killed its supervisor.
+The bounded receiving configuration is now Oliva 5-second child/10-second outer
+for both events; Eko Stop 15/30 seconds and SessionEnd 5/10 seconds. CompAII's
+working configuration is unchanged. The latest successful native times were
+CompAII 418/303ms, Oliva 3,146/586ms and Eko 6,350/691ms. Eko standalone same-source
+capture took 1.12 seconds; the underlying scheduling delay is not proven. Exact
+hook hashes were retrusted through existing native controls, without a global
+Stop or listener replacement. Original failures and matching explicit recoveries
+remain, including separate open/resolution Telegram receipts.
+
+A bounded audit also repaired four older selected Eko gaps and two selected Oliva
+gaps: three exact-source recaptures plus three reused completed receipts, with
+no model calls or native turns. No other conversation was imported.
+
+**Exact continuation:** [Alerts follow-up](https://github.com/AlterMundi/daimon-alerts/issues/1#issuecomment-6175177910)
+owns reconciliation of eleven retained failures proven to concern sessions BEFORE
+the selected cutoff (one Eko, ten Oliva). Its current recovery API requires a
+completed capture and cannot express a verified exclusion. Such resolution must
+retain the failure and scope evidence without importing excluded sessions or
+claiming captured bytes. One further Oliva attempt died before retaining its
+event/source; keep that uncertainty open unless independent native evidence can
+identify it. Later unrelated success is not proof of recovery. This handoff does
+not authorize blanket dismissal or an expanded capture binding.
+
+The goal remains open for that precise integration follow-up. Do not repeat
+native capture acceptance, semantic comparisons, model selection, consolidation
+or the completed repairs. Whole selected tool outputs can still be verbose;
+phone use of Eko/Oliva Sessions remains unobserved. Those limits are not claims
+of universal equivalence to native Codex memory or optimum compression.

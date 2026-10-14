@@ -1,0 +1,1010 @@
+{
+  "schema": "hmk.integrated-runtime-adoption/v1",
+  "observed_date": "2026-10-14",
+  "operational_goal_complete": false,
+  "scope": "Human-authorized selected new sessions; daily finite processing; manual/contextual HMK recall; native Codex memory disabled.",
+  "receivers": [
+    {
+      "body": "CompAII",
+      "observed_at": "2026-10-14T18:12:52.095950+00:00",
+      "worker_release": "3957d225b836e77ab62c7bf943441550440d99d3",
+      "reader_capture_release": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+      "worker_state": "idle",
+      "worker_steps": 5,
+      "worker_budget_exhausted": false,
+      "worker_seconds": 4.339447632,
+      "worker_phases": {
+        "capture": {
+          "processed_through": 2,
+          "proposer_invoked": false,
+          "state": "idle"
+        },
+        "index": {
+          "indexed_through": 1,
+          "organization_indexed_through": 0,
+          "state": "idle"
+        },
+        "organization": {
+          "blocked_accounts": 0,
+          "organized_through": 0,
+          "ready_accounts": 0,
+          "reason_code": "accounts_current",
+          "state": "idle"
+        }
+      },
+      "timer": {
+        "NextElapseUSecRealtime": "Thu 2026-10-15 00:00:00 UTC",
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "native_capture": {
+        "schema": "hmk.supervised-native-capture-check/v1",
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "native_events": [
+          "Stop",
+          "SessionEnd"
+        ],
+        "supervisor_complete": true,
+        "inbox_observations": 2,
+        "source_reconstructed": true,
+        "canonical_writes_by_check": false,
+        "new_semantic_comparison": false,
+        "usd_cost": null
+      },
+      "alerts_state": "healthy",
+      "observer_states": [
+        "healthy"
+      ],
+      "open_incidents": 0,
+      "capture_incidents": [],
+      "selection_calls": [
+        {
+          "batch": 1,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 3.252214064821601,
+          "total_tokens": 11676,
+          "billed_usd": null
+        }
+      ],
+      "native_checks": [
+        {
+          "phase": "supervised-capture-native-events.json",
+          "hooks": [
+            {
+              "event": "stop",
+              "status": "completed",
+              "milliseconds": 418
+            },
+            {
+              "event": "sessionEnd",
+              "status": "completed",
+              "milliseconds": 303
+            }
+          ],
+          "token_usage": [
+            {
+              "total": {
+                "totalTokens": 25730,
+                "inputTokens": 25724,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 25730,
+                "inputTokens": 25724,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "body": "Eko",
+      "observed_at": "2026-10-14T18:15:39.309146+00:00",
+      "worker_release": "3957d225b836e77ab62c7bf943441550440d99d3",
+      "reader_capture_release": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+      "worker_state": "pending",
+      "worker_steps": 9,
+      "worker_budget_exhausted": true,
+      "worker_seconds": 203.104182762,
+      "worker_phases": {
+        "capture": {
+          "processed_through": 0,
+          "proposer_invoked": true,
+          "source_group_complete": false,
+          "state": "complete"
+        },
+        "index": {
+          "indexed_through": 6,
+          "processed": 2,
+          "state": "complete"
+        },
+        "organization": {
+          "blocked_accounts": 0,
+          "organized_through": 0,
+          "ready_accounts": 0,
+          "reason_code": "accounts_current",
+          "state": "idle"
+        }
+      },
+      "timer": {
+        "NextElapseUSecRealtime": "Thu 2026-10-15 00:00:00 UTC",
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "native_capture": {
+        "schema": "hmk.supervised-native-capture-recovery/v1",
+        "resolved_events": [
+          "Stop",
+          "SessionEnd",
+          "Stop"
+        ],
+        "new_native_stop_and_session_end": true,
+        "retained_source_reconstructed": true,
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "usd_cost": null,
+        "stop_child_timeout_seconds": 15,
+        "stop_native_timeout_seconds": 30,
+        "session_end_child_timeout_seconds": 5,
+        "session_end_native_timeout_seconds": 10,
+        "canonical_writes_by_check": false
+      },
+      "alerts_state": "healthy",
+      "observer_states": [
+        "healthy"
+      ],
+      "open_incidents": 1,
+      "capture_incidents": [
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 3,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        }
+      ],
+      "selection_calls": [
+        {
+          "batch": 1,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 10.716789424419403,
+          "total_tokens": 15024,
+          "billed_usd": null
+        },
+        {
+          "batch": 2,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 8.56644980981946,
+          "total_tokens": 16500,
+          "billed_usd": null
+        },
+        {
+          "batch": 2,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 27.79125736746937,
+          "total_tokens": 25143,
+          "billed_usd": null
+        },
+        {
+          "batch": 2,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 17.946014526300132,
+          "total_tokens": 24045,
+          "billed_usd": null
+        },
+        {
+          "batch": 3,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 17.160565328784287,
+          "total_tokens": 21948,
+          "billed_usd": null
+        },
+        {
+          "batch": 3,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 8.173711604438722,
+          "total_tokens": 23649,
+          "billed_usd": null
+        },
+        {
+          "batch": 3,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 17.70916899573058,
+          "total_tokens": 31453,
+          "billed_usd": null
+        },
+        {
+          "batch": 3,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 5.391668835654855,
+          "total_tokens": 30297,
+          "billed_usd": null
+        },
+        {
+          "batch": 4,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 9.173955365084112,
+          "total_tokens": 20036,
+          "billed_usd": null
+        },
+        {
+          "batch": 4,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 4.622389120049775,
+          "total_tokens": 25434,
+          "billed_usd": null
+        },
+        {
+          "batch": 4,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 16.13141785003245,
+          "total_tokens": 35697,
+          "billed_usd": null
+        },
+        {
+          "batch": 5,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 28.16613149922341,
+          "total_tokens": 22407,
+          "billed_usd": null
+        },
+        {
+          "batch": 6,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 12.53859450109303,
+          "total_tokens": 17229,
+          "billed_usd": null
+        }
+      ],
+      "native_checks": [
+        {
+          "phase": "supervised-capture-native-events.json",
+          "hooks": [
+            {
+              "event": "stop",
+              "status": "completed",
+              "milliseconds": 9205
+            },
+            {
+              "event": "sessionEnd",
+              "status": "failed",
+              "milliseconds": 3002
+            }
+          ],
+          "token_usage": [
+            {
+              "total": {
+                "totalTokens": 19435,
+                "inputTokens": 19334,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 101,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 19435,
+                "inputTokens": 19334,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 101,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 38976,
+                "inputTokens": 38835,
+                "cachedInputTokens": 31488,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 141,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 19541,
+                "inputTokens": 19501,
+                "cachedInputTokens": 19200,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 40,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 67404,
+                "inputTokens": 67227,
+                "cachedInputTokens": 50816,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 177,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 28428,
+                "inputTokens": 28392,
+                "cachedInputTokens": 19328,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 36,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 99139,
+                "inputTokens": 98861,
+                "cachedInputTokens": 78976,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 278,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 31735,
+                "inputTokens": 31634,
+                "cachedInputTokens": 28160,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 101,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 138522,
+                "inputTokens": 138171,
+                "cachedInputTokens": 91264,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 351,
+                "reasoningOutputTokens": 13
+              },
+              "last": {
+                "totalTokens": 39383,
+                "inputTokens": 39310,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 73,
+                "reasoningOutputTokens": 13
+              },
+              "modelContextWindow": 475000
+            }
+          ]
+        },
+        {
+          "phase": "supervised-capture-recovery-native-events.json",
+          "hooks": [
+            {
+              "event": "stop",
+              "status": "failed",
+              "milliseconds": 10001
+            },
+            {
+              "event": "sessionEnd",
+              "status": "completed",
+              "milliseconds": 979
+            }
+          ],
+          "token_usage": [
+            {
+              "total": {
+                "totalTokens": 138522,
+                "inputTokens": 138171,
+                "cachedInputTokens": 91264,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 351,
+                "reasoningOutputTokens": 13
+              },
+              "last": {
+                "totalTokens": 39383,
+                "inputTokens": 39310,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 73,
+                "reasoningOutputTokens": 13
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 177953,
+                "inputTokens": 177596,
+                "cachedInputTokens": 130432,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 357,
+                "reasoningOutputTokens": 13
+              },
+              "last": {
+                "totalTokens": 39431,
+                "inputTokens": 39425,
+                "cachedInputTokens": 39168,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            }
+          ]
+        },
+        {
+          "phase": "supervised-capture-recovery-v2-native-events.json",
+          "hooks": [
+            {
+              "event": "stop",
+              "status": "completed",
+              "milliseconds": 6350
+            },
+            {
+              "event": "sessionEnd",
+              "status": "completed",
+              "milliseconds": 691
+            }
+          ],
+          "token_usage": [
+            {
+              "total": {
+                "totalTokens": 177953,
+                "inputTokens": 177596,
+                "cachedInputTokens": 130432,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 357,
+                "reasoningOutputTokens": 13
+              },
+              "last": {
+                "totalTokens": 39431,
+                "inputTokens": 39425,
+                "cachedInputTokens": 39168,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 217432,
+                "inputTokens": 217069,
+                "cachedInputTokens": 169728,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 363,
+                "reasoningOutputTokens": 13
+              },
+              "last": {
+                "totalTokens": 39479,
+                "inputTokens": 39473,
+                "cachedInputTokens": 39296,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "body": "Oliva",
+      "observed_at": "2026-10-14T18:15:40.200534+00:00",
+      "worker_release": "3957d225b836e77ab62c7bf943441550440d99d3",
+      "reader_capture_release": "103a5a0f5b90fc0d794a9909c2db00f0ce282de6",
+      "worker_state": "idle",
+      "worker_steps": 5,
+      "worker_budget_exhausted": false,
+      "worker_seconds": 74.37574531,
+      "worker_phases": {
+        "capture": {
+          "processed_through": 4,
+          "proposer_invoked": false,
+          "state": "idle"
+        },
+        "index": {
+          "indexed_through": 1,
+          "organization_indexed_through": 0,
+          "state": "idle"
+        },
+        "organization": {
+          "blocked_accounts": 0,
+          "organized_through": 0,
+          "ready_accounts": 0,
+          "reason_code": "accounts_current",
+          "state": "idle"
+        }
+      },
+      "timer": {
+        "NextElapseUSecRealtime": "Thu 2026-10-15 00:00:00 UTC",
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "native_capture": {
+        "schema": "hmk.supervised-native-capture-recovery/v1",
+        "resolved_events": [
+          "Stop"
+        ],
+        "new_native_stop_and_session_end": true,
+        "retained_source_reconstructed": true,
+        "model": "gpt-6.1-sol",
+        "effort": "low",
+        "usd_cost": null,
+        "child_timeout_seconds": 5,
+        "native_timeout_seconds": 10,
+        "canonical_writes_by_check": false
+      },
+      "alerts_state": "healthy",
+      "observer_states": [
+        "healthy"
+      ],
+      "open_incidents": 11,
+      "capture_incidents": [
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "open",
+          "revision": 1,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        },
+        {
+          "processing_state": "resolved",
+          "revision": 2,
+          "deliveries": [
+            {
+              "state": "delivered",
+              "processing_state": "open",
+              "receipt_outcome": "delivered"
+            },
+            {
+              "state": "delivered",
+              "processing_state": "resolved",
+              "receipt_outcome": "delivered"
+            }
+          ]
+        }
+      ],
+      "selection_calls": [
+        {
+          "batch": 1,
+          "model": "deepseek-flash",
+          "returned_model": "deepseek-flash",
+          "seconds": 3.0276053119450808,
+          "total_tokens": 9311,
+          "billed_usd": null
+        }
+      ],
+      "native_checks": [
+        {
+          "phase": "supervised-capture-native-events.json",
+          "hooks": [
+            {
+              "event": "stop",
+              "status": "completed",
+              "milliseconds": 4823
+            },
+            {
+              "event": "sessionEnd",
+              "status": "completed",
+              "milliseconds": 1579
+            }
+          ],
+          "token_usage": [
+            {
+              "total": {
+                "totalTokens": 21614,
+                "inputTokens": 21608,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 21614,
+                "inputTokens": 21608,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            }
+          ]
+        },
+        {
+          "phase": "supervised-capture-recovery-native-events.json",
+          "hooks": [
+            {
+              "event": "stop",
+              "status": "completed",
+              "milliseconds": 3146
+            },
+            {
+              "event": "sessionEnd",
+              "status": "completed",
+              "milliseconds": 586
+            }
+          ],
+          "token_usage": [
+            {
+              "total": {
+                "totalTokens": 21614,
+                "inputTokens": 21608,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 21614,
+                "inputTokens": 21608,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            },
+            {
+              "total": {
+                "totalTokens": 43276,
+                "inputTokens": 43264,
+                "cachedInputTokens": 24576,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 12,
+                "reasoningOutputTokens": 0
+              },
+              "last": {
+                "totalTokens": 21662,
+                "inputTokens": 21656,
+                "cachedInputTokens": 12288,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 6,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 475000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "instruction_context_repair": {
+    "pr": 118,
+    "records": 3,
+    "original_revisions_preserved": true,
+    "formation_artifacts_and_metadata_preserved": true,
+    "selected_vectors_refreshed": 3,
+    "selector_calls": 0,
+    "verified_snapshot_and_copy_rollback": true,
+    "characters_before_after": [
+      [
+        21878,
+        301
+      ],
+      [
+        50015,
+        28741
+      ],
+      [
+        58634,
+        37360
+      ]
+    ],
+    "focused_tests_passed": 44
+  },
+  "usefulness": {
+    "real_receiver": "Eko",
+    "cue": "Human's earlier question about a person interested in agents and daimons; private identifiers excluded.",
+    "observed": "Native receiver used HMK, identified the participant and topics, attributed the report to the human and declined to invent the original speaker's wording or prior knowledge.",
+    "new_broad_semantic_comparison": false
+  },
+  "prior_selected_capture_gaps": {
+    "eko": {
+      "resolved": 4,
+      "recaptures": 3,
+      "reused_completed_receipts": 1
+    },
+    "oliva": {
+      "resolved": 2,
+      "recaptures": 0,
+      "reused_completed_receipts": 2
+    },
+    "model_calls": 0,
+    "scope_expanded": false
+  },
+  "remaining": {
+    "alerts_followup": "https://github.com/AlterMundi/daimon-alerts/issues/1#issuecomment-6175177910",
+    "verified_pre_boundary_exclusions": {
+      "Eko": 1,
+      "Oliva": 10
+    },
+    "unidentified_early_attempts": {
+      "Oliva": 1
+    },
+    "no_false_resolution": true,
+    "eko_bounded_pending": true,
+    "phone_acceptance_eko_oliva": "unobserved",
+    "tool_output_granularity": "Whole selected tool outputs remain verbatim; not a claim of optimal compression.",
+    "pricing": "Billed USD unavailable; usage and HTTP times retained separately."
+  }
+}
