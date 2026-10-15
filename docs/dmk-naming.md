@@ -26,3 +26,41 @@ The MCP alias uses the same binding, pools, read-only annotations and implementa
 New/resumed harness processes pick up configured changes; already-running sessions
 may retain their original tool names, which remain compatible. No global Stop is
 needed and no new capture scope, scheduler or native memory provider is enabled.
+
+
+## Receiving adoption — 2026-10-15
+
+CompAII, Eko and Oliva have the pinned `daimon-memory-kit` shared skill,
+`dmk` command, updated active guidance and the new MCP entry point. Actual
+read-only receiving probes found the same owner-bound pools (one, two and one,
+respectively), equal results through both recall names, and unchanged existing
+chapter IDs, revisions and raw content. Each body has a verified pre-update
+SQLite snapshot and an attributed naming record; historical records retain
+original names. Private configuration preimages and retired skills are retained
+outside discovery. Already-running sessions may still expose the old tool alias.
+
+The code and guidance update is [PR #3](https://github.com/AlterMundi/daimon-memory-kit/pull/3);
+the shared package is [Skills #68](https://github.com/AlterMundi/Skills/pull/68).
+Current Field cards and open issue descriptions were updated while original URLs,
+comments, signed data and dated evidence remain intact. Current cross-repository
+references use the maintained project; the old repository remains historical.
+
+A separate capture fix, [PR #4](https://github.com/AlterMundi/daimon-memory-kit/pull/4),
+is installed in the existing trusted capture hooks on all three bodies. It reads
+the bounded session header before applying the full-source size limit. Selected
+sources still require exact complete capture; oversized selected sources remain
+visible failures. No source is truncated or admitted merely to clear an alert.
+
+Twelve CompAII failures belonged to one old session outside the selected scope.
+New matching receipts verified its exclusion under the unchanged binding; the
+supported exclusion control reconciled the retained failures. Alerts confirmed
+all twelve resolved at a higher revision, with `work_preserved: false`. This is
+verified exclusion, not source capture. There were no new inbox observations or
+revisions for this source, no worker invocation and no paid model calls. See the
+[sanitized receipt](../evidence/dmk-naming-2026-10-15/capture-resolution.json).
+This does not resolve unrelated unidentified historical capture attempts.
+
+Validation: 75 focused naming/upgrade/MCP tests, bootstrap smoke, shared-skill
+catalog/package checks, actual three-body MCP probes, and 19 capture-inbox tests
+including oversized selected/excluded sources. These updates add no scheduler,
+expand no capture scope and enable no native memory provider.
