@@ -77,6 +77,9 @@ def capture(binding, payload, *, _fault=None):
                         return dict(capture_complete=False, error='source_header_incomplete', scope_verified=False)
                     if meta['payload'].get('id') != sid:
                         raise ValueError('transcript session differs from hook')
+                    from forward_capture import policy, capture as capture_forward
+                    if policy(binding['inbox']) is not None:
+                        return capture_forward(binding, payload, source, path, header, before, _fault=_fault)
                     if meta['payload'].get('cwd') not in binding['allowed_cwds']:
                         return dict(capture_complete=False, skipped=True,
                                     reason='unselected_session_working_directory')
