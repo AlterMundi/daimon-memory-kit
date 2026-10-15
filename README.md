@@ -1,36 +1,33 @@
-# Hermes Memory Kit
+# DaimonMemoryKit
 
-Self-contained memory infrastructure for Hermes-style agents.
+Durable local memory and portable continuity for daimons across agent harnesses.
+Maintained by [AlterMundi](https://github.com/AlterMundi/daimon-memory-kit).
 
-[![release](https://img.shields.io/github/v/tag/Mar-IA-no/hermes-memory-kit?label=release&style=flat&color=blue)](https://github.com/Mar-IA-no/hermes-memory-kit/releases)
-[![license](https://img.shields.io/github/license/Mar-IA-no/hermes-memory-kit?style=flat&color=success)](LICENSE)
-[![python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-[![hermes-agent](https://img.shields.io/badge/Hermes_Agent-v0.10%2B-9cf?style=flat)](https://github.com/NousResearch/hermes-agent)
+[![license](https://img.shields.io/github/license/AlterMundi/daimon-memory-kit)](LICENSE)
 
-This repository exists for a very unglamorous reason: real agents forget at the worst possible moment.
+- SQLite and local files preserve originals, revisions, provenance and corrections.
+- Hybrid recall and paginated navigation recover older experiences from partial cues.
+- Selective capture, resumable processing and supported consolidation maintain useful
+  memory with visible failures and explicit recovery.
+- Hermes and Codex integrations keep memory ownership separate from a body's
+  current tools, native session history and capabilities.
+- Portable archives and qualified projections preserve continuity across bodies.
 
-Not in the benchmark sense.
-In the annoying, daily, operational sense:
+See the [operational plan and receiving evidence](docs/integrated-memory-plan.md)
+for deployed scope and limits. Experimental native projections are documented
+separately in the [Codex provider plan](docs/codex-hmk-provider-plan.md).
 
-- the process restarts;
-- the model switches;
-- the session gets compacted;
-- the operator comes back six hours later and says “seguí”;
-- and the agent replies as if the last hour of work had never happened.
+Use `dmk` for new integrations. The `hmk` command, `HMK_*` settings, existing
+schemas, plugin identifiers and database paths remain compatible. Existing
+installations do not need a data migration or a directory rename.
 
-`hermes-memory-kit` is the answer to that class of failure.
+Originally based on [Hermes Memory Kit](https://github.com/Mar-IA-no/hermes-memory-kit)
+by Mariano Fernández Méndez. [MIT license](LICENSE).
 
-It gives you a **portable, per-agent workspace** with:
-
-- durable memory in SQLite;
-- retrieval that is cheap enough to run on modest hardware;
-- continuity files the model can re-absorb after interruption;
-- scaffolded scripts and templates;
-- and a layout that lets you run more than one agent on the same host without them silently bleeding into each other.
-
-It is not a giant platform. It is not a cloud service. It is not Docker theatre.
-
-It is a practical memory layer for agents that actually live on a machine and need to come back from the dead without becoming stupid.
+Historical issues and PRs remain in the
+[previous repository](https://github.com/nicoechaniz/hermes-memory-kit).
+New work belongs in this repository; historical issue numbers in older documents
+refer to that previous repository. [Current continuation](https://github.com/AlterMundi/daimon-memory-kit/issues/1).
 
 ---
 
@@ -58,7 +55,8 @@ It is a practical memory layer for agents that actually live on a machine and ne
 
 ## What This Repo Is
 
-`hermes-memory-kit` is a **workspace scaffold plus memory toolkit** for Hermes-style agents.
+**DaimonMemoryKit** provides durable memory APIs and harness adapters, with an
+optional self-contained workspace scaffold for Hermes.
 
 The guiding idea is simple:
 
@@ -223,8 +221,8 @@ flowchart LR
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/Mar-IA-no/hermes-memory-kit.git
-cd hermes-memory-kit
+git clone https://github.com/AlterMundi/daimon-memory-kit.git
+cd daimon-memory-kit
 
 # 2. (Optional) install extras — kit core has zero third-party deps
 pip install -r requirements-ingest.txt           # for scripts/ingest_any.py
@@ -243,7 +241,7 @@ vim hermes-home/SOUL.md
 # Curate durable knowledge through HMK; keep identity concise in SOUL.md.
 
 # 6. Initialize the memory DB
-./scripts/hmk memoryctl.py init
+./scripts/dmk memoryctl.py init
 
 # 7. Install Hermes Agent inside the workspace
 git clone https://github.com/NousResearch/hermes-agent.git app
@@ -251,7 +249,7 @@ python3 -m venv venv
 ./venv/bin/pip install -e ./app
 
 # 8. Enable the systemd user service
-cp ../../hermes-memory-kit/templates/systemd/hermes-gateway@.service ~/.config/systemd/user/
+cp ../../daimon-memory-kit/templates/systemd/hermes-gateway@.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now hermes-gateway@hermes-alfa.service
 ```
@@ -268,25 +266,25 @@ The intended daily workflow is simple:
 
 ```bash
 # Initialize / inspect memory
-./scripts/hmk memoryctl.py init
-./scripts/hmk memoryctl.py stats
-./scripts/hmk memoryctl.py embed-config
+./scripts/dmk memoryctl.py init
+./scripts/dmk memoryctl.py stats
+./scripts/dmk memoryctl.py embed-config
 
 # Add memory
-./scripts/hmk memoryctl.py add-text --shelf library --title "Operator note" --raw "..." --tags operator
-./scripts/hmk ingest_any.py --source /path/file.pdf --shelf evidence --title "Paper X" --tags pdf
+./scripts/dmk memoryctl.py add-text --shelf library --title "Operator note" --raw "..." --tags operator
+./scripts/dmk ingest_any.py --source /path/file.pdf --shelf evidence --title "Paper X" --tags pdf
 
 # Retrieve memory
-./scripts/hmk memoryctl.py search --query "what did we conclude about X?"
-./scripts/hmk memoryctl.py hybrid-pack --query "what matters right now?" --budget 1800 --limit 4 --threshold 0.4
-./scripts/hmk memoryctl.py expand --id 42
+./scripts/dmk memoryctl.py search --query "what did we conclude about X?"
+./scripts/dmk memoryctl.py hybrid-pack --query "what matters right now?" --budget 1800 --limit 4 --threshold 0.4
+./scripts/dmk memoryctl.py expand --id 42
 
 # Resume dialogue through Hermes /resume (select the intended session).
 # Optional engineering notes are NOT conversation history:
-./scripts/hmk continuityctl.py show
+./scripts/dmk continuityctl.py show
 
 # Export selected HMK-native material to the isolated projection vault
-./scripts/hmk export_obsidian.py --ids 1 2 3
+./scripts/dmk export_obsidian.py --ids 1 2 3
 ```
 
 That is the point of the kit: the commands are ordinary, local, inspectable, and boring in a good way.
@@ -521,7 +519,7 @@ The bet here is that disciplined local architecture beats fashionable sprawl sur
 | `scripts/ingest_any.py` | normalizes documents into storable markdown |
 | `scripts/export_obsidian.py` | projects selected HMK-native records into an isolated generated vault |
 | `scripts/publish_collective.py` | plans and applies independently approved downstream publication artifacts |
-| `scripts/hmk` | workspace-aware wrapper |
+| `scripts/dmk`, `scripts/hmk` | workspace-aware wrapper and compatible original command |
 | `templates/plugins/dialogue-handoff/` | vendored continuity plugin |
 | `templates/systemd/hermes-gateway@.service` | per-agent user service template |
 | `docs/` | deeper docs and design notes |

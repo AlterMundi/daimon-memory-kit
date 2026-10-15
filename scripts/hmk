@@ -1,5 +1,5 @@
 #!/bin/bash
-# hmk — Hermes Memory Kit wrapper.
+# hmk — compatible DaimonMemoryKit wrapper.
 # Usage: ./scripts/hmk <script-name.py> [args...]
 #        ./scripts/hmk memoryctl.py init
 set -e

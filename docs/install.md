@@ -10,8 +10,8 @@
 ## Base Setup
 
 ```bash
-git clone <repo-url>
-cd hermes-memory-kit
+git clone https://github.com/AlterMundi/daimon-memory-kit.git
+cd daimon-memory-kit
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
@@ -49,14 +49,14 @@ Paths you can set:
 
 ## Running the tooling
 
-Always use the wrapper:
+Use `dmk`; `hmk` remains a compatible alias with the same `HMK_*` configuration:
 
 ```bash
-./scripts/hmk memoryctl.py init
-./scripts/hmk memoryctl.py add-text --shelf library --title foo --raw "content" --tags t1
-./scripts/hmk memoryctl.py hybrid-pack --query "something" --budget 1800
-./scripts/hmk continuityctl.py show  # engineering notes only, not dialogue
-./scripts/hmk export_obsidian.py --ids 1 2 3
+./scripts/dmk memoryctl.py init
+./scripts/dmk memoryctl.py add-text --shelf library --title foo --raw "content" --tags t1
+./scripts/dmk memoryctl.py hybrid-pack --query "something" --budget 1800
+./scripts/dmk continuityctl.py show  # engineering notes only, not dialogue
+./scripts/dmk export_obsidian.py --ids 1 2 3
 ```
 
 The wrapper loads `.env`, absolutizes any relative `HMK_*` paths against the workspace root, and `cd`s to the workspace before executing the target Python script. That makes invocation from any cwd predictable.
@@ -66,7 +66,7 @@ The wrapper loads `.env`, absolutizes any relative `HMK_*` paths against the wor
 Install once from the repo:
 
 ```bash
-cd /path/to/hermes-memory-kit
+cd /path/to/daimon-memory-kit
 pip install -r requirements.txt
 # for local embeddings (optional):
 pip install -r requirements-local-embeddings.txt
