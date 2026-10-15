@@ -64,3 +64,26 @@ Validation: 75 focused naming/upgrade/MCP tests, bootstrap smoke, shared-skill
 catalog/package checks, actual three-body MCP probes, and 19 capture-inbox tests
 including oversized selected/excluded sources. These updates add no scheduler,
 expand no capture scope and enable no native memory provider.
+
+
+### Hot reload correction
+
+The first hook adoption updated `hooks.json` and wrote trust hashes through
+`config/value/write`. That saved configuration and `hooks/list` verified its
+current contents, but did not reload already-loaded hook runtimes. Two later
+Stop/SessionEnd attempts repeated the old size error on the same excluded source.
+The original twelve resolutions remain valid; they did not prove runtime reload.
+
+On the installed Codex 0.162.1, explicitly request `config/batchWrite` with
+`{"edits": [], "reloadUserConfig": true}` after configuration/trust adoption.
+The supported batch path reloads loaded threads and refreshes their hooks;
+`config/value/write` alone does not. The three receiving daemons accepted the
+reload with `status: ok`, with configuration bytes unchanged and no native model
+turns, thread stops or worker invocations. Do not replace immutable release files
+to compensate for a cached command.
+
+The two additional retained failures were reconciled through fresh matching
+exclusion receipts, preserving the original attempts and scope. Confirm the next
+naturally occurring native hook separately: a successful reload RPC or direct
+supervisor invocation is not itself observation of that hook. No global restart
+or synthetic paid turn is required merely to obtain that observation.
