@@ -1,0 +1,5 @@
+#!/bin/bash
+# DaimonMemoryKit entry point; share the existing workspace and configuration.
+set -e
+SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+exec "$SCRIPT_DIR/hmk" "$@"

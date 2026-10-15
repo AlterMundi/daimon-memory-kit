@@ -1,5 +1,8 @@
 # Integrated operational memory
 
+Maintained as **DaimonMemoryKit** in AlterMundi. [Current continuation](https://github.com/AlterMundi/daimon-memory-kit/issues/1).
+Historical issue/PR numbers below refer to [nicoechaniz/hermes-memory-kit](https://github.com/nicoechaniz/hermes-memory-kit).
+
 Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. Verified exclusions and atomic identity are adopted through Alerts PRs #2/#4; goal closure awaits the decision on two unidentified historical Oliva attempts below; do not repeat completed semantic or receiving trials.
 
 ## Outcome

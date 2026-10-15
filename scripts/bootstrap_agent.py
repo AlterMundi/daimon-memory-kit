@@ -105,7 +105,7 @@ def copy_tree_overwrite(src: Path, dst: Path, preserve_exec: bool = False) -> No
         shutil.copy2(src, dst)
     if preserve_exec and dst.is_dir():
         for p in dst.rglob("*"):
-            if p.suffix == ".sh" or p.name == "hmk":
+            if p.suffix == ".sh" or p.name in ("hmk", "dmk"):
                 try:
                     os.chmod(p, 0o755)
                 except Exception:
@@ -159,7 +159,7 @@ def copy_tree_merge(
             counts["copied"] += 1
 
         shutil.copy2(src_path, dst_path)
-        if preserve_exec and (dst_path.suffix == ".sh" or dst_path.name == "hmk"):
+        if preserve_exec and (dst_path.suffix == ".sh" or dst_path.name in ("hmk", "dmk")):
             try:
                 os.chmod(dst_path, 0o755)
             except Exception:
@@ -310,7 +310,7 @@ def bootstrap(agent_dir: Path, name: str, with_wiki_templates: bool) -> None:
 
     # Scripts (hmk wrapper + memoryctl + etc.)
     copy_if_missing(SCRIPTS_DIR, agent_dir / "scripts")
-    for name_exec in ("hmk", "smoke-test.sh", "bootstrap_agent.py",
+    for name_exec in ("hmk", "dmk", "smoke-test.sh", "bootstrap_agent.py",
                       "bootstrap_workspace.py", "memoryctl.py",
                       "continuityctl.py", "ingest_any.py",
                       "export_obsidian.py", "embed_benchmark.py",
@@ -384,7 +384,7 @@ def upgrade(agent_dir: Path) -> None:
             f"preserved={counts['preserved']} "
             f"(pre-images in script-backups/{script_backups_dir.name}/)"
         )
-    for name_exec in ("hmk", "smoke-test.sh"):
+    for name_exec in ("hmk", "dmk", "smoke-test.sh"):
         p = agent_dir / "scripts" / name_exec
         if p.exists():
             try:
