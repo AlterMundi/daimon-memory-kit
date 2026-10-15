@@ -87,3 +87,11 @@ exclusion receipts, preserving the original attempts and scope. Confirm the next
 naturally occurring native hook separately: a successful reload RPC or direct
 supervisor invocation is not itself observation of that hook. No global restart
 or synthetic paid turn is required merely to obtain that observation.
+
+
+## Forward coverage follow-up
+
+The excluded source above was an active working conversation, not a disposable
+test. Correct exclusion under the former binding did not establish intended
+memory coverage. The explicit [forward-capture policy](forward-capture.md) permits
+new selected turns in old sessions while preserving the prior exclusion history.
