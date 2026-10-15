@@ -1,7 +1,7 @@
-# Explicit HMK-native projections into Codex memory
+# Explicit DMK-native projections into Codex memory
 
 `scripts/codex_projection.py` builds a selected Codex memory-v1 view from an
-existing HMK-native SQLite canon. It uses no model or embedding provider and
+existing DMK-native SQLite canon. It uses no model or embedding provider and
 changes no native setting. This is a projection primitive, not a complete Codex
 memory provider or signed Matrix admission adapter.
 
@@ -32,7 +32,7 @@ For example, a fictional selection:
 Applicability can name `being`, `body`, `project` or `environment`; all except
 being-wide scope require explicit targets. This is an attributed selection, not
 proof of authorship, identity or runtime capabilities. Body of origin remains in
-the original HMK metadata. Missing legacy attribution stays missing. Unknown
+the original DMK metadata. Missing legacy attribution stays missing. Unknown
 selection/source fields remain in inert original sidecars; only known fields have
 implemented behavior.
 
@@ -58,9 +58,9 @@ an active view and can be removed after inspecting the stopped operation.
 The view contains `memory_summary.md`, `MEMORY.md`, linked current-head originals
 under `rollout_summaries/`, inert full original sidecars, and a content-hashed
 `hmk-projection.json` manifest. Registry snippets are cropped navigation aids;
-linked originals are complete. HMK UUIDs are not presented as original Codex
+linked originals are complete. DMK UUIDs are not presented as original Codex
 rollout identities. Historical revisions, links and canonical artifacts remain
-in the HMK database; this selected view is not their portable backup.
+in the DMK database; this selected view is not their portable backup.
 
 ## Consumer boundary
 
@@ -72,14 +72,14 @@ equivalent freshness boundary; no timer or hook is installed here.
 Codex 0.160.0's `generate_memories=false` only excludes new sessions from native
 formation. An observed isolated durable receiver still ran startup maintenance,
 removed externally supplied rollout summaries and rewrote summary/registry files.
-`verify` detects those changes; canonical HMK is unchanged. Do not use that setting
+`verify` detects those changes; canonical DMK is unchanged. Do not use that setting
 alone to protect a projection. Stock ephemeral receivers skip that startup path;
 durable external-view use needs the separately qualified Codex startup-processing
 control described in the [integration plan](codex-hmk-provider-plan.md). Explicit
 notes and reset remain distinct operations, not implied read-only behavior.
 
 Accepted Matrix projection records are refused by this generic projector: use
-their existing verified owning adapter. This tool neither imports existing HMK
+their existing verified owning adapter. This tool neither imports existing DMK
 records into Matrix nor authenticates a supplied being/body label.
 
 ## Preserve and incorporate native learning
@@ -118,4 +118,4 @@ native file into a signed Matrix event.
 
 ## Native receiving evidence
 
-The [bounded native cycle](../research/agent-memory-2026-10-06/pilots/2026-10-11-native-projection-cycle.md) demonstrates stock ephemeral receivers using injected native context and full filesystem originals without an HMK-query instruction. Current human/body bindings must not resolve unnamed historical speakers or participants; the projector carries that constraint without rewriting originals. The cycle retains one genuinely new native lesson, replay, a preference correction, expired-overlay removal and source-free reconstruction. A native-authored note is preserved before refresh, not automatically accepted as a new encounter. This evidence does not qualify every backend method, long-running freshness, or production automatic capture.
+The [bounded native cycle](../research/agent-memory-2026-10-06/pilots/2026-10-11-native-projection-cycle.md) demonstrates stock ephemeral receivers using injected native context and full filesystem originals without a DMK-query instruction. Current human/body bindings must not resolve unnamed historical speakers or participants; the projector carries that constraint without rewriting originals. The cycle retains one genuinely new native lesson, replay, a preference correction, expired-overlay removal and source-free reconstruction. A native-authored note is preserved before refresh, not automatically accepted as a new encounter. This evidence does not qualify every backend method, long-running freshness, or production automatic capture.

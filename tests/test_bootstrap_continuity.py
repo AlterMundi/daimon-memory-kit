@@ -106,3 +106,16 @@ def test_bootstrap_does_not_interpret_or_rewrite_existing_yaml(tmp_path):
     bootstrap.bootstrap(ws, "agent", False)
     assert path.read_bytes() == raw
     assert not (ws / "hermes-home/plugins/dialogue-handoff").exists()
+
+
+def test_retired_obsidian_option_creates_no_vault_and_preserves_existing_notes(tmp_path):
+    ws = tmp_path / "agent"
+    bootstrap.bootstrap(ws, "agent", True)
+    assert not (ws / "wiki").exists()
+    assert not (ws / "scripts/export_obsidian.py").exists()
+    notes = ws / "wiki"
+    notes.mkdir()
+    retained = notes / "personal.md"
+    retained.write_text("Independently authored notes.")
+    bootstrap.upgrade(ws)
+    assert retained.read_text() == "Independently authored notes."

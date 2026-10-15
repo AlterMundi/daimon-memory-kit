@@ -39,8 +39,6 @@ Paths you can set:
 
 - `HMK_BASE_DIR` — where memory state / DB live (default: `./agent-memory`)
 - `HMK_DB_PATH` — the SQLite library (default: `./agent-memory/library.db`)
-- `HMK_VAULT_DIR` — generated HMK projection target (default: `./wiki`);
-  it must be disjoint from `WIKI_PATH` / the authoritative LLM Wiki
 - `HMK_WORKSPACE_ROOT` — resolved automatically by the wrapper; override if you need to
 - `HMK_HERMES_HOME` — your Hermes Agent home (only relevant if you use the optional plugin)
 - `HMK_AGENT_MEMORY_BASE` — alias for `HMK_BASE_DIR`, used by the plugin
@@ -56,7 +54,6 @@ Use `dmk`; `hmk` remains a compatible alias with the same `HMK_*` configuration:
 ./scripts/dmk memoryctl.py add-text --shelf library --title foo --raw "content" --tags t1
 ./scripts/dmk memoryctl.py hybrid-pack --query "something" --budget 1800
 ./scripts/dmk continuityctl.py show  # engineering notes only, not dialogue
-./scripts/dmk export_obsidian.py --ids 1 2 3
 ```
 
 The wrapper loads `.env`, absolutizes any relative `HMK_*` paths against the workspace root, and `cd`s to the workspace before executing the target Python script. That makes invocation from any cwd predictable.
@@ -77,13 +74,13 @@ pip install -r requirements-local-embeddings.txt
 New workspaces select `hmk-memory`, native file stores disabled, and explicit
 `plugins.disabled: [dialogue-handoff]`. Use Hermes `/resume`, selected native
 history and `/goal` for conversational re-entry. No dialogue plugin is needed
-for HMK prefetch or librarian. See [native-continuity.md](native-continuity.md)
+for DMK prefetch or librarian. See [native-continuity.md](native-continuity.md)
 for targeted migration and deprecated `rehydrate` behavior.
 
 Existing standalone dialogue opt-ins are preserved, but no longer installed or
-upgraded by HMK bootstrap. [dialogue-handoff.md](dialogue-handoff.md) describes
+upgraded by DMK bootstrap. [dialogue-handoff.md](dialogue-handoff.md) describes
 explicit compatibility installation. Do not blindly restart a shared gateway
-or overwrite an independently repaired plugin as part of HMK setup.
+or overwrite an independently repaired plugin as part of DMK setup.
 
 ## Smoke test
 
@@ -93,7 +90,7 @@ Before relying on a fresh install, run the smoke test once from the repo:
 ./scripts/smoke-test.sh
 ```
 
-It exercises bootstrap → init → add-text → search → pack → export → upgrade, in a throwaway temp workspace.
+It exercises bootstrap → init → add-text → search → pack → upgrade, in a throwaway temp workspace.
 
 ## Initialization
 

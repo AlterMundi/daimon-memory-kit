@@ -2,32 +2,30 @@
 
 ## Scope
 
-This workspace uses Hermes Memory Kit as its durable memory layer.
+This workspace uses DaimonMemoryKit as its durable memory layer.
 
 ## Memory Discipline
 
-- HMK-native memory lives canonically in `agent-memory/library.db`
-- use `./scripts/hmk memoryctl.py hybrid-pack` for durable retrieval
-- use `./scripts/hmk ingest_any.py` to normalize heterogeneous sources before storage
-- use the workspace `wiki/` only as an HMK-generated projection
-- never point that projection at the authoritative LLM Wiki (`$WIKI_PATH`)
+- DMK-native memory lives canonically in `agent-memory/library.db`
+- use `./scripts/dmk memoryctl.py hybrid-pack` for durable retrieval
+- use `./scripts/dmk ingest_any.py` to normalize heterogeneous sources before storage
 - LLM Wiki files are authoritative for their raw evidence and curated notes;
-  their HMK chapters are rebuildable retrieval indexes
+  their DMK chapters are rebuildable retrieval indexes
 - accept `null_retrieval` instead of padding weak context
 
 ## Curation Discipline
 
-- classify new documentation as HMK-native or LLM Wiki-authored first
+- classify new documentation as DMK-native or LLM Wiki-authored first
 - then retrieve related context
 - then inspect the appropriate navigation surface if conceptual orientation is needed
 - then decide whether to keep as evidence, link, distill, or project
 
 ## Remembering experience
 
-HMK preserves what allows a future body to recognize our history and return to
+DMK preserves what allows a future body to recognize our history and return to
 our affairs after the sessions are gone. Retain enduring meaning and useful
 world references together. Temporary operational relevance alone is insufficient;
-native harness memory candidates need the same judgment before entering HMK.
+native harness memory candidates need the same judgment before entering DMK.
 
 Within authorized foreground work, consider meaningful experience from human
 conversation, tool responses, actions and embodied encounters. Follow this
@@ -61,10 +59,10 @@ skill's [durable-memory selection reference](hermes-home/skills/memory/librarian
 
 Use native Hermes session history and goal state for the matching conversation.
 The latest human direction controls continuation; historical summaries do not
-revive cancelled work. Retrieve HMK or the project cockpit when needed, but do
+revive cancelled work. Retrieve DMK or the project cockpit when needed, but do
 not infer current dialogue from engineering-state files or global handoffs.
 
-`./scripts/hmk continuityctl.py rehydrate` provides an optional native-first
+`./scripts/dmk continuityctl.py rehydrate` provides an optional native-first
 orientation result, not a recovered conversation or a mandatory startup ritual.
 Keep retrieval metadata out of ordinary conversation unless relevant to the
 user's request.

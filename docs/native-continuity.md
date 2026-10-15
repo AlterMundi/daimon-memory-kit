@@ -1,6 +1,6 @@
-# Native-first continuity and HMK
+# Native-first continuity and DMK
 
-HMK remains the durable curated memory provider, including automatic prefetch and
+DMK remains the durable curated memory provider, including automatic prefetch and
 `librarian`. Native Hermes session history, routing, compression lineage and goal
 state own conversational continuity. Native MEMORY.md/USER.md stores are a
 separate feature and need not be enabled to resume sessions.
@@ -17,7 +17,7 @@ plugins:
   disabled: [dialogue-handoff]
 ```
 
-Bootstrap installs HMK and librarian, but no dialogue plugin, handoff,
+Bootstrap installs DMK and librarian, but no dialogue plugin, handoff,
 always-context or native memory placeholders. Keep foundational identity in the
 existing SOUL mechanism rather than a second global context file.
 
@@ -25,7 +25,7 @@ Bootstrap and `--upgrade` preserve existing configuration verbatim. They do not
 parse/rewrite YAML or infer consent from directory presence. Existing native
 memory files, legacy handoffs and independently installed dialogue plugins are
 left alone. An opted-in user's plugin continues to be configured as before, but
-HMK no longer upgrades that separately maintained component. The pinned vendor
+DMK no longer upgrades that separately maintained component. The pinned vendor
 remains available as an explicit compatibility artifact; see
 [dialogue-handoff.md](dialogue-handoff.md).
 
@@ -46,7 +46,7 @@ re-entry guidance, empty `meta_context`/`exact_memories`, and null
 retrieval/summary flags are accepted but ignored; they cannot restore the old
 reader. The `identity`, `state`, `episode_handoff` and `dialogue_handoff` output
 fields are retired. It does not read files, import memoryctl, access any database,
-run inference, or choose/restore a session. It works without HMK path variables.
+run inference, or choose/restore a session. It works without DMK path variables.
 
 Use Hermes `/resume` for the intended conversation, `session_search` for selected
 historical context, and native `/goal` for the active mission. Do not choose the
@@ -55,7 +55,7 @@ A `/new` reset, explicit resume, compression successor and delegated worker are
 not interchangeable. Current human direction outranks historical summaries.
 
 Use `continuityctl show` / `update` only for optional engineering notes; they
-still require the configured HMK base. Use `memoryctl hybrid-pack`, `expand`, or
+still require the configured DMK base. Use `memoryctl hybrid-pack`, `expand`, or
 `librarian` for explicit durable recall. Neither engineering state nor retrieved
 chapters becomes a dialogue transcript.
 
@@ -66,20 +66,20 @@ chapters becomes a dialogue transcript.
 2. Keep `memory.provider: hmk-memory`, both native-store flags false when already
    selected, and the memory toolset available. Preserve `HMK_AGENT_MEMORY_BASE`,
    `HMK_MEMORYCTL_PATH` and embedding configuration. Removing dialogue-specific
-   aliases is not permission to remove HMK's actual database root.
+   aliases is not permission to remove DMK's actual database root.
 3. Deploy only the revised continuityctl and librarian instructions where needed;
    update root/nested re-entry instructions to native selection, not shared
    handoff reads. Do not replace identity files wholesale from generic templates.
 4. Explicitly disable dialogue hooks; archive old mixed handoffs outside active
-   consumption rather than importing them into HMK or deleting evidence. Review
+   consumption rather than importing them into DMK or deleting evidence. Review
    any essential ALWAYS-CONTEXT content for the existing identity floor, without
    duplicating it or enabling native file stores.
-5. Verify isolated native resume/goal/routing and HMK recall before activation.
+5. Verify isolated native resume/goal/routing and DMK recall before activation.
    Process reload/restart safety is deployment-specific; changing files alone
    does not prove loaded behavior changed.
 
 Do not run broad bootstrap `--upgrade` merely to retire continuity: that command
-still refreshes all kit scripts, including memoryctl, and other HMK tooling.
+still refreshes all kit scripts, including memoryctl, and other DMK tooling.
 
 ## Offline regression checks
 
@@ -92,7 +92,7 @@ python -m pytest tests/test_native_continuity.py \
 Test dependencies: pytest and PyYAML (only tests; no new runtime dependency).
 The provider regression uses a real temporary SQLite library with stubbed
 embedding computation, both dialogue configuration states, null retrieval and
-backend failure. It tests HMK independence, not Hermes plugin loading or
+backend failure. It tests DMK independence, not Hermes plugin loading or
 model-level behavior. To verify an older memoryctl artifact without deployment:
 
 ```bash
@@ -101,4 +101,4 @@ HMK_TEST_MEMORYCTL_PATH=/tmp/reviewed-memoryctl.py \
 ```
 
 No new global store or native-history adapter is introduced. Hermes lifecycle
-acceptance belongs to the runtime integration, not a second implementation in HMK.
+acceptance belongs to the runtime integration, not a second implementation in DMK.

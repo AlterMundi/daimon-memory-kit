@@ -11,7 +11,7 @@ Native Hermes session history and goal state own conversational continuity.
 `hmk-memory` owns durable curated recall through automatic `prefetch(query)` and
 `librarian`. Neither path reads a handoff or calls continuityctl. The standalone
 `dialogue-handoff` hooks are optional compatibility tooling, not a dependency.
-Bootstrap installs HMK, explicitly disables dialogue, and leaves native file
+Bootstrap installs DMK, explicitly disables dialogue, and leaves native file
 stores disabled. See [native-continuity.md](native-continuity.md).
 
 ## Architecture

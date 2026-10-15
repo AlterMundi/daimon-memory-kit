@@ -14,7 +14,7 @@ rerankers order those candidates; a text model decides what to retain or narrate
 supplied evidence. Changing a narrator cannot repair missing evidence, and a
 better vector search cannot make an unsupported narrative true.
 
-Keep source records, revisions, selected assets and vectors locally in HMK's
+Keep source records, revisions, selected assets and vectors locally in DMK's
 files/SQLite. Hosted inference does not require adopting a hosted memory store.
 Provider/model choices are replaceable processing dependencies, not the being's
 identity or the durable authority of its history.
@@ -69,7 +69,7 @@ errors; larger parameter counts did not qualify that run.
 | OpenAI `text-embedding-3-large` | Explicit multilingual/text baseline, easy to separate from any narrator | $0.13/M tokens | [Official model page](https://developers.openai.com/api/docs/models/text-embedding-3-large) |
 | Gemini `gemini-embedding-2` | Current text/multimodal candidate; future selected media may benefit | Text $0.20/M tokens; other modalities have separate rates | [Model](https://ai.google.dev/gemini-api/docs/models/gemini-embedding-2), [pricing](https://ai.google.dev/gemini-api/docs/pricing) |
 | Cohere `embed-v5.0-pro` / `embed-v5.0-fast`, plus `rerank-v4.0-pro` | Current specialist alternatives; compare quality and latency | Verify self-serve API pricing; Model Vault dedicated-instance prices are a different product | [Models](https://docs.cohere.com/docs/models), [release/availability](https://docs.cohere.com/v2/changelog), [pricing](https://cohere.com/pricing) |
-| Existing NVIDIA model and a local multilingual model | Preserve a measured reference and assess independence from network inference | Measure actual latency, resources and provider billing | [Existing HMK backend](../scripts/memoryctl.py) |
+| Existing NVIDIA model and a local multilingual model | Preserve a measured reference and assess independence from network inference | Measure actual latency, resources and provider billing | [Existing DMK backend](../scripts/memoryctl.py) |
 
 Vendor benchmark gains justify a trial, not a claim of better lifelong recall.
 Our tests need Spanish/English and cross-language weak cues, known aliases,
@@ -87,13 +87,13 @@ Voyage advertises a shared space within its Voyage 4 family
 Google explicitly says Embedding 001 and Embedding 2 spaces are incompatible;
 Embedding 2 also drops the old task-type parameter and changes aggregation
 ([migration guidance](https://ai.google.dev/gemini-api/docs/embeddings)). The current
-HMK Google adapter still sends taskType, so Embedding 2 is not a demonstrated
+DMK Google adapter still sends taskType, so Embedding 2 is not a demonstrated
 drop-in model-name change. Preserve query/document separation and test batches
 before using any new endpoint.
 
 ## Provisional configuration and decision procedure
 
-Current human selection: use direct DeepSeek Flash for HMK narration and as the
+Current human selection: use direct DeepSeek Flash for DMK narration and as the
 next consolidation candidate, retaining the existing embeddings/retrieval space.
 This is provisional adoption of the working candidate, not a passed narrative
 or consolidation qualification. Complete the fictional contract and distinguish

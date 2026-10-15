@@ -27,7 +27,7 @@ def test_real_stdio_protocol_and_readonly_annotation(setup, tmp_path):
         params = StdioServerParameters(
             command=sys.executable,
             args=[
-                str(Path(__file__).resolve().parents[1] / "scripts/hmk_mcp.py"),
+                str(Path(__file__).resolve().parents[1] / "scripts/dmk_mcp.py"),
                 "--binding",
                 str(selected),
             ],
@@ -37,7 +37,7 @@ def test_real_stdio_protocol_and_readonly_annotation(setup, tmp_path):
                 initialized = await session.initialize()
                 assert "current human task" in initialized.instructions
                 listing = await session.list_tools()
-                assert [t.name for t in listing.tools] == ["hmk_recall"]
+                assert [t.name for t in listing.tools] == ["dmk_recall", "hmk_recall"]
                 assert listing.tools[0].annotations.readOnlyHint is True
                 response = await session.call_tool(
                     "hmk_recall", dict(action="read", pool="main", record_uid=uid)
@@ -49,6 +49,14 @@ def test_real_stdio_protocol_and_readonly_annotation(setup, tmp_path):
                 result = payload["pools"][0]["result"]
                 assert result["raw"] == "The invitation failed."
                 assert result["complete"] is True
+                renamed = await session.call_tool(
+                    "dmk_recall", dict(action="read", pool="main", record_uid=uid)
+                )
+                renamed_payload = renamed.structuredContent or json.loads(renamed.content[0].text)
+                for value in (renamed_payload, payload):
+                    for entry in value["pools"]:
+                        entry["result"].pop("seconds", None)
+                assert renamed_payload == payload
                 checkpoint=await session.call_tool('hmk_recall',dict(action='checkpoint',pool='main',record_uid=uid))
                 metadata=checkpoint.structuredContent or json.loads(checkpoint.content[0].text)
                 assert metadata['pools'][0]['result']['content_loaded'] is False

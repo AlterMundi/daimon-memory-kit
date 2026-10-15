@@ -29,7 +29,7 @@ After bootstrap, the user is expected to clone hermes-agent into ./app and
 create ./venv, then enable the systemd unit. See docs/multi-agent.md.
 
 Modes:
-  --with-wiki-templates   Include starter wiki notes (first bootstrap).
+  --with-wiki-templates   Deprecated compatibility option; no vault is created.
   --upgrade               Refresh tooling in an existing v3 workspace.
 """
 from __future__ import annotations
@@ -299,21 +299,15 @@ def bootstrap(agent_dir: Path, name: str, with_wiki_templates: bool) -> None:
             src = mem_tpl / rel
             if src.exists():
                 copy_if_missing(src, am / rel)
-    # Wiki
-    wiki = agent_dir / "wiki"
-    wiki.mkdir(exist_ok=True)
     if with_wiki_templates:
-        wiki_src = TEMPLATES / "wiki"
-        if wiki_src.exists():
-            for entry in wiki_src.iterdir():
-                copy_if_missing(entry, wiki / entry.name)
+        print("Deprecated: --with-wiki-templates is ignored; DMK no longer generates an Obsidian vault.")
 
     # Scripts (hmk wrapper + memoryctl + etc.)
     copy_if_missing(SCRIPTS_DIR, agent_dir / "scripts")
     for name_exec in ("hmk", "dmk", "smoke-test.sh", "bootstrap_agent.py",
                       "bootstrap_workspace.py", "memoryctl.py",
                       "continuityctl.py", "ingest_any.py",
-                      "export_obsidian.py", "embed_benchmark.py",
+                      "embed_benchmark.py",
                       "embed_clear.py", "embed_verify.py"):
         p = agent_dir / "scripts" / name_exec
         if p.exists():
@@ -471,7 +465,7 @@ def main():
     ap.add_argument("agent_dir", help="Agent directory (e.g. ~/agents/hermes-prime)")
     ap.add_argument("--name", help="Agent name (default: basename of agent_dir)")
     ap.add_argument("--with-wiki-templates", action="store_true",
-                    help="Copy starter wiki notes into wiki/")
+                    help="Deprecated compatibility option; does not create a wiki")
     ap.add_argument("--upgrade", action="store_true",
                     help="Refresh tooling in an existing v3 workspace")
     args = ap.parse_args()
