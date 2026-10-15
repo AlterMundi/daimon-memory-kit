@@ -160,3 +160,39 @@ def test_scoped_unselected_or_unverifiable_event_does_not_journal_payload(bound)
     result=capture(binding,event)
     assert result['error']=='transcript_missing' and not result['scope_verified']
     assert not Path(binding['inbox']).exists()
+
+
+@pytest.mark.parametrize('cwd,created,reason', [
+    ('/private', '2026-10-14T00:00:00Z', 'unselected_session_working_directory'),
+    ('/work', '2026-10-12T00:00:00Z', 'session_precedes_selected_boundary'),
+    ('/work', '2026-10-14T00:00:00Z', 'source_exceeds_capture_limit'),
+])
+def test_oversized_session_checks_verified_scope_before_size(bound, cwd, created, reason):
+    binding, source, event = bound
+    binding.update(schema='hmk.codex-hook-binding/v2', max_source_bytes=4096,
+                   sessions_started_at_or_after='2026-10-13T00:00:00Z')
+    header = json.dumps(dict(type='session_meta', payload=dict(
+        id=event['session_id'], cwd=cwd, timestamp=created))).encode() + b'\n'
+    with source.open('wb') as stream:
+        stream.write(header)
+        stream.truncate(65 * 1024 * 1024)
+    result = capture(binding, event)
+    assert not result['capture_complete']
+    assert result.get('reason', result.get('error')) == reason
+    assert bool(result.get('skipped')) == (reason != 'source_exceeds_capture_limit')
+    assert not Path(binding['inbox']).exists()
+    assert source.stat().st_size == 65 * 1024 * 1024
+
+
+def test_oversized_exclusion_does_not_accept_mismatched_or_unbounded_header(bound):
+    binding, source, event = bound
+    binding.update(schema='hmk.codex-hook-binding/v2', max_source_bytes=4096,
+                   sessions_started_at_or_after='2026-10-13T00:00:00Z')
+    source.write_text(json.dumps(dict(type='session_meta',payload=dict(
+        id='different-session',cwd='/private',timestamp='2026-10-12T00:00:00Z')))+'\n'+'x'*8192)
+    with pytest.raises(ValueError, match='session differs'):
+        capture(binding,event)
+    source.write_bytes(b'x'*8192)
+    result=capture(binding,event)
+    assert result['error']=='source_header_incomplete' and not result.get('skipped')
+    assert not Path(binding['inbox']).exists()

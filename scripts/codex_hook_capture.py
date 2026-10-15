@@ -65,6 +65,29 @@ def capture(binding, payload, *, _fault=None):
                 before = os.fstat(source.fileno())
                 if not stat.S_ISREG(before.st_mode):
                     raise ValueError('transcript must be a regular file')
+                if scoped:
+                    # Scope depends on the session header, not the growing body.
+                    # Read at most the configured bound even for excluded sources.
+                    header = source.readline(limit + 1)
+                    try:
+                        meta = json.loads(header) if len(header) <= limit else None
+                    except (ValueError, UnicodeError):
+                        meta = None
+                    if not isinstance(meta, dict) or meta.get('type') != 'session_meta' or not isinstance(meta.get('payload'), dict):
+                        return dict(capture_complete=False, error='source_header_incomplete', scope_verified=False)
+                    if meta['payload'].get('id') != sid:
+                        raise ValueError('transcript session differs from hook')
+                    if meta['payload'].get('cwd') not in binding['allowed_cwds']:
+                        return dict(capture_complete=False, skipped=True,
+                                    reason='unselected_session_working_directory')
+                    try:
+                        session_started = timestamp(meta['payload'].get('timestamp'))
+                    except (ValueError, TypeError):
+                        return dict(capture_complete=False, error='session_scope_unverified', scope_verified=False)
+                    if session_started < boundary:
+                        return dict(capture_complete=False, skipped=True,
+                                    reason='session_precedes_selected_boundary')
+                    source.seek(0)
                 if before.st_size > limit:
                     error = 'source_exceeds_capture_limit'
                 else:
