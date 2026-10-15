@@ -52,7 +52,7 @@ See [`benchmarks/README.md`](benchmarks/README.md) for step-by-step instructions
 No re-embedding is needed to *switch* retrieval — each `memoryctl.py` subcommand accepts `--provider` and `--model` flags that pick the matching set from `chapter_embeddings`. To *store* a different set, run:
 
 ```bash
-./scripts/hmk memoryctl.py embed-backfill --provider <p> --model <m> --all
+./scripts/dmk memoryctl.py embed-backfill --provider <p> --model <m> --all
 ```
 
 Multiple sets can coexist; selection at query time is via `--provider/--model` or the `HERMES_EMBED_PROVIDER` env var.

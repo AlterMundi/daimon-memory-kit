@@ -43,8 +43,8 @@ An entirely fictional event:
 ```
 
 ```bash
-./scripts/hmk capturectl.py stage --file event.json
-./scripts/hmk capturectl.py pending --stream fixture:harbormesh-issue47
+./scripts/dmk capturectl.py stage --file event.json
+./scripts/dmk capturectl.py pending --stream fixture:harbormesh-issue47
 ```
 
 Pending content is separate from selected autobiography. A later authorized
@@ -58,7 +58,7 @@ Supply the proposal schema to the selecting model rather than asking it to
 imitate database rows:
 
 ```bash
-./scripts/hmk capturectl.py decision-schema > decision-schema.json
+./scripts/dmk capturectl.py decision-schema > decision-schema.json
 ```
 
 This command opens no pool and installs nothing. Source modes are `observed`,
@@ -93,7 +93,7 @@ Example selection:
 ```
 
 ```bash
-./scripts/hmk capturectl.py assess --event-key EVENT_KEY --file selection.json
+./scripts/dmk capturectl.py assess --event-key EVENT_KEY --file selection.json
 ```
 
 Updates require `chapter_id` and observed `expected_revision`. New records require
@@ -141,8 +141,8 @@ explicitly; there is no hidden per-source excerpt cutoff. Record count does not
 establish independent corroboration. Generated summaries cannot confirm sources.
 
 ```bash
-./scripts/hmk consolidationctl.py preview --ids 17 24 > dream-manifest.json
-./scripts/hmk consolidationctl.py apply \
+./scripts/dmk consolidationctl.py preview --ids 17 24 > dream-manifest.json
+./scripts/dmk consolidationctl.py apply \
   --manifest dream-manifest.json --proposal dream-proposal.json \
   --stream fixture:dream --sequence 1 --event-id fixture:reflection1 \
   --selection-version fixture:policy-model-v1

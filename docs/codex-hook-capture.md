@@ -1,6 +1,6 @@
 # Opt-in source capture for stock Codex
 
-Experimental delivery for [#12](https://github.com/nicoechaniz/hermes-memory-kit/issues/12). This is durable handoff, not automatic selection, a scheduled processor or production installation. The existing contextual HMK reader stays separate. Native memory remains disabled.
+Experimental delivery for [#12](https://github.com/nicoechaniz/hermes-memory-kit/issues/12). This is durable handoff, not automatic selection, a scheduled processor or production installation. The existing contextual DMK reader stays separate. Native memory remains disabled.
 
 `capture_inbox.Inbox` stores caller-authorized source snapshots and event payloads in a local SQLite journal. An append stores only its suffix and a verified prefix dependency; a changed prefix starts a new full version while retaining earlier versions. Source bytes, head and event receipt commit together. Replay after an uncertain commit returns the same observation. Restoring checks every dependency's size/hash. Different sessions retain distinct source identities.
 
@@ -32,6 +32,6 @@ Nine focused tests cover commit interruption before/after durability, concurrent
 
 The observed native Stop took 1.577 seconds. Local first-use initialization initially took 1.877 seconds and a subsequent append 0.120 seconds. Schema initialization was subsequently grouped into one transaction, with the affected storage tests passing; these observations are not a production latency guarantee or measurements of the optimized first-use path. Native dispatch and writer I/O must continue to be accounted separately.
 
-The inbox is temporary processing evidence, not ordinary HMK recall. This version does not automatically delete input, prune dependencies or mark it semantically processed. There is no infinite-storage guarantee: the caller owns capacity and an eventual explicit archive/retention policy. Do not purge originals that pending work or preserved history needs. Copy/transport of the inbox does not admit Matrix events or grant authority.
+The inbox is temporary processing evidence, not ordinary DMK recall. This version does not automatically delete input, prune dependencies or mark it semantically processed. There is no infinite-storage guarantee: the caller owns capacity and an eventual explicit archive/retention policy. Do not purge originals that pending work or preserved history needs. Copy/transport of the inbox does not admit Matrix events or grant authority.
 
 The subsequent [portable producer](portable-producer.md) now implements finite, explicitly owned processing through existing CaptureLedger and supported writers, with automatic selection and source-free recall qualified in the isolated corpus. Source capture and semantic processing remain separate. No automatic production worker, native learning, timer or cross-being pooling follows from either delivery.

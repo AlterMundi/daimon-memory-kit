@@ -1,13 +1,13 @@
-# HMK to collective-memory publication
+# DMK to collective-memory publication
 
 ## Boundary
 
 This is a publication adapter, not database synchronization.
 
-- HMK remains authoritative for records authored natively in HMK.
-- An LLM Wiki file remains authoritative when HMK only indexes that file.
+- DMK remains authoritative for records authored natively in DMK.
+- An LLM Wiki file remains authoritative when DMK only indexes that file.
 - collective-memory receives reviewed, derived Markdown artifacts.
-- The adapter never reads through a network API, changes the HMK database, or
+- The adapter never reads through a network API, changes the DMK database, or
   writes into collective-memory's code or index database.
 
 The destination corpus and publication state are separate roots. Publication
@@ -24,13 +24,13 @@ A chapter is publishable only when all of these are true:
 4. Consent is exactly `explicit`.
 5. The chapter also carries the `collective:publish` tag. This is the second,
    record-local opt-in.
-6. `source_kind` is `text` and `source_path` is empty, proving that HMK is the
+6. `source_kind` is `text` and `source_path` is empty, proving that DMK is the
    source rather than a retrieval index for a Wiki/file source.
 7. The reject-only redaction scanner finds no credential-shaped content.
 
 The adapter does not redact automatically. Silent substitution could change
 meaning while making the artifact look reviewed. A rejected chapter must be
-edited or distilled in HMK and reviewed again.
+edited or distilled in DMK and reviewed again.
 
 The example closed policy is
 [`policies/collective-publication.example.json`](../policies/collective-publication.example.json).

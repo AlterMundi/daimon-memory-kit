@@ -2846,7 +2846,7 @@ def doctor() -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local memory control for Hermes")
+    parser = argparse.ArgumentParser(description="DaimonMemoryKit local memory control")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init")

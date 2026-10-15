@@ -1,4 +1,4 @@
-"""Opt-in stdio MCP access to an owner's existing HMK pools; no writer/learner."""
+"""Opt-in stdio MCP access to an owner's existing DMK pools; no writer/learner."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from deep_recall import Reader
 
 BINDING = "hmk.deep-recall.binding/v1"
 INSTRUCTIONS = (
-    "HMK is this being's durable memory. Consult hmk_recall when past encounters, "
+    "DaimonMemoryKit (DMK) is this being's durable memory. Consult dmk_recall when past encounters, "
     "relationships, projects, decisions or lessons would help the current human task, "
     "without waiting for an explicit memory-search request. Skip self-contained tasks. "
     "Search returns candidates, not relevance verdicts: read originals and all pages "
@@ -140,14 +140,14 @@ def recall(
 
 
 def server(binding):
-    # Optional dependency; ordinary HMK commands remain stdlib-only.
+    # Optional dependency; ordinary DMK commands remain stdlib-only.
     from mcp.server.fastmcp import FastMCP
     from mcp.types import ToolAnnotations
 
-    app = FastMCP("HMK durable recall", instructions=INSTRUCTIONS, log_level="WARNING")
+    app = FastMCP("DaimonMemoryKit durable recall", instructions=INSTRUCTIONS, log_level="WARNING")
 
     @app.tool(
-        name="hmk_recall",
+        name="dmk_recall",
         description=INSTRUCTIONS,
         annotations=ToolAnnotations(
             readOnlyHint=True,
@@ -156,7 +156,7 @@ def server(binding):
             openWorldHint=False,
         ),
     )
-    def hmk_recall(
+    def dmk_recall(
         action: Literal["search", "read", "history", "checkpoint"],
         query: str = "",
         record_uid: str = "",
@@ -180,6 +180,12 @@ def server(binding):
             expected_revision=expected_revision,
         )
 
+    app.tool(
+        name="hmk_recall",
+        description="Compatibility alias for dmk_recall; the same owner-bound DMK memory.",
+        annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False,
+                                    idempotentHint=True, openWorldHint=False),
+    )(dmk_recall)
     return app
 
 

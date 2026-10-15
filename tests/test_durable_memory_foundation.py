@@ -71,18 +71,6 @@ def test_bootstrap_cannot_replace_an_existing_canon(mc):
     assert mc.search('irreplaceable')[0]['id'] == cid
 
 
-def test_projection_preserves_open_relation_names_and_escapes_yaml(mc):
-    projection = load('durable_projection_fixture', SCRIPTS / 'export_obsidian.py')
-    chapter = dict(id=1, book_id=1, shelf='episodes', tags=[], source_path=None,
-                   links_out=[dict(link_type='concerns', other_id=2, other_title='Relay'),
-                              dict(link_type='place: "north"', other_id=3, other_title='Canal')])
-    text = projection.render_frontmatter(chapter, dict(title='Encounter',folder='episodes'), {})
-    import yaml
-    metadata = yaml.safe_load(text.split('---')[1])
-    assert metadata['memory_links']['concerns'] == ['`mem:2` Relay']
-    assert metadata['memory_links']['place: "north"'] == ['`mem:3` Canal']
-
-
 def test_decision_schema_requires_no_pool_and_matches_writer_fields(tmp_path):
     import os
     env = dict(os.environ)

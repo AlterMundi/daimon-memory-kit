@@ -1,6 +1,6 @@
 # Multi-agent deployment
 
-Hermes Memory Kit v3.0+ defaults to **one directory = one isolated installation**.
+DaimonMemoryKit v3.0+ defaults to **one directory = one isolated installation**.
 This page explains how to deploy several agents side-by-side without accidental
 cross-contamination. Installation boundaries do not establish being identity.
 
@@ -15,7 +15,7 @@ For each agent, everything it needs lives inside its own workspace:
 ├── hermes-home/         HERMES_HOME — config, SOUL, memories, sessions, plugins
 │   └── .env             ← canonical real file (Hermes upstream writes here with os.replace)
 ├── agent-memory/        durable memory (library.db, state, episodes, plans, index)
-├── wiki/                optional generated HMK projection (never the LLM Wiki)
+├── wiki/                optional generated DMK projection (never the LLM Wiki)
 ├── scripts/             tooling (hmk, memoryctl, continuityctl, ...)
 ├── app/                 hermes-agent upstream clone (user installs)
 └── venv/                Python venv for app/ (user creates)
@@ -24,7 +24,7 @@ For each agent, everything it needs lives inside its own workspace:
 > upstream rewrites it via `os.replace()` (atomic rename) in `config.py:3292/3395/3451`
 > — a symlink at that path would be replaced by a regular file on the first save.
 > The symlink in the agent root is relative (`hermes-home/.env`), so both the
-> `hmk` wrapper (reads from workspace root) and the systemd template
+> `dmk` wrapper (reads from workspace root) and the systemd template
 > (`EnvironmentFile=%h/agents/%i/.env`) follow it to the real file.
 ```
 
@@ -82,7 +82,7 @@ Every script in the kit checks the cascade and hard-fails if the agent's `.env` 
 | Always-context | `HMK_ALWAYS_CONTEXT_PATH` | derived from `HMK_AGENT_MEMORY_BASE` | hard fail for plugin |
 | Vault (wiki) | `HMK_VAULT_DIR` | — | derived from workspace root |
 
-The `hmk` wrapper loads each agent's `.env` and absolutizes relative paths against `HMK_WORKSPACE_ROOT`. You never run kit commands without the wrapper unless you source the `.env` yourself.
+The `dmk` wrapper loads each agent's `.env` and absolutizes relative paths against `HMK_WORKSPACE_ROOT`. You never run kit commands without the wrapper unless you source the `.env` yourself.
 
 ## Running two agents on one host
 

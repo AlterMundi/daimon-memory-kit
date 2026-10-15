@@ -8,7 +8,7 @@ trap "rm -rf $TMP" EXIT
 
 REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
-echo "[1] bootstrap workspace with wiki + scripts + plugins"
+echo "[1] bootstrap workspace with scripts + plugins"
 python3 "$REPO/scripts/bootstrap_workspace.py" --workspace "$TMP/ws" --with-wiki-templates
 
 echo "[2] hmk wrapper is executable (regression 1C)"
@@ -24,12 +24,9 @@ echo "[4] add-text + search + pack"
 ./scripts/hmk memoryctl.py search --query "smoke" --limit 3 | grep -q "smoke" || { echo "FAIL: search did not return smoke entry"; exit 1; }
 ./scripts/hmk memoryctl.py pack --query "smoke" --limit 3 >/dev/null
 
-echo "[5] export_obsidian (regression 1B — maps dir)"
-./scripts/hmk export_obsidian.py --ids 1 >/dev/null
-test -f "$TMP/ws/wiki/maps/project-memory-system.md" || { echo "FAIL: wiki/maps/project-memory-system.md not created"; exit 1; }
-
-echo "[6] wiki templates copied (regression 1A)"
-test -f "$TMP/ws/wiki/index.md" || { echo "FAIL: wiki templates missing"; exit 1; }
+echo "[5] retired Obsidian option creates no generated vault"
+test ! -e "$TMP/ws/wiki" || { echo "FAIL: obsolete vault created"; exit 1; }
+test ! -e "$TMP/ws/scripts/export_obsidian.py" || { echo "FAIL: obsolete exporter installed"; exit 1; }
 
 echo "[7] HMK provider + librarian present, legacy handoff absent"
 test -f "$TMP/ws/hermes-home/plugins/hmk-memory/__init__.py" || { echo "FAIL: HMK provider missing"; exit 1; }

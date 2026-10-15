@@ -1,12 +1,12 @@
-# Finite portable HMK producer
+# Finite portable DMK producer
 
-Experimental implementation for [HMK #12](https://github.com/nicoechaniz/hermes-memory-kit/issues/12), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Production automatic learning remains disabled. The stock Codex hook adapter is described in [codex-hook-capture.md](codex-hook-capture.md).
+Experimental implementation for [DMK #12](https://github.com/nicoechaniz/hermes-memory-kit/issues/12), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Production automatic learning remains disabled. The stock Codex hook adapter is described in [codex-hook-capture.md](codex-hook-capture.md).
 
 ## Ownership and invocation
 
 Codex hooks only persist bounded source snapshots and event payloads. They do not run inference or a child expected to survive shutdown. The foreground operator, or an explicitly configured owning launcher, invokes `portable_producer.process_once` after capture and invokes it again to resume. One invocation processes at most one batch. There is no installed listener, background worker, timer, polling loop or source scan. This delivery qualifies the finite worker, not an unattended scheduler or production installation.
 
-The portable processor accepts an existing `capture_inbox.Inbox`, the receiving HMK module, one persistent state directory, a caller-supplied stateless proposer and an explicit subject/body context. The current source normalizer understands Codex text response items; the coordinator, journal and writer are separate from that harness representation. Another harness needs its own source adapter and qualification.
+The portable processor accepts an existing `capture_inbox.Inbox`, the receiving DMK module, one persistent state directory, a caller-supplied stateless proposer and an explicit subject/body context. The current source normalizer understands Codex text response items; the coordinator, journal and writer are separate from that harness representation. Another harness needs its own source adapter and qualification.
 
 For an isolated fictional profile, the reproducible DeepSeek transport wrapper is:
 

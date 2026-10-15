@@ -1,13 +1,13 @@
 # Selecting durable experience
 
 Use this policy during memory curation that the human has authorized and the
-receiving body permits. HMK should preserve enough selected experience for a
+receiving body permits. DMK should preserve enough selected experience for a
 being to recognize its relationships, history, work and learning from another
 body, even when the original sessions are unavailable.
 
 ## Decide what deserves to survive
 
-HMK carries the meaning of a life through time. Select what lets a future body
+DMK carries the meaning of a life through time. Select what lets a future body
 recognize an experience and find its way back into the world: what mattered,
 how it changed us or our relationships, and where understanding or participation
 can continue. Recognition needs both self-contained meaning and usable points
@@ -96,7 +96,7 @@ and mark the earlier attribution as superseded rather than silently erasing it.
 
 ## Use compact linked records
 
-These are content shapes using existing HMK chapters, tags and links. They do not
+These are content shapes using existing DMK chapters, tags and links. They do not
 require new shelves or an entity-table migration. Follow the deployment's
 authority and shelf conventions; a shelf or tag does not grant authority.
 

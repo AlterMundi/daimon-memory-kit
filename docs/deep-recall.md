@@ -1,4 +1,4 @@
-# Bounded native context with deeper HMK recall
+# Bounded native context with deeper DMK recall
 
 For the subsequently adopted interactive MCP transport over live owner pools,
 see [live MCP recall](live-mcp-recall.md). The experiment documented here keeps
@@ -6,7 +6,7 @@ its pinned selection and native projection contract; its evidence is not replace
 by the daily integration.
 
 This opt-in adapter lets a Codex App Server receiver deepen a relevant memory
-question beyond its selected native projection. HMK remains the selected canon;
+question beyond its selected native projection. DMK remains the selected canon;
 Matrix admission and authority do not change. Native learning generation is not
 needed. Production activation, a full `MemoriesBackend` replacement and automatic
 capture are outside this delivery.

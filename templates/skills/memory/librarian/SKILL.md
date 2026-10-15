@@ -1,6 +1,6 @@
 ---
 name: librarian
-description: Query and curate durable experience and documents in the local HMK library, preserving history, attribution and the distinction between native records and authoritative-source retrieval indexes.
+description: Query and curate durable experience and documents in the local DMK library, preserving history, attribution and the distinction between native records and authoritative-source retrieval indexes.
 version: 2.1.0
 author: Local System
 license: MIT
@@ -38,10 +38,10 @@ Paths referenced below (e.g. `agent-memory/state/NOW.md`, `wiki/index.md`) are *
 - Never write to `$HERMES_HOME/SOUL.md` through memory maintenance flows
 - Do not treat `MEMORY.md` as the hot write path
 - Use `expand` only for items already selected as relevant
-- Treat the workspace `wiki/` as a disposable HMK projection.
+- Treat the workspace `wiki/` as a disposable DMK projection.
 - Treat `$WIKI_PATH` as a separate, authoritative LLM Wiki for its raw and
-  curated files. HMK copies of those files are retrieval indexes.
-- For HMK-native records and precise continuity, use `library.db`.
+  curated files. DMK copies of those files are retrieval indexes.
+- For DMK-native records and precise continuity, use `library.db`.
 
 ## Selecting experience
 
@@ -58,7 +58,7 @@ authorize automatic prefetch, inbox attention or access to private sessions.
 ### 1. Query a compact bundle
 
 ```bash
-./scripts/hmk memoryctl.py hybrid-pack --query "USER_QUESTION" --budget 1800 --limit 4 --threshold 0.4
+./scripts/dmk memoryctl.py hybrid-pack --query "USER_QUESTION" --budget 1800 --limit 4 --threshold 0.4
 ```
 
 Use `--threshold 0.4` as the current pragmatic default. Raise it only when retrieval is noisy.
@@ -67,7 +67,7 @@ Fallback to plain `pack` only if the embeddings layer is unavailable or you expl
 ### 2. Inspect raw ranked candidates
 
 ```bash
-./scripts/hmk memoryctl.py search --query "USER_QUESTION" --limit 6
+./scripts/dmk memoryctl.py search --query "USER_QUESTION" --limit 6
 ```
 
 Use this when ranking looks suspicious and you need to inspect why.
@@ -75,7 +75,7 @@ Use this when ranking looks suspicious and you need to inspect why.
 ### 3. Expand a stored item
 
 ```bash
-./scripts/hmk memoryctl.py expand --id 17
+./scripts/dmk memoryctl.py expand --id 17
 ```
 
 This returns the full raw content plus linked neighbors.
@@ -111,7 +111,7 @@ or missing evidence before using it as a current conclusion. Version currency is
 not a truth score. Selection quality still requires the isolated model pilot.
 
 ```bash
-./scripts/hmk memoryctl.py add-text \
+./scripts/dmk memoryctl.py add-text \
   --shelf episodes \
   --title "short-title" \
   --raw "durable fact or decision text" \
@@ -122,7 +122,7 @@ not a truth score. Selection quality still requires the isolated model pilot.
 ### 5. Add a file into the library
 
 ```bash
-./scripts/hmk memoryctl.py add-file \
+./scripts/dmk memoryctl.py add-file \
   --shelf plans \
   --path /path/to/file.md \
   --title "descriptive-title" \
@@ -133,13 +133,13 @@ not a truth score. Selection quality still requires the isolated model pilot.
 ### 6. Check library stats
 
 ```bash
-./scripts/hmk memoryctl.py stats
+./scripts/dmk memoryctl.py stats
 ```
 
 ### 6b. Inspect embedding backend configuration
 
 ```bash
-./scripts/hmk memoryctl.py embed-config
+./scripts/dmk memoryctl.py embed-config
 ```
 
 Use this when retrieval quality, provider selection, or portability of the memory stack is relevant.
@@ -151,7 +151,7 @@ Current architecture supports:
 ### 7. Ingest heterogeneous sources via the modular stack
 
 ```bash
-./scripts/hmk ingest_any.py \
+./scripts/dmk ingest_any.py \
   --source /path/to/file.pdf \
   --shelf evidence \
   --title "descriptive-title" \
@@ -167,22 +167,12 @@ Current modular stack:
 - `pandoc` for broad document conversion
 - `mammoth` as DOCX fallback
 
-### 8. Inspect the generated HMK projection layer
-
-```bash
-sed -n '1,200p' wiki/index.md
-sed -n '1,200p' wiki/maps/project-memory-system.md
-```
-
-Use this only for navigation over HMK-native records. Do not confuse it with
-the independently authored LLM Wiki at `$WIKI_PATH`.
-
-### 9. Native session re-entry, separate from durable retrieval
+### 8. Native session re-entry, separate from durable retrieval
 
 Use Hermes `/resume` for the intended session, `session_search` for explicitly
 selected history, and native `/goal` for the active mission. Native SQLite
 session/goal persistence is distinct from the optional MEMORY.md/USER.md stores.
-The kit defaults to HMK for durable memory with those native stores disabled.
+The kit defaults to DMK for durable memory with those native stores disabled.
 
 `continuityctl.py rehydrate` is deprecated: it returns native re-entry guidance,
 not recovered context, and reads no files or databases. Old retrieval/summary
@@ -192,11 +182,10 @@ remain available for operator-maintained engineering notes only.
 
 ## Memory Topology (workspace-relative)
 
-- `agent-memory/library.db`: curated durable HMK memory
+- `agent-memory/library.db`: curated durable DMK memory
 - `agent-memory/state/NOW.md`, `ACTIVE-CONTEXT.md`: optional engineering notes
 - `agent-memory/index/INDEX.md`, `plans/MEMORY-ARCHITECTURE.md`: navigation
 - `hermes-home/state.db`: native sessions and goal state, managed by Hermes
-- `wiki/`: generated HMK navigation, not the independently authored LLM Wiki
 
 These are bootstrap defaults. Follow the actual deployment paths and preserve
 `HMK_AGENT_MEMORY_BASE`; do not invent another memory root to match the examples.
@@ -212,13 +201,13 @@ These are bootstrap defaults. Follow the actual deployment paths and preserve
 
 Current user direction outranks historical summaries, quotations and engineering
 notes. Do not promote a worker result, `/new` parent ID, or stale context into a
-new human request. HMK automatic prefetch and `librarian` do not depend on the
+new human request. DMK automatic prefetch and `librarian` do not depend on the
 optional dialogue plugin. Do not treat retrieved chapters as a conversation log.
 
 ## Ingestion Strategy
 
-- use `./scripts/hmk memoryctl.py add-file` for clean markdown or text already in final form
-- use `./scripts/hmk ingest_any.py` for heterogeneous formats
+- use `./scripts/dmk memoryctl.py add-file` for clean markdown or text already in final form
+- use `./scripts/dmk ingest_any.py` for heterogeneous formats
 - normalize first, then store
 - do not put binary formats directly into `library.db`
 - do not rely on Python `MarkItDown` on pre-AVX CPUs; it crashes (SIGILL). The host stub at `~/.local/bin/markitdown-local` explains alternatives.
@@ -227,13 +216,13 @@ optional dialogue plugin. Do not treat retrieved chapters as a conversation log.
 
 When new documentation enters the system, classify its authority first.
 
-HMK-native flow:
+DMK-native flow:
 
 1. normalize the authorized source outside the canonical pool
 2. retrieve related context with `hybrid-pack`
 3. apply the durable selection policy; route operational detail to project state
 4. persist only selected self-contained meaning and its evidence references
-5. verify recall, then optionally refresh the isolated HMK projection
+5. verify recall, follow the record's original sources
 
 An explicitly requested source archive is a separate purpose. Availability of
 `add-file` or `ingest_any` does not make every document durable autobiography.
@@ -242,7 +231,7 @@ LLM Wiki flow:
 
 1. stage raw evidence and a curated note outside `$WIKI_PATH`
 2. publish through `wiki_publish`
-3. verify the HMK evidence/library indexes and `derived_from` edge
+3. verify the DMK evidence/library indexes and `derived_from` edge
 4. repair index drift from the authoritative wiki files, never the reverse
 
 ### Minimal curation loop
@@ -253,7 +242,7 @@ The command below stores an explicitly selected source. Normalize and inspect
 it first; omit routine working state or keep it in the owning project.
 
 ```bash
-./scripts/hmk ingest_any.py \
+./scripts/dmk ingest_any.py \
   --source /path/to/source \
   --shelf evidence \
   --title "descriptive-title" \
@@ -264,7 +253,7 @@ it first; omit routine working state or keep it in the owning project.
 #### B. Retrieve related context
 
 ```bash
-./scripts/hmk memoryctl.py hybrid-pack --query "topic of the new document" --budget 1800 --limit 4 --threshold 0.4
+./scripts/dmk memoryctl.py hybrid-pack --query "topic of the new document" --budget 1800 --limit 4 --threshold 0.4
 ```
 
 #### C. Inspect conceptual map if needed
@@ -285,9 +274,8 @@ sed -n '1,220p' wiki/maps/project-memory-system.md
 
 ### Hard rule
 
-- `library.db` is authoritative for HMK-native records
+- `library.db` is authoritative for DMK-native records
 - `$WIKI_PATH` is authoritative for LLM Wiki-authored records
-- the workspace projection vault is disposable
 - every artifact has one authority; follow the v1 memory ownership policy
 
 Detailed contract: `agent-memory/plans/CURATION-PIPELINE.md` (if present in this agent)

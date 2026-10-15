@@ -12,8 +12,7 @@ Layers:
 Rules:
 
 - assign one authority per artifact class
-- HMK-native records: HMK first, projection after
-- LLM Wiki records: wiki first, HMK retrieval index after
-- never overlap the generated projection vault with `$WIKI_PATH`
+- DMK-native records: DMK first, projection after
+- LLM Wiki records: wiki first, DMK retrieval index after
 - raw only on demand
 - `null_retrieval` is valid

@@ -62,7 +62,7 @@ Once chapters are typed, use `memoryctl.py engram-pack` to retrieve a
 balanced mix instead of running `hybrid-pack` per bucket and concatenating.
 
 ```bash
-./scripts/hmk memoryctl.py engram-pack \
+./scripts/dmk memoryctl.py engram-pack \
   --query "build a nighttime shelter" \
   --limit 6 \
   --threshold 0.3 \

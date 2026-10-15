@@ -15,24 +15,19 @@ They are different products and must never share a target directory:
 | Surface | Typical path | Owner | Purpose |
 |---|---|---|---|
 | LLM Wiki | `$WIKI_PATH`, normally `~/wiki` | Human/agent curation workflow | Authoritative raw evidence and long-form curated knowledge |
-| HMK projection vault | `$HMK_VAULT_DIR`, normally a workspace `wiki/` | `export_obsidian.py` | Generated, disposable navigation over HMK-native records |
-
-`export_obsidian.py` refuses any target that equals, contains, or is contained
-by the LLM Wiki root. Deleting and rebuilding the HMK projection vault is safe.
-Deleting or regenerating the LLM Wiki from HMK is forbidden.
 
 ## Authority by artifact
 
 | Artifact | Authority | Other surface |
 |---|---|---|
-| Raw LLM Wiki evidence | File under `$WIKI_PATH/**/raw/` | HMK `evidence` chapter is a retrieval index |
-| Curated LLM Wiki note | File under `$WIKI_PATH` | HMK `library` chapter is a retrieval index |
-| HMK-native identity/state/plan/episode/atomic note | `library.db` | HMK projection vault is disposable navigation |
+| Raw LLM Wiki evidence | File under `$WIKI_PATH/**/raw/` | DMK `evidence` chapter is a retrieval index |
+| Curated LLM Wiki note | File under `$WIKI_PATH` | DMK `library` chapter is a retrieval index |
+| DMK-native identity/state/plan/episode/atomic note | `library.db` | Native records retain their own source history |
 | Live project branch/blocker/task state | Project `MEMORY.md` and GitHub | May be linked, never copied as durable wiki truth |
-| Dialogue continuity | The originating harness's native session/goal history (Hermes `state.db`; Codex thread history and compaction state) | HMK retrieval may supplement it; shared handoffs are attributed project context, not the original history |
-| Daimon `/me` personal memory | Daimon Matrix signed/evented memory ledger | HMK `daimon-projection` row is a disposable retrieval view |
+| Dialogue continuity | The originating harness's native session/goal history (Hermes `state.db`; Codex thread history and compaction state) | DMK retrieval may supplement it; shared handoffs are attributed project context, not the original history |
+| Daimon `/me` personal memory | Daimon Matrix signed/evented memory ledger | DMK `daimon-projection` row is a disposable retrieval view |
 
-An HMK `library` shelf can therefore contain both authoritative HMK-native
+A DMK `library` shelf can therefore contain both authoritative DMK-native
 records and rebuildable indexes of LLM Wiki notes. Shelf alone does not decide
 authority. The record's origin does:
 
@@ -46,24 +41,23 @@ authority. The record's origin does:
 
 Codex also has a separate local cross-session memory lifecycle. Its generated
 summaries, source resources and learned procedures must not be confused with
-native dialogue continuity or automatically treated as HMK-native records.
+native dialogue continuity or automatically treated as DMK-native records.
 The [Codex integration review](codex-native-memory-review.md) compares explicit
 ownership under coexistence with a full backend/writer adapter. No receiving
 adapter or additional machine-readable ownership class is activated by this
 documentation; the existing policy file remains scoped to its declared paths.
 
-Until HMK persists origin fields directly, the verified `wiki_publish` receipt,
+Until DMK persists origin fields directly, the verified `wiki_publish` receipt,
 source path, file hash, tags, and `derived_from` edge are the provenance
-boundary. The HMK→collective-memory adapter must carry that origin explicitly
+boundary. The DMK→collective-memory adapter must carry that origin explicitly
 rather than infer it from shelf or title.
 
 ## Write paths
 
-### HMK-native memory
+### DMK-native memory
 
 Write through `librarian` or `memoryctl`; never through raw SQL. Back up before
-schema, provider, bulk rewrite, or destructive maintenance. `export_obsidian`
-may project selected native records only to the isolated projection vault.
+schema, provider, bulk rewrite, or destructive maintenance. The retired Obsidian exporter is no longer shipped.
 
 ### LLM Wiki publication
 
@@ -71,18 +65,18 @@ Write drafts under the configured staging directory and publish through
 `wiki_publish`. Its transaction:
 
 1. validates frontmatter, taxonomy, links, and raw-body hash;
-2. snapshots the HMK database;
+2. snapshots the DMK database;
 3. atomically writes raw/note/index files;
-4. creates HMK retrieval-index chapters and the `derived_from` edge;
+4. creates DMK retrieval-index chapters and the `derived_from` edge;
 5. appends the wiki log and verifies the chain;
 6. restores both file and database state if any step fails.
 
-The files are authoritative. A failed or missing HMK index is repaired from the
+The files are authoritative. A failed or missing DMK index is repaired from the
 files; it is not a reason to overwrite the files with an older DB chapter.
 
 ### Daimon personal-memory projection
 
-Write only through the closed `daimon_projection.py` API. Generic HMK ingest,
+Write only through the closed `daimon_projection.py` API. Generic DMK ingest,
 update, delete, linking and collective publication reject projection-managed
 chapters. Correction/retraction follows Matrix event predecessors; rebuild is
 limited to one exact source/subject/projector namespace. See
@@ -93,22 +87,21 @@ limited to one exact source/subject/projector namespace. See
 | Drift | Resolution |
 |---|---|
 | Wiki file hash differs from its declared raw hash | Stop; preserve both versions and investigate source mutation |
-| Wiki file differs from its indexed HMK chapter | Re-index HMK from the wiki file after a verified DB snapshot |
-| HMK-native record differs from projection note | Rebuild the projection from HMK |
-| Daimon projection differs from Matrix source head | Stop retrieval for that namespace and rebuild it from Matrix; never write the HMK value back as source truth |
+| Wiki file differs from its indexed DMK chapter | Re-index DMK from the wiki file after a verified DB snapshot |
+| DMK-native record differs from projection note | Rebuild the projection from DMK |
+| Daimon projection differs from Matrix source head | Stop retrieval for that namespace and rebuild it from Matrix; never write the DMK value back as source truth |
 | Project `MEMORY.md` disagrees with Git branch/runtime | Git/runtime wins for mechanical state; repair `MEMORY.md` |
-| Publication receipt or provenance edge is missing | Treat HMK copy as untrusted index; rebuild the full chain through the gate |
+| Publication receipt or provenance edge is missing | Treat DMK copy as untrusted index; rebuild the full chain through the gate |
 
 Never “merge both” automatically. The authoritative side replaces its replica
 after preservation and validation.
 
 ## Recovery
 
-- LLM Wiki recovery uses its Git/Obsidian history plus raw-body checksums. HMK
+- LLM Wiki recovery uses its Git/Obsidian history plus raw-body checksums. DMK
   is not a backup of the wiki.
-- HMK recovery uses a SQLite backup API snapshot with integrity and
+- DMK recovery uses a SQLite backup API snapshot with integrity and
   foreign-key checks. A wiki index is not a database backup.
-- HMK projection recovery deletes/rebuilds the isolated projection vault.
 - Daimon projection recovery verifies its receipts/checkpoint and atomically
   rebuilds one namespace from Matrix.
 - Project operational recovery reconciles GitHub, Git, runtime, then
@@ -121,10 +114,10 @@ The adapter publishes immutable, provenance-bearing versions:
 
 - wiki-origin records cite the authoritative wiki path/hash and their evidence
   edge;
-- HMK-native records cite the HMK record ID, content hash, and memory policy;
+- DMK-native records cite the DMK record ID, content hash, and memory policy;
 - updates create a new version and supersession edge;
 - deletions become tombstones, never silent disappearance.
 
-Daimon projection rows are excluded from the current HMK-native publication
+Daimon projection rows are excluded from the current DMK-native publication
 adapter. Publication, if later designed, must be a distinct reviewed derivation
 that preserves Matrix provenance and consent.

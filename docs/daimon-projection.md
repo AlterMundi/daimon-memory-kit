@@ -3,13 +3,13 @@
 ## Purpose and authority
 
 This API gives Daimon Matrix a narrow local boundary for projecting its
-policy-authorized personal-memory view into HMK retrieval. “Matrix” here means
+policy-authorized personal-memory view into DMK retrieval. “Matrix” here means
 the `daimon-matrix` component; the protocol has no dependency on Matrix.org.
 
 Daimon Matrix remains authoritative for `/me`, memory identity, event order,
-category, correction/retraction, classification and projection policy. HMK
+category, correction/retraction, classification and projection policy. DMK
 stores a disposable retrieval view plus local receipts. A projected chapter is
-never HMK-native authority and cannot become collective memory by implication.
+never DMK-native authority and cannot become collective memory by implication.
 
 The boundary accepts only canonical JSON on standard input and emits canonical
 JSON on standard output. It does not accept paths, URLs, database handles,
@@ -29,7 +29,7 @@ Within it, projection identity adds `memory_id`. IDs are SHA-256-derived from
 canonical bytes with domain separation. Titles, slugs, shelves, tags, paths,
 semantic similarity and local chapter IDs have no authority.
 
-Every request binds the intended HMK instance, API version and SQLite schema
+Every request binds the intended DMK instance, API version and SQLite schema
 version. The local operator supplies the logical instance ID through
 `--instance-id` or `HMK_INSTANCE_ID`; a mismatch fails closed.
 
@@ -73,7 +73,7 @@ Rebuild is deliberately two-phase:
    namespace has not drifted before replacing that namespace atomically.
 
 The plan never names a shelf, filesystem root or author-wide deletion target.
-An empty manifest clears only the exact namespace. HMK-native, Wiki-indexed and
+An empty manifest clears only the exact namespace. DMK-native, Wiki-indexed and
 other subject/projector namespaces survive unchanged. Accepted source
 high-water never moves backwards. History and prior receipts are retained even
 when their active rows are rebuilt.
@@ -84,7 +84,7 @@ when their active rows are rebuilt.
 For a projected row it contains `kind: daimon-projection`, source and subject,
 author, memory/category, exact event head, statement hash/media type/
 classification, checkpoint, projector and active state. A normal row reports
-its HMK `source_kind`; a misleading tag cannot impersonate provenance.
+its DMK `source_kind`; a misleading tag cannot impersonate provenance.
 
 Projection chapters are FTS-readable but embedding-disabled. Generic ingest,
 update, delete, chapter clearing and link mutation refuse projection-managed
@@ -109,7 +109,7 @@ python3 scripts/generate_daimon_projection_vectors.py
 
 Tests regenerate the corpus under different hash seeds, timezones and locales
 and require byte-identical output. Downstream adapters should pin a released
-HMK commit and validate these vectors before enabling writes.
+DMK commit and validate these vectors before enabling writes.
 
 ## Migration, backup and rollback
 
@@ -118,9 +118,9 @@ Daimon tables; retrying is safe. An unknown stored schema version is refused,
 not downgraded. Existing projection tables are checked for all required
 provenance columns.
 
-Before enabling the writer on an existing HMK workspace, make a SQLite backup
+Before enabling the writer on an existing DMK workspace, make a SQLite backup
 through the backup API and verify both `PRAGMA integrity_check` and
-`PRAGMA foreign_key_check`. A normal HMK backup includes projection rows,
+`PRAGMA foreign_key_check`. A normal DMK backup includes projection rows,
 history, idempotency receipts and rebuild receipts.
 
 Before any projections exist, rollback may remove the unused API and tables.

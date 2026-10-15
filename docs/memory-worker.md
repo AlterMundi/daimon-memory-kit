@@ -151,14 +151,14 @@ hmk memory_runtime.py status --profile /selected/worker.json
 The wrapper must first contain this delivery. `run` exits 0 when its owned phases
 are idle, 2 when work remains, and 1 on launch/configuration failure. Failures emit
 only a safe error class, preserve the previous worker observation and must be
-observed through the receiving supervisor's exit status as well as HMK's journal.
+observed through the receiving supervisor's exit status as well as DMK's journal.
 `status` exits 0 for a successful read even if processing is unhealthy: it does
 not open the canonical pool, read credentials, dispatch models or resume work.
 
 DeepSeek credentials are resolved lazily from the named process environment
 variable. An idle run or successful dispatch replay needs no credential. The
 receiving launcher must obtain it through its established secret facility;
-`embedding_env_file` is HMK's existing embedding configuration, not a new DeepSeek
+`embedding_env_file` is DMK's existing embedding configuration, not a new DeepSeek
 credential store. The current body's existing DeepSeek route is its Hermes pool,
 not that embedding environment file. Connecting that receiving secret route and
 supervisor is still adoption work, not evidence of a missing account or quota.
@@ -230,12 +230,12 @@ python3 scripts/memory_supervision.py --profile /selected/worker.json \
 
 An explicitly selected `--calendar daily` also renders a timer; rendering grants
 no activation authority. The service is finite, has no automatic restart, and
-terminates its process group on timeout. Budgets/checkpoints remain HMK-owned.
+terminates its process group on timeout. Budgets/checkpoints remain DMK-owned.
 An invocation can end with pending work; neither the next timer tick nor an alert
 retries a retained failed paid request without the explicit recovery above.
 
 A completed oneshot normally becomes inactive. The receiving observer must use
-service `Result`/`ExecMainStatus`, cadence and HMK timestamps to distinguish that
+service `Result`/`ExecMainStatus`, cadence and DMK timestamps to distinguish that
 from failure or overdue work. `RemainAfterExit=yes` prevents subsequent scheduled
 invocation and is not appropriate. An active timer alone does not prove worker
 health. Integration is tracked in

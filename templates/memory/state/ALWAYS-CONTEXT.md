@@ -1,7 +1,7 @@
 # Legacy always-context compatibility note
 
-This template is no longer installed by HMK bootstrap. It is retained only for
-explicit standalone dialogue-plugin compatibility. HMK does not inject it.
+This template is no longer installed by DMK bootstrap. It is retained only for
+explicit standalone dialogue-plugin compatibility. DMK does not inject it.
 
 Use native Hermes session history and goal state for the selected conversation.
 Current human direction outranks historical summaries, quotes and engineering
