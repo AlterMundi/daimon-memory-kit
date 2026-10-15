@@ -26,11 +26,16 @@ source remains separate from selecting lasting meaning, writing memory and index
 
 ## Bounded capture and preserved source
 
-A hook seeks to its durable cursor and reads at most `max_source_bytes` of unread
-source. That setting limits one operation, not total session history. Complete
+A hook seeks to its durable cursor and reads at most its configured forward
+`read_budget_bytes` (default 4 MiB, bounded by `max_source_bytes`). This budget
+limits one operation, not total session history. Complete
 JSONL records form per-turn source segments. Larger backlogs retain their cursor
 and report `capture_deferred`; repeated explicit capture can continue without
-models. An individual record exceeding the bound remains a visible failure.
+models. `drain --binding ... --payload ... --max-steps 32` performs bounded
+catch-up with an explicitly selected native payload; it stops on completion, no
+progress or its step budget and invokes no models. An individual record exceeding
+the read budget remains a visible failure; select an adequate explicit budget
+before activation when unusually large individual records are expected.
 Incomplete records, replacement, truncation and a changed cursor boundary never
 silently advance. Concurrent appends beyond the observed size wait for the next
 capture. Native rollouts are append-only inputs: this detects identity/boundary

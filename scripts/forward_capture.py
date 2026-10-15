@@ -35,10 +35,12 @@ def guard(fd, offset):
     return sha(os.pread(fd, min(GUARD_BYTES, offset), max(0, offset-GUARD_BYTES)))
 
 
-def activate(binding, backup):
+def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
     """Explicitly inventory current EOFs; do not ingest existing conversations."""
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('scoped binding required')
+    if type(read_budget_bytes) is not int or read_budget_bytes < 1:
+        raise ValueError('positive capture read budget required')
     if policy(binding['inbox']):
         raise ValueError('forward policy already exists; preserve its cursors')
     inbox = Inbox(binding['inbox'], binding)
@@ -61,7 +63,8 @@ def activate(binding, backup):
         finally:
             os.close(fd)
     value = dict(schema=SCHEMA, enabled=True, activated_ns=started,
-                 binding_sha256=sha(inbox.binding.encode()), baseline_files=len(baselines))
+                 binding_sha256=sha(inbox.binding.encode()), baseline_files=len(baselines),
+                 read_budget_bytes=min(read_budget_bytes,binding['max_source_bytes']))
     with inbox.connect() as con:
         con.execute('BEGIN IMMEDIATE')
         con.execute('CREATE TABLE forward_policy(value TEXT NOT NULL)')
@@ -136,7 +139,7 @@ def capture(binding, payload, source, path, header, before, *, _fault=None):
                 or cursor['guard'] != guard(fd,cursor['offset'])):
             return deferred('source_changed_during_capture')
         start = cursor['offset']
-        limit = binding['max_source_bytes']
+        limit = selected['read_budget_bytes']
         data = os.pread(fd, min(limit, before.st_size-start), start)
         # Never consume a partial JSONL record. A later invocation resumes it.
         complete = data.rfind(b'\n')+1
@@ -231,14 +234,28 @@ def capture(binding, payload, source, path, header, before, *, _fault=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['activate','status','pause','resume'])
+    parser.add_argument('command',choices=['activate','status','pause','resume','drain'])
     parser.add_argument('--binding',type=Path,required=True)
     parser.add_argument('--backup',type=Path)
+    parser.add_argument('--read-budget-bytes',type=int,default=4*1024*1024)
+    parser.add_argument('--payload',type=Path)
+    parser.add_argument('--max-steps',type=int,default=32)
     args = parser.parse_args(); binding = json.loads(args.binding.read_text())
     if args.command == 'activate':
         if args.backup is None:
             parser.error('--backup is required for activation')
-        result = activate(binding,args.backup)
+        result = activate(binding,args.backup,read_budget_bytes=args.read_budget_bytes)
+    elif args.command == 'drain':
+        if args.payload is None or args.max_steps < 1:
+            parser.error('--payload and a positive --max-steps are required')
+        from codex_hook_capture import capture as hook_capture
+        payload = json.loads(args.payload.read_text()); previous = None
+        for step in range(args.max_steps):
+            result = hook_capture(binding,payload)
+            if result['capture_complete'] or result.get('source_offset') == previous:
+                break
+            previous = result.get('source_offset')
+        result = dict(result,steps=step+1,model_calls=0)
     elif args.command == 'status':
         result = policy(binding['inbox'])
     else:
