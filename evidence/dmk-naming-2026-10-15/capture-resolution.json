@@ -1,0 +1,85 @@
+{
+  "schema": "dmk.capture-exclusion-verification/v1",
+  "incidents": [
+    {
+      "incident_id": "capture-0abb9c0ea9a24956a5452da38999c788",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-62bcb2a6096f432ab2a9e4046be4bb92",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-eaf3674fd5f844cd8268a0633562403b",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-2a27784e12954744bf4d3bae82641ce5",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-69bd4b87a9c94e23ab3c0f4522df7eb2",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-26a28ab850be4af9ad88cca56a92f600",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-07700c68293f478f8f3c3b6a03dd151b",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-4fd13fa78e41402bb4947eceb25da457",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-45077c96e6044f899d5ae393e4516703",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-e41bb3b625ea4c36890ac4c7b04493e1",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-220689970a754403b5f3b3c628c4105f",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    },
+    {
+      "incident_id": "capture-29fb76846a764b45a0b0bea7ce3b608d",
+      "before_revision": 1,
+      "resolved_revision": 2,
+      "work_preserved": false
+    }
+  ],
+  "resolved": 12,
+  "paid_calls": 0,
+  "worker_invocations": 0,
+  "excluded_sources": 1,
+  "captured_sources": 0,
+  "new_observations": 0,
+  "new_revisions": 0,
+  "release": "f3040b67e444f4989e7bbd9f86cfb87db5a3fa5c"
+}
