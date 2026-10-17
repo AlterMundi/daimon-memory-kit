@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 import time
 
-from capturectl import CaptureLedger, digest, wire
+from capturectl import CaptureLedger, CanonicalTitleConflict, title_conflicts, digest, wire
 from codex_coordinator import checkpoint, sync_directory
 import codex_projection as artifacts
 import portable_capture as selection
@@ -46,7 +46,7 @@ def _refresh_changed_context(memory, job, job_path):
             return
         row = con.execute('SELECT state,reason,payload_json,decision_hash FROM capture_events WHERE stream_id=? AND sequence=?',
             ('portable:'+digest(job['owner']),job['sequence'])).fetchone()
-    if row is None or row['state'] != 'failed' or row['reason'] != 'CanonicalContextChanged':
+    if row is None or row['state'] != 'failed' or row['reason'] not in {'CanonicalContextChanged', 'CanonicalTitleConflict'}:
         return
     if 'proposal' not in job:
         return  # Already reopened; do not discard the new attempt on each call.
@@ -55,7 +55,15 @@ def _refresh_changed_context(memory, job, job_path):
     event = json.loads(row['payload_json'])
     if event['content'] != wire(job['inputs']) or event['event_id'] != 'portable-batch:'+job['input_hash']:
         raise ValueError('failed source event does not match frozen producer input')
-    job.setdefault('prior_attempts',[]).append(dict(reason='canonical_context_changed',
+    if row['reason'] == 'CanonicalTitleConflict':
+        if job.get('title_reconciliations', 0) >= 2:
+            raise ValueError('title reconciliation remains pending after two attempts; inspect retained work')
+        with memory.connect() as con:
+            decision = selection.selected_decision(job['proposal']['selection'],
+                selection_navigation.effective_sources(job), job.get('navigation',{}).get('canon',[]))
+            job['title_conflicts'] = title_conflicts(con, decision)
+        job['title_reconciliations'] = job.get('title_reconciliations', 0)+1
+    job.setdefault('prior_attempts',[]).append(dict(reason=row['reason'],
         proposal=job.pop('proposal'),navigation=job.pop('navigation',{})))
     job['context_attempt'] = job.get('context_attempt',0)+1
     job.pop('decision_hash',None)
@@ -298,8 +306,9 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 raise ValueError('retained producer artifact differs')
         try:
             receipt = ledger.assess(staged['event_key'],decision,_validator=preserve)
-        except CanonicalContextChanged:
-            return {'state':'pending','reason':'canonical context changed; next invocation refreshes evidence',
+        except (CanonicalContextChanged, CanonicalTitleConflict) as error:
+            return {'state':'pending','reason':('canonical title conflict; reconcile current original' if isinstance(error, CanonicalTitleConflict)
+                else 'canonical context changed; next invocation refreshes evidence'),
                 'processed_through':index['after'],'proposer_invoked':proposer_invoked,
                 'event_key':staged['event_key']}
         if decision['outcome'] == 'applied' and artifacts.load_learning(memory,bundle['artifact_id']) != originals:
@@ -404,6 +413,60 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
         state['after'] = row['sequence']
         checkpoint(path,state)
         return dict(state='complete',processed=processed,indexed_through=state['after'],space=cfg)
+
+
+def reconcile_failed_title(memory, inbox, state_dir):
+    """Explicitly reopen a proven failed title collision, retaining its event.
+
+    No inference, source advancement or canonical writes. In particular a pending
+    or committed event cannot be reclassified as an uncommitted failed selection.
+    This also qualifies the older ledger's generic ValueError on an actual clash.
+    """
+    state_dir = Path(state_dir).absolute()
+    with open(str(inbox.path)+'.worker.lock', 'a+b') as worker_lock, open(str(inbox.path)+'.producer.lock', 'a+b') as lock:
+        fcntl.flock(worker_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        index_path = state_dir/'index.json'
+        with inbox.connect() as con:
+            owner_row = con.execute('SELECT value FROM producer_owner').fetchone()
+        if owner_row is None:
+            raise ValueError('established producer owner required')
+        owner = json.loads(owner_row[0])
+        index = json.loads(index_path.read_text()) if index_path.exists() else dict(owner=owner, sequence=0)
+        path = state_dir/f"batch-{index['sequence']+1}.json"
+        job = json.loads(path.read_text())
+        if (job['owner'] != owner or job['owner'] != index['owner'] or job['owner']['database'] != str(Path(memory.DB_PATH).resolve())
+                or job['owner']['state_dir'] != str(state_dir)
+                or job['owner']['capture_binding'] != digest(json.loads(inbox.binding))
+                or digest(job['inputs']) != job['input_hash']):
+            raise ValueError('failed job owner or input differs')
+        for revision in job['inputs']['revisions'].values():
+            if artifacts.sha(inbox.restore(revision['revision'])) != revision['sha256']:
+                raise ValueError('failed job source bytes differ')
+        with memory.connect() as con:
+            row = con.execute('SELECT * FROM capture_events WHERE stream_id=? AND sequence=?',
+                ('portable:'+digest(job['owner']), job['sequence'])).fetchone()
+            if (row is None or row['state'] != 'failed' or row['reason'] not in {'ValueError','CanonicalTitleConflict'}
+                    or not job.get('decision_hash') or row['decision_hash'] != job['decision_hash']):
+                raise ValueError('only the exact failed title decision can be reopened')
+            event = json.loads(row['payload_json'])
+            if event['content'] != wire(job['inputs']) or event['event_id'] != 'portable-batch:'+job['input_hash']:
+                raise ValueError('failed source event differs')
+            decision = selection.selected_decision(job['proposal']['selection'],
+                selection_navigation.effective_sources(job), job.get('navigation',{}).get('canon',[]))
+            conflicts = title_conflicts(con, decision)
+        if not conflicts:
+            raise ValueError('no title collision demonstrated; preserve failed work')
+        archive = state_dir/f"batch-{job['sequence']}-title-conflict-{digest(job)}.json"
+        checkpoint(archive, job)
+        job.setdefault('prior_attempts',[]).append(dict(reason='verified_title_conflict',
+            proposal=job.pop('proposal'), navigation=job.pop('navigation',{})))
+        job.pop('decision_hash', None)
+        job.update(state='prepared', code_hash=_code_hash(), title_conflicts=conflicts,
+            context_attempt=job.get('context_attempt',0)+1)
+        checkpoint(path, job)
+        return dict(state='reconciliation_prepared', preserved_job=str(archive),
+            event_key=row['event_key'], cursor_advanced=False, model_calls=0)
 
 
 def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=False):

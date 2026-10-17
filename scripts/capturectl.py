@@ -21,6 +21,23 @@ def digest(value):
     return hashlib.sha256(wire(value).encode()).hexdigest()
 
 
+class CanonicalTitleConflict(ValueError):
+    """An add collided with an existing title; reconcile, never rename blindly."""
+
+
+def title_conflicts(con, decision):
+    conflicts = []
+    for record in decision.get('records', []):
+        if record.get('operation') != 'add':
+            continue
+        for row in con.execute('''SELECT c.id, c.record_uid, c.revision, c.title
+                FROM chapters c JOIN books b ON b.id=c.book_id
+                JOIN shelves s ON s.id=b.shelf_id WHERE s.name=? AND b.title=?''',
+                (record['shelf'], record['title'])):
+            conflicts.append(dict(row))
+    return conflicts
+
+
 class CaptureLedger:
     """Journal pending source deltas separately from selected autobiography.
 
@@ -201,7 +218,7 @@ class CaptureLedger:
             if not all(isinstance(record.get(key), str) and record[key].strip() for key in ('shelf','title','raw')):
                 raise ValueError('new selected records require shelf, title and self-contained raw text')
             if con.execute('SELECT 1 FROM books b JOIN shelves s ON s.id=b.shelf_id WHERE s.name=? AND b.title=?', (record['shelf'],record['title'])).fetchone():
-                raise ValueError('selected title already exists; reconcile by explicit expected-revision update')
+                raise CanonicalTitleConflict('selected title already exists; reconcile by explicit expected-revision update')
             return self.mc.add_text(record['shelf'], record['title'], record['raw'], source_kind='capture', _con=con, **options)
         if record.get('operation') == 'update' and type(record.get('chapter_id')) is int and type(record.get('expected_revision')) is int:
             return self.mc.update_chapter(record['chapter_id'], content=record.get('raw'), title=record.get('title'),
