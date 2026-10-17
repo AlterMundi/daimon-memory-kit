@@ -2957,7 +2957,12 @@ def main():
     p_sem.add_argument("--model")
     _add_filter_args(p_sem)
 
-    p_hybrid = sub.add_parser("hybrid-pack")
+    p_navigation = sub.add_parser("hybrid-search", help="Read-only hybrid navigation; inspect originals before treating candidates as evidence")
+    p_navigation.add_argument("--query", required=True)
+    p_navigation.add_argument("--limit", type=int, default=8)
+    p_navigation.add_argument("--record-uid", action="append", help="Search only selected stable records in the bound pool")
+
+    p_hybrid = sub.add_parser("hybrid-pack", help="Select automatic context using the relevance threshold and token budget")
     p_hybrid.add_argument("--query", required=True)
     p_hybrid.add_argument("--budget", type=int, default=4000)
     p_hybrid.add_argument("--limit", type=int, default=8)
@@ -3085,6 +3090,13 @@ def main():
             shelves=args.shelf, exclude_shelves=args.exclude_shelf,
             tags=args.tag, exclude_tags=args.exclude_tag,
         ), indent=2, ensure_ascii=False))
+    elif args.command == "hybrid-search":
+        import memory_navigation
+        _require_config("hybrid-search")
+        with read_scope(DB_PATH):
+            result = memory_navigation.search(sys.modules[__name__], args.query,
+                mode='hybrid', limit=args.limit, record_uids=args.record_uid)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
     elif args.command == "hybrid-pack":
         print(
             json.dumps(
