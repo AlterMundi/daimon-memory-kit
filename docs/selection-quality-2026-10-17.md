@@ -85,3 +85,65 @@ it must not silently renormalize already frozen evidence or reset correction
 budgets. Configuration rollback restores code references, not old databases over
 later memories. Existing native sessions may retain their loaded reader until a
 normal restart; installing a release alone does not establish receiving use.
+
+## Adopted receiving release
+
+[PR #14](https://github.com/AlterMundi/daimon-memory-kit/pull/14) is merged.
+Source `04b59a9a84e96dbe44d93675fd631f354a7a1cec` is selected for the existing
+worker and native reader on CompAII, Eko and Oliva. Each configured foreground
+reader returned a real source excerpt whose quotation, header, UID and revision
+were checked against the unchanged original. These are actual receiving calls;
+already-running sessions can still retain their loaded older reader until normal
+restart. CLI and capture-handler references remain unchanged.
+
+Eko's prepared batch retained all 16 completed navigation steps, its frozen inputs,
+source order and cursor. The existing explicit `preserve_navigation` procedure
+archived its prior job before reconciling the implementation hash. No worker was
+started or model dispatch repeated by adoption. The other two had no prepared job
+to reconcile. Configuration backups and reverse substitutions preserve independent
+later settings. For worker rollback, inspect any current pending job first: use
+the same supported pre-stage reconciliation with the selected previous release;
+staged work must finish through its owning writer. Never restore an old database
+or archived job over later memories or progress.
+
+Existing reconciliation checks additionally passed: one pre-stage upgrade test
+reused retained lookups/proposals, and three revision-conflict/preservation checks
+passed. The shared resource catalog points to this release and report.
+
+## Closing weak-cue route check
+
+The automatic-context pack and native navigation have different existing
+contracts. On the verified earlier snapshot restricted to the 34 records existing
+at the original query time, with that clock and the retained query vector, the
+0.4 pack still returned no records. Native navigation offered the relevant earlier
+encounter at rank 6, within its existing eight-candidate page. No new embeddings,
+threshold change or noise admission were used for this check.
+
+A stateless receiver given that native candidate page chose the correct encounter.
+A second call received its complete retained record, not the source session. Its
+answer distinguished the proposal, the attributed assistant assessment, actual
+returned evidence and unproven implementation. All 18 statements had matching
+source content on inspection after decoding transport text; incidental status/PR
+facts made the answer longer than the question needed. This is evidence of useful
+navigation, not a complete natural-narration acceptance or improved automatic-pack
+admission. The strict raw-string citation gate failed on three quotations whose
+line wrapping was normalized. That failed gate remains recorded; whitespace
+matching is not substituted for semantic validation. Future narration qualification
+must reuse the existing passage-based contract rather than repeat this ad hoc
+raw-citation adapter.
+
+The two receiver calls used 19,472 reported tokens (1,943 selection, 17,529 answer)
+and took 5.99 and 39.04 seconds. Together with the three selection diagnostics,
+there were five new DeepSeek calls and 37,904 reported tokens; USD billing remains
+unknown. Receiving reader probes used the existing embedding configuration and
+have unknown billed cost. No generation call was repeated during recovery or
+adoption. Raw receiving packets, responses, failed gate and assessment are private.
+
+**Exact remaining scope for #11:** the original automatic-context pack miss remains
+unresolved. Before another experiment, identify the owning consumer that needs
+automatic admission for this case; the native read-and-assess route already finds
+it. Do not lower admission thresholds, widen the corpus, replay completed jobs,
+rerun the rejected embedding projection, or treat a candidate as proof. A further
+ranking/relevance change requires a controlled relevant/irrelevant comparison and
+an actual benefit for that consumer. Current operational repairs and the bounded
+selection/navigation delivery are adopted; full #11 closure is not asserted.
