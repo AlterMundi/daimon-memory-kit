@@ -65,3 +65,20 @@ repair receipt, and resumes normal schema/source validation and navigation. Repe
 invocation reuses the retained repair. Valid JSON, uncertain/unfinished dispatches,
 observed tool execution and foreign requests are refused. Failure stays pending;
 no unbounded prompt/provider retries or silent provider substitution is authorized.
+
+## Interrupted pre-write snapshots
+
+A subsequent live batch completed model selection but timed out during its SQLite
+pre-write snapshot, before staging a canonical event. The old helper created the
+final backup filename before completing or verifying it; a later invocation could
+mistake that partial file for the required checkpoint. New snapshots retain any
+failed/interrupted candidate under a unique `.partial-` name and publish the final
+name only after integrity/foreign-key verification and durable file flush, using a
+non-overwriting atomic link. Existing recovery files and concurrent winners are
+never replaced. Timeout does not authorize retrying an already-completed model call.
+
+For a retained failure from the older helper, preserve the candidate and journal
+companions, inspect it and the unchanged current job, and explicitly create a fresh
+verified checkpoint before resuming. The helper's existing timeout argument can
+bound that operator recovery independently of model/selection budgets. Never delete
+or silently accept an uncertain old backup merely because its pathname exists.
