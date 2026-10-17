@@ -19,6 +19,14 @@ def instruction_context(payload):
     if payload.get('type') != 'message' or payload.get('role') != 'user':
         return False
     text = '\n'.join(c.get('text', '') for c in payload.get('content', []))
+    # Codex also emits this frame as its own user-role message. Do not make
+    # the harness's date/cwd the human opener of the following encounter.
+    stripped = text.strip()
+    if (stripped.startswith('<environment_context>') and
+            stripped.endswith('</environment_context>') and
+            stripped.count('<environment_context>') == 1 and
+            stripped.count('</environment_context>') == 1):
+        return True
     header, separator, rest = text.partition('\n\n<INSTRUCTIONS>')
     if not separator or not (header == '# AGENTS.md instructions' or
                             header.startswith('# AGENTS.md instructions for ')):

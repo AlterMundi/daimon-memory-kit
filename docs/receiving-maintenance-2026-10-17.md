@@ -108,7 +108,7 @@ another finite invocation. Do not re-run the completed reconciliation or native
 repair and do not revive obsolete experimental queues.
 
 The quality continuation is [DMK #11](https://github.com/AlterMundi/daimon-memory-kit/issues/11).
-The next quality change should use the already-retained failed weak query and
+The initial quality hypothesis used the already-retained failed weak query and
 oversized episode as a bounded diagnostic: distinguish source-artifact preservation
 from the concise memory/index projection, identify what the embedding actually
 represented, and test that same query without lowering acceptance thresholds.
@@ -116,3 +116,26 @@ Separately assess selection of temporary work state against meaningful encounter
 Preserve originals and revisions; demonstrate a useful correction on equivalent
 inputs before any wider model comparison or production projection change. Existing
 stage qualification remains evidence, but does not override these receiving limits.
+
+## Follow-up: controlled diagnosis and snapshot recovery
+
+[The bounded follow-up](selection-quality-2026-10-17.md) corrects the temporal
+comparison above: the later relevant record did not yet exist at the first query.
+An equivalent-corpus experiment established no benefit from the candidate vector
+change; no ranking or embedding change was adopted. The original no-result
+observation remains intact.
+
+DMK [PR #13](https://github.com/AlterMundi/daimon-memory-kit/pull/13) fixes an
+interrupted SQLite snapshot leaving an empty final backup pathname. Verified
+snapshots now publish atomically without overwriting prior files; failed partials
+remain identifiable. All three workers adopted source `1726da4b08c741827ac2e074f493ade2008c76f5`.
+Oliva's retained batch completed and indexed using its cached proposal: zero new
+selection calls. The existing UID, exact previous revision and one-record identity
+were verified; the failed empty candidate is retained separately.
+
+Alerts [PR #9](https://github.com/AlterMundi/daimon-alerts/pull/9) provides explicit
+audited reconciliation of a diagnosed stale finite-budget observation. Eko's
+original incident was confirmed resolved by the service, with its resolution
+delivery confirmed; pending producer work was not run or declared complete.
+Transient observation-read failures under host I/O pressure remain a separate
+infrastructure concern, not proof of failed provider processing or lost memory.
