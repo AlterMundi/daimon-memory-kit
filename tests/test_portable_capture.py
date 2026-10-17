@@ -156,3 +156,35 @@ def test_discussion_of_instructions_remains_a_human_source():
     for text in ['We changed AGENTS.md after the incident.',
                  '# AGENTS.md instructions\n\n<INSTRUCTIONS>Old rule</INSTRUCTIONS>\nPlease correct this rule.']:
         assert not instruction_context(dict(type='message',role='user',content=[dict(type='input_text',text=text)]))
+
+
+def test_standalone_environment_is_context_not_a_human_encounter():
+    from portable_capture import block_sources, instruction_context
+    frame='<environment_context>\n<cwd>/fictional/work</cwd>\n</environment_context>'
+    def message(text):
+        return dict(type='message',role='user',content=[dict(type='input_text',text=text)])
+    payloads=[message(frame), message('Jo proposed a brace, but the delivery failed.')]
+    raw=b''.join((json.dumps(dict(type='response_item',payload=p))+'\n').encode() for p in payloads)
+    blocks=block_sources(codex_sources(raw,source='fixture'),'fixture:desk')
+    assert blocks[0]['channel']=='harness_instruction_context'
+    assert blocks[0]['status']=='earlier_context' and blocks[0]['content']==frame
+    assert blocks[1]['dependencies']==[]
+    decision=dict(outcome='applied',reason='A meaningful failed contribution',records=[dict(
+        key='encounter',operation='add',shelf='episodes',title='Jo proposed a brace',source_ids=[blocks[1]['id']])],links=[])
+    assert frame not in selected_decision(decision,blocks,[])['records'][0]['raw']
+    decision['records'][0]['source_ids'].append(blocks[0]['id'])
+    with pytest.raises(ValueError,match='harness instructions'):
+        selected_decision(decision,blocks,[])
+    for text in [frame+'\nPlease change this cwd.', 'We discussed '+frame,
+                 '<environment_context>unfinished', frame+frame]:
+        assert not instruction_context(message(text))
+
+
+def test_native_goal_receipt_is_not_human_testimony():
+    from portable_capture import instruction_context
+    text='<codex_internal_context source="user_goal">\nUser cleared the goal.\n</codex_internal_context>'
+    def payload(s):return dict(type='message',role='user',content=[dict(type='input_text',text=s)])
+    assert instruction_context(payload(text))
+    assert not instruction_context(payload(text+'\nI changed my mind because of the failed delivery.'))
+    assert not instruction_context(payload('I saw this receipt: '+text))
+    assert not instruction_context(dict(payload(text),role='assistant'))

@@ -145,6 +145,8 @@ class Reader:
         )
         if row.get('historical'):
             result.update(historical=True, current_revision=row.get('current_revision'))
+        if row.get('source_excerpt'):
+            result['source_excerpt'] = row['source_excerpt']
         return result
 
     def call(self, arguments):
@@ -303,6 +305,11 @@ class Reader:
                             pass
                 result["local_storage_time_utc"] = storage
             result["seconds"] = round(time.monotonic() - started, 6)
+            # Optional navigation quotes must not turn a previously fitting
+            # search into a budget failure. Full evidence remains paginated.
+            if len(json.dumps(result, ensure_ascii=False).encode()) > self.max_bytes:
+                for item in result.get('items', []):
+                    item.pop('source_excerpt', None)
             if len(json.dumps(result, ensure_ascii=False).encode()) > self.max_bytes:
                 return self._result(
                     "budget_exceeded",

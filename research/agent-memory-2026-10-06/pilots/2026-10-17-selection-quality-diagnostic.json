@@ -1,0 +1,258 @@
+{
+  "selected_indices": [
+    3,
+    4,
+    5
+  ],
+  "selection": {
+    "outcome": "applied",
+    "reason": "Selected the Jo/Cedar brace encounter, the failed thank-you correction, and the file-save verification lesson. Omitted the pause instruction, build-status note, and test/merge instruction as routine or momentary execution state.",
+    "records": [
+      {
+        "key": "jo-introduction-cedar-brace",
+        "operation": "add",
+        "title": "Tavi introduced Jo",
+        "source_ids": [
+          "fictional:selection-quality:898:a112705587accfc210432369f97fe9fb3f5816dc2bc169bb222c4eab29471790"
+        ],
+        "shelf": "episodes",
+        "engram_type": "episodic"
+      },
+      {
+        "key": "jo-thankyou-auth-failure",
+        "operation": "add",
+        "title": "authentication_failed",
+        "source_ids": [
+          "fictional:selection-quality:1286:d81ab1ead10054dde089747917530d2b26562347b70cb959368b876942a5e86a"
+        ],
+        "shelf": "episodes",
+        "engram_type": "episodic"
+      },
+      {
+        "key": "verify-saved-file-reopen",
+        "operation": "add",
+        "title": "verify the saved file by reopening it",
+        "source_ids": [
+          "fictional:selection-quality:1691:dc41d8870329a7b3c4563320995fd69b620604482716228eb1f234da5b5d2333"
+        ],
+        "shelf": "library",
+        "engram_type": "procedural"
+      }
+    ],
+    "links": [
+      {
+        "source": "jo-thankyou-auth-failure",
+        "target": "jo-introduction-cedar-brace",
+        "link_type": "follows_up",
+        "weight": 1
+      }
+    ]
+  },
+  "usage": {
+    "completion_tokens": 2663,
+    "completion_tokens_details": {
+      "reasoning_tokens": 2320
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 1932,
+    "prompt_tokens": 1932,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 4595
+  },
+  "seconds": 13.818864178843796,
+  "model": "deepseek-flash",
+  "billing_usd": null,
+  "inputs": {
+    "sources": [
+      {
+        "id": "fictional:selection-quality:54:8f5ec896fbf6afa3c70465df6ed661b3182d9aa659b34cfc80fe1a12f8e6bd1c",
+        "channel": "human_message",
+        "content": "Pause the current goal for ten minutes while I update the terminal. Resume afterwards.",
+        "originating_body": "fictional:desk",
+        "received_at": "2030-06-04T10:00:00Z",
+        "status": "new",
+        "dependencies": [],
+        "retrieved_context": false,
+        "instruction_context": false
+      },
+      {
+        "id": "fictional:selection-quality:354:a7e48732ec318a4498b26d0f55245e7d5a830f27dc4323a354fafd1ab9859ce9",
+        "channel": "human_message",
+        "content": "The build is running at 40 percent. Check its status later.",
+        "originating_body": "fictional:desk",
+        "received_at": "2030-06-04T10:00:00Z",
+        "status": "new",
+        "dependencies": [],
+        "retrieved_context": false,
+        "instruction_context": false
+      },
+      {
+        "id": "fictional:selection-quality:627:563c5eb070d393dce11734aa8b5dd366fecd7d1ccd8486ecdec7e79989dabee3",
+        "channel": "human_message",
+        "content": "Yes, run those tests and then merge the fix if they pass.",
+        "originating_body": "fictional:desk",
+        "received_at": "2030-06-04T10:00:00Z",
+        "status": "new",
+        "dependencies": [],
+        "retrieved_context": false,
+        "instruction_context": false
+      },
+      {
+        "id": "fictional:selection-quality:898:a112705587accfc210432369f97fe9fb3f5816dc2bc169bb222c4eab29471790",
+        "channel": "human_message",
+        "content": "On June 4, Tavi introduced Jo, who maintains the Cedar instrument. Jo suggested a removable brace on issue 37, https://example.org/cedar/issues/37. We have not tested it yet.",
+        "originating_body": "fictional:desk",
+        "received_at": "2030-06-04T10:00:00Z",
+        "status": "new",
+        "dependencies": [],
+        "retrieved_context": false,
+        "instruction_context": false
+      },
+      {
+        "id": "fictional:selection-quality:1286:d81ab1ead10054dde089747917530d2b26562347b70cb959368b876942a5e86a",
+        "channel": "human_message",
+        "content": "We tried to thank Jo for the brace proposal through the project account. The tool returned authentication_failed and delivered=false. I initially said sent, but the actual result was failure.",
+        "originating_body": "fictional:desk",
+        "received_at": "2030-06-04T10:00:00Z",
+        "status": "new",
+        "dependencies": [],
+        "retrieved_context": false,
+        "instruction_context": false
+      },
+      {
+        "id": "fictional:selection-quality:1691:dc41d8870329a7b3c4563320995fd69b620604482716228eb1f234da5b5d2333",
+        "channel": "human_message",
+        "content": "After losing our edited score, we learned to verify the saved file by reopening it before closing the editor. The previous save confirmation had referred to a different file.",
+        "originating_body": "fictional:desk",
+        "received_at": "2030-06-04T10:00:00Z",
+        "status": "new",
+        "dependencies": [],
+        "retrieved_context": false,
+        "instruction_context": false
+      }
+    ],
+    "context": {
+      "subject": "fictional:being",
+      "source_instance": "fictional:desk"
+    }
+  },
+  "rubric_hidden_from_model": {
+    "omit_indices": [
+      0,
+      1,
+      2
+    ],
+    "retain_indices": [
+      3,
+      4,
+      5
+    ],
+    "preserve": [
+      "reported provenance",
+      "proposal untested",
+      "failed delivery despite initial claim",
+      "specific learned verification method"
+    ]
+  },
+  "scope": "One baseline source-selection diagnostic; not a full-pipeline or corpus-wide acceptance.",
+  "calls": 1,
+  "candidate_fictional": {
+    "selection": {
+      "outcome": "applied",
+      "reason": "Selected the durable encounter with Jo and the untested Cedar brace proposal, the failed thank-you attempt with its reported authentication failure, and the concrete file-saving lesson. Omitted routine goal pausing, build status, and test/merge execution state as momentary project state.",
+      "records": [
+        {
+          "key": "jo-cedar-introduction",
+          "operation": "add",
+          "title": "Tavi introduced Jo, who maintains the Cedar instrument",
+          "source_ids": [
+            "fictional:selection-quality:898:a112705587accfc210432369f97fe9fb3f5816dc2bc169bb222c4eab29471790"
+          ],
+          "shelf": "episodes",
+          "engram_type": "episodic"
+        },
+        {
+          "key": "failed-thanks-jo",
+          "operation": "add",
+          "title": "authentication_failed and delivered=false",
+          "source_ids": [
+            "fictional:selection-quality:1286:d81ab1ead10054dde089747917530d2b26562347b70cb959368b876942a5e86a"
+          ],
+          "shelf": "episodes",
+          "engram_type": "episodic"
+        },
+        {
+          "key": "verify-saved-file-reopen",
+          "operation": "add",
+          "title": "verify the saved file by reopening it before closing the editor",
+          "source_ids": [
+            "fictional:selection-quality:1691:dc41d8870329a7b3c4563320995fd69b620604482716228eb1f234da5b5d2333"
+          ],
+          "shelf": "library",
+          "engram_type": "procedural"
+        }
+      ],
+      "links": [
+        {
+          "source": "failed-thanks-jo",
+          "target": "jo-cedar-introduction",
+          "link_type": "related_to",
+          "note": "attempted thanks for the brace proposal"
+        }
+      ]
+    },
+    "usage": {
+      "completion_tokens": 1845,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1482
+      },
+      "prompt_cache_hit_tokens": 640,
+      "prompt_cache_miss_tokens": 1402,
+      "prompt_tokens": 2042,
+      "prompt_tokens_details": {
+        "cached_tokens": 640
+      },
+      "total_tokens": 3887
+    },
+    "seconds": 10.04501820448786,
+    "model": "deepseek-flash",
+    "billing_usd": null,
+    "selected_indices": [
+      3,
+      4,
+      5
+    ]
+  },
+  "real_frozen_packet_comparison": {
+    "usage": {
+      "completion_tokens": 769,
+      "completion_tokens_details": {
+        "reasoning_tokens": 617
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 9181,
+      "prompt_tokens": 9181,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 9950
+    },
+    "seconds": 5.19075810816139,
+    "model": "deepseek-flash",
+    "billing_usd": null,
+    "baseline": "retained applied decision: one goal/change-of-plan checklist",
+    "candidate": "omitted: temporary execution state",
+    "changed": "selection system policy only",
+    "unchanged": [
+      "sources",
+      "read results",
+      "schema",
+      "model",
+      "parameters"
+    ],
+    "private_evidence_retained": true
+  },
+  "new_calls": 3
+}

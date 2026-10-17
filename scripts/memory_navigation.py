@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 import time
 
+from source_preview import excerpt
+
 
 def search(memory, query, *, mode='hybrid', record_uids=None, limit=12):
     if mode not in {'lexical', 'hybrid'}:
@@ -43,7 +45,7 @@ def search(memory, query, *, mode='hybrid', record_uids=None, limit=12):
         # selected hit's applicability, never the entire pool's metadata.
         con = memory.connect()
         try:
-            source = con.execute('SELECT source_metadata_json,revision FROM chapters WHERE record_uid=?',
+            source = con.execute('SELECT source_metadata_json,revision,raw FROM chapters WHERE record_uid=?',
                                  (row['record_uid'],)).fetchone()
         finally:
             con.close()
@@ -53,6 +55,11 @@ def search(memory, query, *, mode='hybrid', record_uids=None, limit=12):
         if row.get('historical'):
             result['historical'] = True
             result['current_revision'] = source[1] if source else None
+        elif source and source[1] == row['revision']:
+            # Never attach current text to a historical or concurrently changed hit.
+            preview = excerpt(source[2], query)
+            if preview:
+                result['source_excerpt'] = preview
         return result
     return dict(query=query, mode=mode, retrieval_status=status, backend_errors=errors,
                 items=[nav(row) for row in rows], historical_matches=[nav(row) for row in history],

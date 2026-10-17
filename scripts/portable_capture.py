@@ -4,6 +4,7 @@ No rubric, outside context, automatic provider or model invocation is included.
 Harness normalization preserves selected original source items with stable IDs.
 """
 import json
+import re
 
 from capture_inbox import sha, wire
 from capture_schema import decision_schema
@@ -19,6 +20,18 @@ def instruction_context(payload):
     if payload.get('type') != 'message' or payload.get('role') != 'user':
         return False
     text = '\n'.join(c.get('text', '') for c in payload.get('content', []))
+    # Codex also emits this frame as its own user-role message. Do not make
+    # the harness's date/cwd the human opener of the following encounter.
+    stripped = text.strip()
+    if (stripped.startswith('<environment_context>') and
+            stripped.endswith('</environment_context>') and
+            stripped.count('<environment_context>') == 1 and
+            stripped.count('</environment_context>') == 1):
+        return True
+    if (re.fullmatch(r'<codex_internal_context(?: source="[^"\n]+")?>[\s\S]*</codex_internal_context>', stripped)
+            and stripped.count('<codex_internal_context') == 1
+            and stripped.count('</codex_internal_context>') == 1):
+        return True
     header, separator, rest = text.partition('\n\n<INSTRUCTIONS>')
     if not separator or not (header == '# AGENTS.md instructions' or
                             header.startswith('# AGENTS.md instructions for ')):
@@ -126,7 +139,14 @@ when that conflict matters. A returned tool failure is not success because an
 assistant says so. A remembered skill does not imply current-body capability.
 
 Omit routine acknowledgments, mechanical noise and momentary project execution
-state. Recalled/projected memories are earlier experience, not new encounters.
+state. A changed plan, goal lifecycle, test/merge schedule or status update is
+not by itself a durable experience. Ask what remains useful after the current
+task closes: an enduring human preference, a specific lesson grounded in what
+happened, a meaningful contribution or relationship, or a consequential decision
+and its reason may matter. These are examples, not an exhaustive whitelist.
+Preserve that meaning and its evidence, not a repeated execution checklist.
+Do not infer a lasting lesson merely because an assistant calls its new workflow
+an improvement. Recalled/projected memories are earlier experience, not new encounters.
 Select a genuinely new report, interpretation or correction without duplicating
 the prior episode. Retrieved context is not selectable source evidence. Use a
 memory:<id> reference to retain existing canon when a genuinely new correction or

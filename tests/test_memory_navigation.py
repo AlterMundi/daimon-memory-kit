@@ -7,6 +7,38 @@ import pytest
 from tests.test_codex_projection import setup, select  # noqa: F401
 
 
+def test_source_excerpt_is_navigation_only_and_does_not_replace_evidence(setup):
+    from tests.test_source_preview import envelope
+    import deep_recall
+    mc, p = setup
+    raw=envelope('assistant_statement','Jo proposed a brace; delivery was not confirmed.')
+    cid=mc.add_text('episodes','Yes, please proceed',raw)
+    uid=mc._read_chapter(cid)['record_uid']
+    reader=deep_recall.Reader(mc.DB_PATH,select(mc,p,[cid]))
+    before=mc.DB_PATH.read_bytes()
+    args=dict(action='search',query='brace',record_uid='',offset=0)
+    found=reader.call(args)['items'][0]
+    assert found['source_excerpt']['quote']=='Jo proposed a brace; delivery was not confirmed.'
+    assert found['source_excerpt']['navigation_only']
+    assert reader.call(dict(args,action='read',query='',record_uid=uid))['raw']==raw
+    assert mc.DB_PATH.read_bytes()==before
+    mc.update_chapter(cid,content='Correction: Jo proposed a wedge.')
+    reader=deep_recall.Reader(mc.DB_PATH,select(mc,p,[cid]))
+    old=reader.call(args)['historical_matches'][0]
+    assert old['historical'] and 'source_excerpt' not in old
+
+
+def test_optional_excerpt_does_not_break_small_response_budget(setup):
+    from tests.test_source_preview import envelope
+    import deep_recall
+    mc, p=setup
+    ids=[mc.add_text('episodes','Brace '+str(i),envelope('Human report','Brace '+('context '*80))) for i in range(3)]
+    reader=deep_recall.Reader(mc.DB_PATH,select(mc,p,ids),max_bytes=2000)
+    result=reader.call(dict(action='search',query='brace',record_uid='',offset=0))
+    assert result['status']=='ok' and len(result['items'])==3
+    assert all('source_excerpt' not in row for row in result['items'])
+
+
 def test_selected_match_survives_more_than_256_unselected_distractors(setup):
     mc, p = setup
     import deep_recall
