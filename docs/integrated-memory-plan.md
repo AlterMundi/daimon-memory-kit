@@ -3,6 +3,8 @@
 Maintained as **DaimonMemoryKit** in AlterMundi. [Current continuation](https://github.com/AlterMundi/daimon-memory-kit/issues/1).
 Historical issue/PR numbers below refer to [nicoechaniz/hermes-memory-kit](https://github.com/nicoechaniz/hermes-memory-kit).
 
+Current bounded receiving maintenance, 2026-10-17: [operational repairs and real-source checks](receiving-maintenance-2026-10-17.md). Eko’s retained title conflict and Oliva’s unsupported-source/invalid-response blocks are recovered with history preserved; actual Alerts incidents resolved. New explicit finite-budget receipts distinguish ordinary pending work. Real-source selection and weak-cue retrieval have demonstrated quality limits, recorded separately rather than declared accepted. Return to the existing observation/maintenance cadence; do not re-run completed repairs or drain queues for an idle result. The two unidentified historical Oliva attempts are separate and do not block these repairs. The dated entries below preserve earlier scopes.
+
 Current state, 2026-10-14: [HMK #113](https://github.com/nicoechaniz/hermes-memory-kit/issues/113), under [#11](https://github.com/nicoechaniz/hermes-memory-kit/issues/11). Hybrid recall, selected forward-only capture, daily finite processing and real Alerts receiving are deployed on CompAII, Eko and Oliva. PR #118 is adopted on all three workers. Selected capture gaps and contaminated records are repaired. Verified exclusions and atomic identity are adopted through Alerts PRs #2/#4; goal closure awaits the decision on two unidentified historical Oliva attempts below; do not repeat completed semantic or receiving trials.
 
 ## Outcome

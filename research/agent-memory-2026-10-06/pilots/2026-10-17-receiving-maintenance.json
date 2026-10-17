@@ -1,0 +1,87 @@
+{
+  "schema": "dmk.receiving-maintenance-evidence/v1",
+  "scope": "Bounded operational recovery; not full semantic acceptance. Point-in-time counters, not steady daily cost or complete invocation totals.",
+  "receiving": {
+    "CompAII": {
+      "observed_at": "2026-10-17T01:34:11.954424+00:00",
+      "worker_state": "idle",
+      "completed_capture_batches": 2,
+      "committed_record_changes": 3,
+      "costs": {
+        "calls": 4,
+        "tokens": 65986,
+        "seconds": 78.2019264223054,
+        "billing_usd": null,
+        "pending_dispatches": 0,
+        "providers": {
+          "deepseek": {
+            "calls": 4,
+            "tokens": 65986,
+            "seconds": 78.2019264223054
+          }
+        },
+        "basis": "Completed dispatch receipts, including malformed responses; index/retrieval billing not included. Pending requests are not zero cost."
+      }
+    },
+    "Eko": {
+      "observed_at": "2026-10-17T01:35:20.524488+00:00",
+      "worker_state": "pending",
+      "completed_capture_batches": 2,
+      "committed_record_changes": 2,
+      "costs": {
+        "calls": 29,
+        "tokens": 1007068,
+        "seconds": 183.26495457720011,
+        "billing_usd": null,
+        "pending_dispatches": 0,
+        "providers": {
+          "deepseek": {
+            "calls": 29,
+            "tokens": 1007068,
+            "seconds": 183.26495457720011
+          }
+        },
+        "basis": "Completed dispatch receipts, including malformed responses; index/retrieval billing not included. Pending requests are not zero cost."
+      },
+      "reconciliation": {
+        "same_uid": true,
+        "current_revision": 2,
+        "prior_raw_preserved": true,
+        "same_title_count": 1
+      }
+    },
+    "Oliva": {
+      "observed_at": "2026-10-17T01:35:52.028484+00:00",
+      "worker_state": "running",
+      "completed_capture_batches": 4,
+      "committed_record_changes": 6,
+      "costs": {
+        "calls": 21,
+        "tokens": 675599,
+        "seconds": 209.68663692753762,
+        "billing_usd": null,
+        "pending_dispatches": 1,
+        "providers": {
+          "deepseek": {
+            "calls": 20,
+            "tokens": 630361,
+            "seconds": 201.5600999109447
+          },
+          "openai-codex-native": {
+            "calls": 1,
+            "tokens": 45238,
+            "seconds": 8.12653701659292
+          }
+        },
+        "basis": "Completed dispatch receipts, including malformed responses; index/retrieval billing not included. Pending requests are not zero cost."
+      }
+    }
+  },
+  "limits": [
+    "One weak-cue retrieval missed a new indexed episode; explicit project name succeeded.",
+    "Overly operational selection and envelope-heavy previews remain quality gaps.",
+    "Two historical unidentified capture attempts remain separate.",
+    "USD billing and embedding/retrieval cost are unknown.",
+    "Normal pending and running work is retained; no backlog-draining claim."
+  ]
+}
