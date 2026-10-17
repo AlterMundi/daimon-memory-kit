@@ -136,3 +136,15 @@ def test_real_index_phase_runs_after_capture_and_empty_inbox_is_idle(setup,monke
     empty=Inbox(tmp_path/'empty.sqlite',binding)
     result=run(memory,empty,tmp_path/'empty-worker',propose,binding,organize=no_organization)
     assert result['status']['state']=='idle' and len(calls)==1
+
+@pytest.mark.parametrize('reason,code',[
+    ('navigation invocation budget reached','navigation_budget_exhausted'),
+    ('index work remains','index_budget_exhausted'),
+    ('capture event is not committed','waiting_for_capture'),
+])
+def test_bounded_progress_has_distinct_safe_receipt(setup,monkeypatch,reason,code):
+    import memory_worker
+    memory,inbox,state,propose,binding,_,_=setup
+    monkeypatch.setattr(memory_worker,'process_once',lambda *a,**k:dict(state='pending',reason=reason))
+    result=run(memory,inbox,state,propose,binding,organize=no_organization,max_steps=1)
+    assert result['status']['phases']['capture']['reason_code']==code

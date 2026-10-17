@@ -154,6 +154,12 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                 safe.update(reason_code=code,action=ACTIONS[code])
             elif result.get('minimum_required_bytes'):
                 safe['reason_code']='source_context_budget_exceeded'
+            elif result.get('reason') in {'navigation invocation budget reached','index work remains','capture event is not committed'}:
+                safe['reason_code']={
+                    'navigation invocation budget reached':'navigation_budget_exhausted',
+                    'index work remains':'index_budget_exhausted',
+                    'capture event is not committed':'waiting_for_capture',
+                }[result['reason']]
             elif result['state'] in {'pending','deferred'} and not safe.get('reason_code'):
                 safe['reason_code']='inspect_retained_phase_work'
             status['phases'][phase]=safe
