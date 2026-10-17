@@ -44,3 +44,24 @@ Tests cover pre-write conflicts, failed-event recovery and replay, refusal to re
 uncertain work, opaque-source attribution/preservation and unknown-type refusal.
 Receiving recovery, positive learning/recall and Alerts resolution must be recorded
 separately after actual execution. Passing these tests alone does not close them.
+
+## Explicit malformed-response repair
+
+A real Oliva receiving call completed with `finish_reason=stop`, but returned DSML
+markup rather than the required JSON. Its one explicit fresh semantic selection
+also returned an invalid response. A completed response is not a transport failure;
+transport retry is intentionally refused. Neither markup nor model text is executed.
+
+`repair_selection_response.py --profile ... --request ... --reason ...` verifies the
+current frozen job, owner, original source hashes and exact completed malformed
+response. It invokes the already-configured native OpenAI Codex review adapter once
+on those same selected messages plus the invalid response, without tools or native
+memory. The native adapter retains its qualified review transport label; the outer
+receipt identifies this as selection-response repair, not consolidation acceptance.
+
+This is an explicit operator repair, not automatic fallback for all future calls.
+It preserves the original request, response, authorization and job, stores a separate
+repair receipt, and resumes normal schema/source validation and navigation. Repeated
+invocation reuses the retained repair. Valid JSON, uncertain/unfinished dispatches,
+observed tool execution and foreign requests are refused. Failure stays pending;
+no unbounded prompt/provider retries or silent provider substitution is authorized.
