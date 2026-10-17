@@ -147,3 +147,53 @@ rerun the rejected embedding projection, or treat a candidate as proof. A furthe
 ranking/relevance change requires a controlled relevant/irrelevant comparison and
 an actual benefit for that consumer. Current operational repairs and the bounded
 selection/navigation delivery are adopted; full #11 closure is not asserted.
+
+
+## Navigation CLI and bounded first-account diagnostic
+
+[PR #16](https://github.com/AlterMundi/daimon-memory-kit/pull/16) exposes the
+existing unassessed hybrid navigation through `memoryctl.py hybrid-search`, with
+stable-record scope and read-only database access. It does not alter ranking or
+pack admission. Eight navigation tests passed, including a below-threshold
+candidate that remains rejected by the pack while available for inspection.
+[Skills #88](https://github.com/AlterMundi/Skills/pull/88) corrects the portable
+recall guidance: an empty automatic context pack is not proof of absent memory.
+The exact versioned package passed describe/prepare/apply/status qualification.
+
+A query-independent, complete paragraph projection of the earlier encounter
+required two embedding calls (12 passages, 1.16 and 0.44 seconds). Its best cosine
+was 0.2035; the actual proposal passage scored 0.1938. This does not establish
+admission at the unchanged 0.4 threshold. Neither vectors nor projection were
+adopted. This closes that diagnostic; do not keep trying projection variants.
+
+Inspection also confirmed that automatic account reconciliation updates existing
+inferred accounts; it does not create their first selected account. The existing
+explicit consolidation API already supports that operation with source manifests,
+revision guards, support links and idempotent application. No new summary sweep
+was enabled.
+
+A private first-account diagnostic supplied only the selected complete original,
+without the weak query or hidden criteria. DeepSeek Flash generation and native
+OpenAI Codex Sol 6.1 low assertion review reused the existing passage protocol.
+The first candidate was supported but retained incidental operational inventory:
+support alone did not qualify selection. One evidence-grounded revision removed
+much of that inventory but retained procedural detail; its review found no
+unsupported claims and identified three missing groups of detail. It therefore
+failed acceptance. Both candidates, requests and receipts remain retained; neither
+was incorporated, indexed or used to manufacture a retrieval pass.
+
+These four calls used 115,303 reported tokens; USD billing remains unknown. They
+expose an unresolved selection/completeness boundary for first accounts, not proof
+that the existing correction reviewer should discard its preservation guarantees.
+Do not retry the same generation or replace the failed verdict with a pass.
+
+**Next bounded implementation:** distinguish the selected meaning of a new account
+from preserving all still-supported meaning of an existing account. Reuse the
+qualified source/assertion protocol and native consolidation APIs. Account selection
+and review must agree on the encounter's purpose while independently checking
+participants, contribution, provenance, meaningful results and uncertainty. Test
+that useful meaning survives and incidental inventory can be omitted; retain the
+original evidence separately. Inspect overlapping existing accounts before adding
+one. Only an accepted account warrants the same earlier-corpus, clock, weak-query
+and 0.4 admission comparison, with irrelevant controls. No completed consolidation
+or producer queue should be replayed. #11 and its native goal remain open.
