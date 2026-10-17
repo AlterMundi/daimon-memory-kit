@@ -157,5 +157,102 @@
     ]
   },
   "scope": "One baseline source-selection diagnostic; not a full-pipeline or corpus-wide acceptance.",
-  "calls": 1
+  "calls": 1,
+  "candidate_fictional": {
+    "selection": {
+      "outcome": "applied",
+      "reason": "Selected the durable encounter with Jo and the untested Cedar brace proposal, the failed thank-you attempt with its reported authentication failure, and the concrete file-saving lesson. Omitted routine goal pausing, build status, and test/merge execution state as momentary project state.",
+      "records": [
+        {
+          "key": "jo-cedar-introduction",
+          "operation": "add",
+          "title": "Tavi introduced Jo, who maintains the Cedar instrument",
+          "source_ids": [
+            "fictional:selection-quality:898:a112705587accfc210432369f97fe9fb3f5816dc2bc169bb222c4eab29471790"
+          ],
+          "shelf": "episodes",
+          "engram_type": "episodic"
+        },
+        {
+          "key": "failed-thanks-jo",
+          "operation": "add",
+          "title": "authentication_failed and delivered=false",
+          "source_ids": [
+            "fictional:selection-quality:1286:d81ab1ead10054dde089747917530d2b26562347b70cb959368b876942a5e86a"
+          ],
+          "shelf": "episodes",
+          "engram_type": "episodic"
+        },
+        {
+          "key": "verify-saved-file-reopen",
+          "operation": "add",
+          "title": "verify the saved file by reopening it before closing the editor",
+          "source_ids": [
+            "fictional:selection-quality:1691:dc41d8870329a7b3c4563320995fd69b620604482716228eb1f234da5b5d2333"
+          ],
+          "shelf": "library",
+          "engram_type": "procedural"
+        }
+      ],
+      "links": [
+        {
+          "source": "failed-thanks-jo",
+          "target": "jo-cedar-introduction",
+          "link_type": "related_to",
+          "note": "attempted thanks for the brace proposal"
+        }
+      ]
+    },
+    "usage": {
+      "completion_tokens": 1845,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1482
+      },
+      "prompt_cache_hit_tokens": 640,
+      "prompt_cache_miss_tokens": 1402,
+      "prompt_tokens": 2042,
+      "prompt_tokens_details": {
+        "cached_tokens": 640
+      },
+      "total_tokens": 3887
+    },
+    "seconds": 10.04501820448786,
+    "model": "deepseek-flash",
+    "billing_usd": null,
+    "selected_indices": [
+      3,
+      4,
+      5
+    ]
+  },
+  "real_frozen_packet_comparison": {
+    "usage": {
+      "completion_tokens": 769,
+      "completion_tokens_details": {
+        "reasoning_tokens": 617
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 9181,
+      "prompt_tokens": 9181,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 9950
+    },
+    "seconds": 5.19075810816139,
+    "model": "deepseek-flash",
+    "billing_usd": null,
+    "baseline": "retained applied decision: one goal/change-of-plan checklist",
+    "candidate": "omitted: temporary execution state",
+    "changed": "selection system policy only",
+    "unchanged": [
+      "sources",
+      "read results",
+      "schema",
+      "model",
+      "parameters"
+    ],
+    "private_evidence_retained": true
+  },
+  "new_calls": 3
 }

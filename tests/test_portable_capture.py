@@ -178,3 +178,13 @@ def test_standalone_environment_is_context_not_a_human_encounter():
     for text in [frame+'\nPlease change this cwd.', 'We discussed '+frame,
                  '<environment_context>unfinished', frame+frame]:
         assert not instruction_context(message(text))
+
+
+def test_native_goal_receipt_is_not_human_testimony():
+    from portable_capture import instruction_context
+    text='<codex_internal_context source="user_goal">\nUser cleared the goal.\n</codex_internal_context>'
+    def payload(s):return dict(type='message',role='user',content=[dict(type='input_text',text=s)])
+    assert instruction_context(payload(text))
+    assert not instruction_context(payload(text+'\nI changed my mind because of the failed delivery.'))
+    assert not instruction_context(payload('I saw this receipt: '+text))
+    assert not instruction_context(dict(payload(text),role='assistant'))

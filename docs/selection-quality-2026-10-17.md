@@ -21,8 +21,8 @@ Canon, existing embeddings, ranking and thresholds remain unchanged.
 
 ## Demonstrated corrections
 
-- A standalone Codex `environment_context` frame was treated as a human report
-  and became the causal opener of later activity. It now has the same context-only
+- Standalone Codex `environment_context` and goal-lifecycle receipt frames were treated as human reports
+  and could become the causal opener of later activity. They now have the same context-only
   treatment as the existing framed instruction message. Originals stay in the
   captured source. Ordinary prose discussing the frame remains selectable.
 - Search previously offered a generic quoted title without useful recognition
@@ -41,27 +41,43 @@ No canonical raw text, summary, UID, revision or history is rewritten.
 
 ## Selection and costs
 
-One stateless DeepSeek Flash low request received six fictional source reports,
-without the rubric, tools, other conversations or private memory. The existing
-policy omitted temporary pause, build-status and test/merge instructions. It kept
-the introduction/proposal, failed contribution with its correction, and a specific
-learned verification method. Source validation preserved the reports and linked
-the failed contribution to its encounter. No policy change was warranted by this
-bounded diagnostic. It does not explain all overly operational live selections.
+The existing policy correctly distinguished six simple fictional reports: it
+omitted temporary pause, build-status and test/merge instructions, and retained
+an introduction/proposal, a failed contribution with its correction, and a concrete
+file-save lesson. That did not explain the live excessive selection.
 
-The call used 4,595 reported tokens (1,932 prompt, 2,663 completion), took 13.82
-seconds, and has unknown USD billing. Inputs, response, hidden evaluation criteria
-and costs are in the [fictional evidence](../research/agent-memory-2026-10-06/pilots/2026-10-17-selection-quality-diagnostic.json).
-Mechanism checks passed: 29 focused tests, including exact attribution, unchanged
-raw reads, historical separation, scope, response budgets and source closure.
+The retained real decision showed the cause: the selector called a changed goal
+and its full execution checklist a durable scope decision. On its exact frozen
+packet (including the same previous read results), changing only the policy to
+ask what remains useful after the task closes produced omission. The policy keeps
+enduring preferences, meaningful contributions, consequential decisions and lessons
+grounded in events; these are examples, not a closed list. Calling a new workflow
+an improvement does not by itself establish a lasting lesson.
 
-## Remaining acceptance
+The same six fictional reports under the changed policy still retained all three
+meaningful reports and omitted all three temporary ones. Their hidden evaluation
+criteria were never supplied to the model. Source validation preserved participants,
+uncertainty, reported provenance, the failed result and the specific learned action.
+This is one real correction and one bounded contrast, not corpus-wide acceptance.
+Existing operational records remain preserved; no retrospective deletion occurred.
 
-The live excess of operational selections needs its own frozen-packet comparison:
-inspect one retained questionable decision and the complete context it actually
-received, then change only a demonstrated cause. The six clean reports are not a
-substitute for that receiving evidence. No new prompt variant, broad benchmark,
-reindex, noise admission or repeated completed consolidation is justified here.
+Three new DeepSeek Flash low calls used 18,432 reported tokens: baseline fictional
+4,595 (13.82 seconds), real candidate 9,950 (5.19 seconds), fictional candidate
+3,887 (10.05 seconds). The real baseline was reused from its original retained
+completed response, not rerun. USD billing is unknown. Inputs and fictional results,
+plus safe real comparison counters, are in the
+[diagnostic evidence](../research/agent-memory-2026-10-06/pilots/2026-10-17-selection-quality-diagnostic.json).
+Mechanism checks passed: 42 focused tests, including pending-producer preservation,
+exact attribution, unchanged raw reads, historical separation, scope, response
+budgets and source closure.
+
+## Receiving and remaining limits
+
+The selected real packet and six fictional reports support this bounded correction.
+Future meaningful decisions can still be missed or over-selected; a concrete new
+example warrants investigation, not an automatic broad benchmark. Retrieval on
+the original earlier corpus remains a recorded miss. No reindex, threshold change,
+noise admission or repeated completed consolidation is justified by this evidence.
 
 Pending producer jobs retain their original inputs and completed dispatches. An
 upgrade requires the existing explicit navigation-preserving reconciliation;
