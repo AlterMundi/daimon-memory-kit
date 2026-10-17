@@ -7,6 +7,30 @@ import pytest
 from tests.test_codex_projection import setup, select  # noqa: F401
 
 
+def test_cli_navigation_exposes_candidates_without_lowering_pack_admission(setup, monkeypatch, capsys):
+    import sys
+    mc, _ = setup
+    cid=mc.add_text('episodes','Brace proposal','Jo proposed a removable brace; delivery failed.')
+    other=mc.add_text('episodes','Unselected proposal','Private unrelated account.')
+    row=mc._read_chapter(cid)
+    # Isolate the navigation/admission boundary from provider availability.
+    monkeypatch.setattr(mc,'embeddings_runtime_config',lambda **kw: dict(provider='fixture',model='fixture',output_dimensionality=None))
+    def candidates(query,**kw):
+        assert kw.get('record_uids')==[row['record_uid']]
+        return dict(items=[dict(row,score=0.34)],retrieval_status='ok',backend_errors=[])
+    monkeypatch.setattr(mc,'hybrid_candidates',candidates)
+    before=mc.DB_PATH.read_bytes()
+    assert mc.hybrid_pack('brace',threshold=0.4,record_uids=[row['record_uid']],_record_access=False)['items']==[]
+    monkeypatch.setitem(sys.modules,mc.__name__,mc)
+    monkeypatch.setattr(sys,'argv',['memoryctl.py','hybrid-search','--query','brace','--record-uid',row['record_uid']])
+    mc.main()
+    result=json.loads(capsys.readouterr().out)
+    assert result['navigation_only'] and [x['id'] for x in result['items']]==[cid]
+    assert result['items'][0]['relevance'].startswith('unassessed')
+    assert 'Private unrelated' not in json.dumps(result)
+    assert mc.DB_PATH.read_bytes()==before and mc._read_chapter(other)['revision']==1
+
+
 def test_source_excerpt_is_navigation_only_and_does_not_replace_evidence(setup):
     from tests.test_source_preview import envelope
     import deep_recall
