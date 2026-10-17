@@ -63,20 +63,30 @@ def codex_sources(snapshot, *, source, previous=None):
         kind = payload.get('type')
         if kind == 'reasoning' or (kind == 'message' and payload.get('role') in {'system','developer'}):
             continue
-        if kind not in {'message','function_call','function_call_output','custom_tool_call','custom_tool_call_output'}:
+        if kind not in {'message','agent_message','function_call','function_call_output','custom_tool_call','custom_tool_call_output'}:
             unsupported.append({'offset':start,'type':kind})
             continue
-        if kind == 'message' and (payload.get('role') not in {'user','assistant'} or
-                any(c.get('type') not in {'input_text','output_text','text'} for c in payload.get('content',[]))):
-            unsupported.append({'offset':start,'type':'nontext_message'})
-            continue
+        if kind in {'message', 'agent_message'}:
+            allowed = {'input_text', 'encrypted_content'} if kind == 'agent_message' else {
+                'input_text', 'output_text', 'text', 'input_image', 'input_audio'}
+            parts = payload.get('content')
+            if (not isinstance(parts, list) or
+                    (kind == 'message' and payload.get('role') not in {'user','assistant'}) or
+                    (kind == 'agent_message' and any(not isinstance(payload.get(k),str) for k in ('author','recipient'))) or
+                    any(not isinstance(c,dict) or c.get('type') not in allowed or
+                        (c.get('type') in {'input_text','output_text','text'} and not isinstance(c.get('text'),str)) or
+                        (c.get('type') == 'encrypted_content' and not isinstance(c.get('encrypted_content'),str)) or
+                        (c.get('type') == 'input_image' and not any(isinstance(c.get(k),str) for k in ('image_url','file_id'))) or
+                        (c.get('type') == 'input_audio' and not isinstance(c.get('audio_url'),str)) for c in parts)):
+                unsupported.append({'offset':start,'type':'unsupported_message_content'})
+                continue
         original_sha = sha(line)
         source_id = source+':'+str(start)+':'+original_sha
         dependencies = []
         is_recall = False
         is_instruction = instruction_context(payload)
         if kind in {'function_call', 'custom_tool_call'}:
-            is_recall = payload.get('name') in {'hmk_recall', 'mcp__hmk__hmk_recall'}
+            is_recall = payload.get('name') in {'hmk_recall', 'dmk_recall', 'mcp__hmk__hmk_recall', 'mcp__hmk__dmk_recall', 'mcp__dmk__dmk_recall'}
             calls[payload.get('call_id')] = (source_id, is_recall)
         elif kind in {'function_call_output', 'custom_tool_call_output'}:
             call = calls.get(payload.get('call_id'))
@@ -121,6 +131,12 @@ Select a genuinely new report, interpretation or correction without duplicating
 the prior episode. Retrieved context is not selectable source evidence. Use a
 memory:<id> reference to retain existing canon when a genuinely new correction or
 interpretation changes it; <id> may be its supplied integer ID or stable record_uid.
+Opaque source-part markers identify preserved image/audio/encrypted bytes or
+references in the original artifact. They are not an interpretation or a complete
+reading of that part. Do not infer visual, audio or encrypted meaning. Keep this
+limitation with any selected dependent text; defer a decision requiring that meaning.
+Attributed agent messages preserve local author/recipient labels, not signed being
+identity or independent observation. Never turn an agent's claim into a tool outcome.
 Reading memory is not a correction. Canonical IDs and
 revisions belong to the receiving database; external retrieved revisions are a
 different namespace and never justify updating canon on their own. Existing canon is context. A human report is not this body's
@@ -151,9 +167,22 @@ def block_sources(normalized, body):
     blocks = []
     for item in normalized['sources']:
         p = item['payload']
-        if p['type'] == 'message':
-            content = '\n'.join(c['text'] for c in p['content'])
-            channel = 'human_message' if p['role'] == 'user' else 'assistant_statement'
+        if p['type'] in {'message','agent_message'}:
+            parts = []
+            for index, part in enumerate(p['content']):
+                if part['type'] in {'input_text','output_text','text'}:
+                    parts.append(part['text'])
+                else:
+                    parts.append('[Opaque source part: '+wire(dict(type=part['type'],
+                        source_id=item['id'], content_index=index, sha256=sha(wire(part).encode()),
+                        availability='original part preserved; semantic content not interpreted',
+                        external_reference_may_be_unavailable=True))+']')
+            content = '\n'.join(parts)
+            if p['type'] == 'agent_message':
+                content = 'Native agent attribution (not signed being identity): '+wire({k:p[k] for k in ('author','recipient')})+'\n'+content
+                channel = 'attributed_agent_message'
+            else:
+                channel = 'human_message' if p['role'] == 'user' else 'assistant_statement'
             if item.get('instruction_context'):
                 channel = 'harness_instruction_context'
         else:

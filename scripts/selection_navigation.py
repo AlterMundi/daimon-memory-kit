@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from capturectl import wire
+from capturectl import wire, title_conflicts
 from codex_coordinator import checkpoint
 from deep_recall import Reader, tool_spec
 import portable_capture as selection
@@ -69,6 +69,13 @@ def request_for(job):
     if job.get('context_attempt'):
         payload=json.loads(messages[1]['content'])
         payload['context_refresh'] = 'A concurrent canonical revision invalidated the previous uncommitted decision. Read current originals again; source input is unchanged.'
+        messages[1]['content']=wire(payload)
+    if job.get('title_conflicts'):
+        payload=json.loads(messages[1]['content'])
+        payload['title_conflicts'] = job['title_conflicts']
+        payload['reconciliation'] = ('An add collided with existing memory. These are navigation handles, '
+            'not read evidence. Read the current original completely and reconcile with an explicit '
+            'expected-revision update, or omit if nothing new. Do not rename to bypass duplication.')
         messages[1]['content']=wire(payload)
     # Include exact observed results. A lookup is a host-performed read, never an
     # assistant narrative promoted into canonical evidence.
@@ -145,7 +152,13 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
         value = step['proposal']['selection']
         if not isinstance(value,dict) or value.get('outcome') != 'lookup':
             try:
-                selection.selected_decision(value,effective_sources(job),state['canon'])
+                decision = selection.selected_decision(value,effective_sources(job),state['canon'])
+                if backend is not None:
+                    with backend.connect() as con:
+                        conflicts = title_conflicts(con, decision)
+                    if conflicts:
+                        job['title_conflicts'] = conflicts
+                        raise ValueError('Add title already exists. Read the listed original and reconcile; do not rename to bypass duplication.')
             except ValueError as error:
                 step['feedback'] = dict(selection_error=str(error),
                     instruction='Correct the selection using the supplied schema and evidence. '
