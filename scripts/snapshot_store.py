@@ -245,6 +245,7 @@ class Store:
             if source.name in self.manifest['entries']:
                 self._check(self.manifest['entries'][source.name]); continue
             info = verified(source)
+            created_ns = source.stat().st_mtime_ns
             if source.is_symlink():
                 target = source.resolve()
                 if target.stat().st_dev != self.root.stat().st_dev:
@@ -266,7 +267,8 @@ class Store:
                     if not link.is_symlink() or link.resolve()!=target: raise ValueError('migration link conflict')
                 else: link.symlink_to(target)
                 os.replace(link,source);sync_directory(self.state)
-            self.manifest['entries'][source.name]=dict(state='archive',path=str(target),legacy_path=str(source),**info)
+            self.manifest['entries'][source.name]=dict(state='archive',path=str(target),
+                legacy_path=str(source),created_ns=created_ns,**info)
             self.save()
         return self.maintain()
 
