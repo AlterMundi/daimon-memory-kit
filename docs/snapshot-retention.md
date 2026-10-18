@@ -53,7 +53,9 @@ Retirement requires all of the following:
 - Its canonical owner-bound capture/organization event is applied or omitted.
 - Both processing and corresponding embedding cursors have passed that operation.
 - It is outside the retained recent checkpoints and explicit rollback pins.
-- Retained recovery checkpoints pass verification before deletion.
+- Retained recovery checkpoints match their previously verified byte hashes before
+  deletion. Their integrity/schema proof is reusable only for those exact bytes;
+  every newly created snapshot and restored database receives full SQLite checks.
 
 Pending, failed, uncertain, unindexed and creating operations cannot be retired.
 Each retirement records intent before unlinking and a terminal receipt afterward;
@@ -135,3 +137,17 @@ partial publication and interrupted retirement, corrupt/missing recovery files,
 count/byte limits, protected work, visible pre-model capacity failure and uncertain
 commit replay without another generation call. Receiving adoption evidence is
 recorded in #19; fictitious tests alone do not assert live adoption.
+
+## Runtime packaging
+
+Install the executable runtime, not the repository's retained research corpus.
+A deployment archive can be built from the published commit with `git archive`,
+selecting `scripts`, `schemas`, `templates`, `policies`, `vectors`, `docs`,
+`LICENSE`, `README.md`, `.env.template`, `.env.example`,
+`.continuity-plugin-version`, `bootstrap-docs.example.json`, and the four
+`requirements*.txt` files. Keep research, fixtures and test outputs in their owning
+development/evidence storage. Record the commit and selected paths in the private
+installation receipt; remove transport archives after installation verification.
+Do not modify an already selected immutable release to trim it. Select a separate
+qualified runtime package and retire the old package only after checking live,
+pending-writer and rollback references.
