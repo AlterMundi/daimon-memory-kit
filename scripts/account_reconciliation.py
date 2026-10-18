@@ -10,7 +10,7 @@ import assertion_review as assertions
 import consolidationctl as consolidation
 from capturectl import CaptureLedger, digest, wire
 from codex_coordinator import checkpoint
-from sqlite_snapshot import verified_snapshot
+import snapshot_store
 
 POLICY = 'hmk.account-reconciliation/v1'
 GENERATE = '''Update the supplied inferred account from its complete current sources.
@@ -122,7 +122,7 @@ def _fresh(memory,job):
         return False
 
 
-def process_once(memory,inbox,state_dir,model,context,*,model_policy,source_budget_bytes=64000,max_revisions=1,_fault=None):
+def process_once(memory,inbox,state_dir,model,context,*,model_policy,source_budget_bytes=64000,max_revisions=1,_fault=None,snapshot_policy=None):
     """Repair one account through the existing ledger and assertion reviewer.
 
     model(request, directory) is the same retained-dispatch adapter as capture.
@@ -205,6 +205,8 @@ def process_once(memory,inbox,state_dir,model,context,*,model_policy,source_budg
         required=len(wire(job['input']).encode())
         if required>source_budget_bytes:
             return dict(state='pending',reason_code='source_context_budget_exceeded',minimum_required_bytes=required)
+        if snapshot_policy is not None:
+            snapshot_store.Store(memory,state_dir,snapshot_policy,owner).preflight(f'organization-{sequence}-before.sqlite')
         evidence={r['id']:source_evidence(r)
                   for r in job['input']['manifest']['supports']}
         work=state_dir/f"organization-{sequence}-calls-{job['attempt']}"
@@ -262,9 +264,7 @@ def process_once(memory,inbox,state_dir,model,context,*,model_policy,source_budg
         proposal=dict(outcome='applied',reason='Reconcile existing account against current original sources.',
             records=[dict(key='account',operation='update',chapter_id=old['id'],expected_revision=old['revision'],
                 title=old['title'],raw=raw,summary=raw,engram_type=old['engram_type'],metadata={'mode':'inferred'})],links=[])
-        backup=state_dir/f'organization-{sequence}-before.sqlite'
-        if not backup.exists():
-            verified_snapshot(memory.DB_PATH,backup)
+        snapshot_store.ensure(memory,state_dir,f'organization-{sequence}-before.sqlite',snapshot_policy,owner)
         try:
             receipt=consolidation.apply(job['input']['manifest'],proposal,memory=memory,
                 supports_by_record={'account':supports},stream_id=stream,sequence=sequence,

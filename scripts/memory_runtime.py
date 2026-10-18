@@ -16,6 +16,7 @@ from capture_inbox import Inbox
 import account_reconciliation
 import memory_worker
 from memory_models import Models, authorize_retry
+import snapshot_store
 
 
 def profile(path):
@@ -33,7 +34,7 @@ def profile(path):
         "review",
         "budgets",
     }
-    if set(value) - (required | {"embedding_env_file"}) or not required <= set(value):
+    if set(value) - (required | {"embedding_env_file", "snapshots"}) or not required <= set(value):
         raise ValueError("worker profile has missing or unsupported fields")
     if value["schema"] != "hmk.worker-profile/v1" or value["source_scope"] not in {
         "fictional",
@@ -99,6 +100,8 @@ def profile(path):
         for k, ceiling in limits.items()
     ):
         raise ValueError("explicit positive supported invocation budgets required")
+    if "snapshots" in value:
+        snapshot_store.policy(value["snapshots"])
     return value
 
 
@@ -146,6 +149,7 @@ def run(value):
             value["context"],
             model_policy=models.policy,
             source_budget_bytes=value["budgets"]["source_budget_bytes"],
+            snapshot_policy=value.get("snapshots"),
         )
 
     return memory_worker.run(
@@ -155,6 +159,7 @@ def run(value):
         models,
         value["context"],
         organize=organize,
+        snapshot_policy=value.get("snapshots"),
         **value["budgets"],
     )
 

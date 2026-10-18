@@ -18,7 +18,7 @@ import portable_capture as selection
 import selection_navigation
 import source_windows
 from provider_status import Alerts, ProviderProblem, classify
-from sqlite_snapshot import verified_snapshot
+import snapshot_store
 
 SCHEMA = 'hmk.portable-producer/v1'
 
@@ -72,7 +72,7 @@ def _refresh_changed_context(memory, job, job_path):
 
 
 def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
-                 navigation_steps=4, retrieval='hybrid', source_budget_bytes=64000, notice_sender=None, _fault=None):
+                 navigation_steps=4, retrieval='hybrid', source_budget_bytes=64000, notice_sender=None, _fault=None, snapshot_policy=None):
     """Process at most one frozen batch. Reinvocation resumes uncertain commits.
 
     proposer(request, directory) returns an auditable JSON object containing
@@ -224,6 +224,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             originals['sources/'+digest(source)+'.jsonl'] = data
             source_groups[source] = selection.block_sources(selection.codex_sources(data,source=source),binding['source_instance'])
         proposer_invoked = False
+        if snapshot_policy is not None:
+            snapshot_store.Store(memory,state_dir,snapshot_policy,owner).preflight(f'batch-{sequence}-before.sqlite')
         if 'proposal' not in job:
             if any(s['status']=='new' for s in inputs['sources']):
                 work = state_dir/f"batch-{sequence}-dispatch-{job['created_ns']}"
@@ -274,9 +276,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             subject=binding['subject'],source_event_id='portable-batch:'+job['input_hash'])
         for record in decision['records']:
             record['metadata']['evidence'] = ['artifact:sha256:'+bundle['artifact_id']]
-        backup = state_dir/f'batch-{sequence}-before.sqlite'
-        if not backup.exists():
-            verified_snapshot(memory.DB_PATH,backup)
+        snapshot_store.ensure(memory,state_dir,f'batch-{sequence}-before.sqlite',snapshot_policy,owner)
         ledger = CaptureLedger(memory)
         event = dict(stream_id='portable:'+digest(owner),sequence=sequence,
             event_id='portable-batch:'+job['input_hash'],source_version=digest(inputs['revisions']),
@@ -336,7 +336,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 'source_progress':window['progress'] if window else None}
 
 
-def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, notice_sender=None, _fault=None, kind='capture'):
+def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, notice_sender=None, _fault=None, kind='capture', snapshot_policy=None):
     """Explicit bounded index work from committed capture receipts, independently resumable.
 
     This cannot acknowledge capture or invoke selection. The receiving launcher
@@ -390,9 +390,7 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
         processed = 0
         if pending:
             prefix='embedding' if kind=='capture' else 'embedding-organization'
-            backup = state_dir/f"{prefix}-{row['sequence']}-before.sqlite"
-            if not backup.exists():
-                verified_snapshot(memory.DB_PATH,backup)
+            snapshot_store.ensure(memory,state_dir,f"{prefix}-{row['sequence']}-before.sqlite",snapshot_policy,owner)
             try:
                 result = memory.backfill_embeddings(provider=cfg['provider'],model=cfg['model'],
                     record_uids=uids,limit=limit,batch_size=batch_size)
