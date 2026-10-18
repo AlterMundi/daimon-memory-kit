@@ -1021,3 +1021,18 @@ The [actual operation truncation diagnostic](../research/agent-memory-2026-10-06
 The [persistent receiver and coordinator qualification](../research/agent-memory-2026-10-06/pilots/2026-10-11-persistent-codex-coordinator.md) completes the next bounded delivery: explicit same-home renewal using existing APIs, actual OpenAI Codex Sol6.1 low on the labelled fork, process restart, source-qualified new learning, uncertain-commit replay without duplicates, correction/history, real expiry, fresh-thread action, clean reconstruction and configuration rollback preserving later memory. [HMK PR #95](https://github.com/nicoechaniz/hermes-memory-kit/pull/95) owns the coordinator; [Codex fork PR #2](https://github.com/compaii/codex/pull/2) owns version compatibility. The erroneous inherited ephemeral binding and ineffective resumed review remain rejected evidence; a corrected fresh binding and clean receiver pass. Prior stage evidence is reused.
 
 This delivery is complete; the broader stage-six rollout remains pending. Exact next scope is a separately authorized first real-corpus adoption with explicit bindings, ownership/selection, launch freshness gates and rollback, followed by qualification in that actual environment. Do not activate production by implication. An explicit launcher, concurrent-source reconciliation and existing-thread context replacement remain unqualified extensions; no automatic lifecycle, hooks, timers, old queues, provider parity or Matrix authority change is claimed. Production remains manual.
+
+## Production resource lifecycle — 2026-10-18
+
+DMK #23 follows #19 beyond initial checkpoint placement. PR24–27 implement
+explicit database-wide recovery retention (including migrated checkpoints),
+reuse of verified byte identity, manual pre-write begin/complete journals, and
+budgeted compact historical artifacts. The maintained contract is
+[resource-lifecycle.md](resource-lifecycle.md) and [snapshot-retention.md](snapshot-retention.md).
+
+Receiving maintenance preserves current memory and queued work; it does not
+rerun consolidation, qualification model calls or earlier experiments. Original
+captures remain append-delta records with their existing ownership. Historical
+source evidence and pending work are distinct from redundant recovery copies.
+The issue carries measured receiving evidence and the final continuation; no
+memory-native integration or attention policy changes follow from this work.

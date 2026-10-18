@@ -129,3 +129,10 @@ Standard restoration uses `zstd -dc` and `tar` into a new private directory on
 the data volume, selecting the manifest's exact relative member name. Check its
 SHA256 and SQLite integrity before using it. Do not extract over a live pool,
 follow untrusted archive links, or replace later memory with an older database.
+
+For development evidence, use a separate owning data directory and an explicit
+compressed-byte budget (the receiving qualification capsule uses 1 GiB). Keep a
+manifest and restore pointer with the original experiment; source/model outputs
+remain evidence, not a new memory input. A capsule over its budget blocks source
+retirement until its owner selects a suitable preservation plan. Do not solve
+capacity by dropping evidence or by duplicating it into runtime installations.
