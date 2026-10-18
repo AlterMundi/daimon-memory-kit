@@ -295,3 +295,11 @@ def test_database_archive_changed_link_blocks_retirement(setup,tmp_path):
     legacy.unlink();legacy.symlink_to(tmp_path/'foreign')
     with pytest.raises(ValueError,match='compatibility path changed'):store.maintain()
     assert Path(store.manifest['entries']['batch-1-before.sqlite']['path']).exists()
+
+
+def test_registered_checkpoint_hash_proof_rejects_later_journal(setup,tmp_path):
+    store=owned(setup,tmp_path)
+    path=store.ensure('batch-1-before.sqlite')
+    Path(str(path)+'-wal').write_bytes(b'unresolved writer state')
+    with pytest.raises(ValueError,match='standalone'):
+        store._check(store.manifest['entries']['batch-1-before.sqlite'])

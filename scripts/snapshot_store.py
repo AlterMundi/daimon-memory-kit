@@ -96,10 +96,25 @@ class Store:
         checkpoint(self.path, self.manifest)
 
     def _check(self, entry):
-        actual = verified(entry['path'])
-        if any(actual[k]!=entry[k] for k in ('bytes','sha256','schema_sha256')):
+        # Registration already verified integrity and schema. Exact unchanged
+        # bytes preserve that proof; do not rescan all SQLite indexes on every
+        # maintenance pass. Restore still verifies the newly materialized DB.
+        path = Path(entry['path'])
+        if not path.is_file() or any(Path(str(path.resolve())+s).exists() for s in ('-wal','-journal')):
+            raise ValueError('standalone snapshot required; journal companions preserved')
+        before = path.stat()
+        if before.st_size != entry['bytes']:
             raise ValueError('recovery checkpoint content changed')
-        return actual
+        h = hashlib.sha256()
+        with path.open('rb') as f:
+            for block in iter(lambda:f.read(1024*1024),b''):
+                h.update(block)
+        after = path.stat()
+        if (before.st_ino,before.st_size,before.st_mtime_ns) != (after.st_ino,after.st_size,after.st_mtime_ns):
+            raise ValueError('snapshot changed during verification')
+        if h.hexdigest() != entry['sha256']:
+            raise ValueError('recovery checkpoint content changed')
+        return {k:entry[k] for k in ('bytes','sha256','schema_sha256')}
 
     def terminal(self, name):
         kind, sequence = NAME.fullmatch(name).groups(); sequence = int(sequence)
@@ -110,7 +125,7 @@ class Store:
         for path, key in [(cursor,'after' if organization else 'sequence'), (index,'after')]:
             value = json.loads(path.read_text())
             if value.get('owner')!=self.producer or value.get(key,0)<sequence: return False
-        with self.memory.connect() as con:
+        with closing(self.memory.connect()) as con:
             if not con.execute("select 1 from sqlite_master where name='capture_events'").fetchone(): return False
             row = con.execute('select state from capture_events where stream_id=? and sequence=?',
                 (('organization:' if organization else 'portable:')+digest(self.producer),sequence)).fetchone()
@@ -190,7 +205,7 @@ class Store:
         if entry is None and os.path.lexists(self.state/name):
             raise ValueError('existing checkpoint requires explicit archive migration')
         if entry and entry['state']=='retired': raise ValueError('retired operation cannot be replayed as new work')
-        with self.memory.connect() as con:
+        with closing(self.memory.connect()) as con:
             size = con.execute('pragma page_count').fetchone()[0]*con.execute('pragma page_size').fetchone()[0]
         # Bound target and failed partials separately; never silently delete them.
         partial_bytes = sum(p.stat().st_size for p in self.root.glob('.*.partial-*') if p.is_file())
