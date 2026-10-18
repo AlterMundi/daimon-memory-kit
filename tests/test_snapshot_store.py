@@ -321,3 +321,29 @@ def test_archive_recency_uses_source_time_not_migration_copy_order(setup,tmp_pat
     assert store.manifest['entries']['embedding-1-before.sqlite']['state']=='retired'
     assert store.manifest['entries']['batch-2-before.sqlite']['created_ns']==30
     assert store.manifest['entries']['organization-1-before.sqlite']['state']=='archive'
+
+
+def test_preserved_history_counts_in_same_budget_and_is_never_pruned(setup,tmp_path):
+    import hashlib
+    store=owned(setup,tmp_path)
+    archive=store.root/'history.tar.zst';archive.write_bytes(b'preserved original history')
+    store.policy.update(retention_scope='database',retained_files=[{
+        'name':archive.name,'bytes':archive.stat().st_size,
+        'sha256':hashlib.sha256(archive.read_bytes()).hexdigest()}])
+    first=store.ensure('batch-1-before.sqlite');complete(store,1)
+    store.policy['max_bytes']=first.stat().st_size+1
+    with pytest.raises(SnapshotCapacityError):store.maintain()
+    assert first.exists() and archive.exists()
+    store.policy['max_bytes']=32*1024*1024
+    assert store.maintain()['retained_file_bytes']==archive.stat().st_size
+    archive.write_bytes(b'x'*archive.stat().st_size)
+    with pytest.raises(ValueError,match='content changed'):store.maintain()
+
+
+def test_preserved_history_cannot_escape_storage_or_alias_a_checkpoint(tmp_path):
+    from snapshot_store import policy
+    import hashlib
+    p=config(tmp_path)
+    for name in ('../private','/elsewhere','owner.json','batch-1-before.sqlite'):
+        p['retained_files']=[dict(name=name,bytes=1,sha256=hashlib.sha256(b'x').hexdigest())]
+        with pytest.raises(ValueError):policy(p)

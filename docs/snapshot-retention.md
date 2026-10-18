@@ -26,7 +26,9 @@ is explicit, owner-bound and separate from producer control state. It must not
 contain symlink components. Multiple owners cannot share one checkpoint directory.
 The private manifest remains in producer state and records exact paths, byte and
 schema hashes, operation names and retained/retired state. Keep it with the journals.
-The live canonical database and signed/runtime paths do not move.
+The live canonical database and signed/runtime paths do not move. Optional
+`retained_files` places verified compact historical artifacts inside the same byte
+budget; see [resource lifecycle](resource-lifecycle.md#compact-legacy-history-within-the-budget).
 
 ## Retention contract
 

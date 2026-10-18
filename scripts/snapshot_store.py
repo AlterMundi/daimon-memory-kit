@@ -28,7 +28,7 @@ class SnapshotCapacityError(RuntimeError):
 
 def policy(value):
     required = {'directory', 'max_count', 'max_bytes', 'min_free_bytes', 'keep_latest', 'pins'}
-    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope'} != required:
+    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope', 'retained_files'} != required:
         raise ValueError('explicit snapshot placement, limits and rollback pins required')
     if value.get('retention_scope', 'class') not in ('class', 'database'):
         raise ValueError('unsupported checkpoint retention scope')
@@ -44,6 +44,17 @@ def policy(value):
         raise ValueError('retained checkpoints exceed count budget')
     if not isinstance(value['pins'], list) or any(not isinstance(n, str) or not NAME.fullmatch(n) for n in value['pins']):
         raise ValueError('rollback pins must be exact checkpoint names')
+    retained = value.get('retained_files', [])
+    if not isinstance(retained,list):raise ValueError('retained files must be explicit')
+    names=set()
+    for item in retained:
+        if (not isinstance(item,dict) or set(item)!={'name','bytes','sha256'} or
+            not isinstance(item['name'],str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*',item['name']) or
+            item['name']=='owner.json' or NAME.fullmatch(item['name']) or item['name'] in names or
+            type(item['bytes']) is not int or item['bytes']<1 or
+            not isinstance(item['sha256'],str) or not re.fullmatch(r'[0-9a-f]{64}',item['sha256'])):
+            raise ValueError('retained files require unique local names and verified byte hashes')
+        names.add(item['name'])
     return value
 
 
@@ -152,10 +163,16 @@ class Store:
                 keep.update(sorted(names,key=lambda n:int(NAME.fullmatch(n)[2]),reverse=True)[:self.policy['keep_latest']])
         partials=[p for p in self.root.glob('.*.partial-*') if p.is_file()]
         partial_bytes=sum(p.stat().st_size for p in partials)
+        retained_bytes=0
+        for item in self.policy.get('retained_files',[]):
+            path=self.root/item['name']
+            if path.is_symlink():raise ValueError('retained file destination changed')
+            self._check(dict(item,path=str(path),schema_sha256=None))
+            retained_bytes+=item['bytes']
         free = shutil.disk_usage(self.root).free
         def excess():
             return (len(active)+len(partials)+(1 if reserve else 0)>self.policy['max_count'] or
-                    sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values())+reserve+partial_bytes>self.policy['max_bytes'] or
+                    sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values())+reserve+partial_bytes+retained_bytes>self.policy['max_bytes'] or
                     free-reserve<self.policy['min_free_bytes'])
         checked_recovery = False
         for n in sorted(active,key=lambda n:(active[n].get('created_ns',0),int(NAME.fullmatch(n)[2]))):
@@ -195,7 +212,8 @@ class Store:
         if excess():
             raise SnapshotCapacityError('protected checkpoints or storage headroom prevent reservation')
         return dict(active_count=len(active),active_bytes=sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values()),
-                    archive_count=sum(e['state']=='archive' for e in entries.values()),free_bytes=free)
+                    archive_count=sum(e['state']=='archive' for e in entries.values()),
+                    retained_file_bytes=retained_bytes,free_bytes=free)
 
     def preflight(self, name):
         if not NAME.fullmatch(name): raise ValueError('unsupported checkpoint class')
