@@ -7,8 +7,9 @@ this field, the legacy pre-write snapshot behavior remains available.
 ```json
 "snapshots": {
   "directory": "/selected-data-volume/private-dmk-snapshots",
-  "max_count": 12,
-  "max_bytes": 2147483648,
+  "retention_scope": "database",
+  "max_count": 6,
+  "max_bytes": 1073741824,
   "min_free_bytes": 21474836480,
   "keep_latest": 2,
   "timeout_seconds": 300,
@@ -31,15 +32,24 @@ The live canonical database and signed/runtime paths do not move.
 
 The bounded working set covers `batch`, `embedding`, `organization` and
 `embedding-organization` pre-write checkpoints. Limits count logical bytes, not
-compressed physical allocation. `keep_latest` protects the newest checkpoints
-**per class**; leave room in `max_count` for those classes and pending work.
+compressed physical allocation. With explicit `retention_scope: database`,
+`keep_latest` protects the newest recovery points across the entire database,
+ordered by snapshot creation time rather than unrelated stream sequence numbers.
+Completed older copies are retired on maintenance even before reaching the hard
+count/byte limits. Historical migrated checkpoints participate in this same
+budget and retention; they do not form an indefinitely exempt archive.
+The example keeps two recent points and leaves room for pending operations;
+actual count/byte/headroom limits must fit the receiving database and workload.
+Without this field (or with `class`), legacy per-class retention and separate
+archive behavior remain unchanged for compatibility.
 `pins` lists exact checkpoint filenames required by actual outstanding rollbacks.
 Review those references before adopting a policy; unknown requirements remain
 protected, not inferred obsolete from age.
 
 Retirement requires all of the following:
 
-- The checkpoint is registered as managed, with unchanged verified bytes/schema.
+- The checkpoint is registered under the selected retention policy, with unchanged
+  verified bytes/schema.
 - Its canonical owner-bound capture/organization event is applied or omitted.
 - Both processing and corresponding embedding cursors have passed that operation.
 - It is outside the retained recent checkpoints and explicit rollback pins.
@@ -78,15 +88,20 @@ python scripts/snapshotctl.py restore --profile /private/worker.json \
 ```
 
 These commands hold the existing worker and producer locks and dispatch no models.
-Migration preserves existing snapshots as an explicit **fixed historical archive**,
-separate from the bounded future working set. It does not automatically expire
-old recovery evidence. Regular old files are copied to data storage, checked for
+Migration registers existing snapshots with their original paths, hashes and
+compatibility links. Database-wide policy makes those registered snapshots
+eligible for retirement only after their operation is proven complete, including
+its indexing cursor, and they are outside recent recovery points and explicit
+pins. A missing or redirected compatibility link blocks deletion. Interrupted
+retirement finishes removing that same copy and its link, retaining its manifest
+receipt. Without database-wide policy, imports remain a fixed historical archive;
+that compatibility mode is not a complete production retention policy. Regular old files are copied to data storage, checked for
 exact bytes/schema/integrity and atomically replaced by compatibility symlinks.
 Already-relocated symlinks on that filesystem retain their destinations. Repeated
 migration verifies receipts; interruption does not create an accepted partial copy.
-The archive consumes filesystem space and is included in free-space planning;
-`max_bytes` is the future working-set limit, not a claim that the historical archive
-has disappeared or been compressed to that size.
+All retained archive bytes count under database-wide policy. Under legacy
+class policy, archive bytes are separate from `max_bytes` but still consume
+filesystem space. No policy removes unknown files or unique source history.
 
 Restore always writes to a new destination, verifies exact bytes, schema, SQLite
 integrity and foreign keys, and refuses to overwrite an existing file. It never
@@ -97,7 +112,11 @@ manifest and source journals within their existing private access boundary.
 ## Adoption and rollback
 
 Inspect current jobs, authoritative ledgers, storage placement and actual rollback
-references before migration. Preserve configuration and use the supported explicit
+references before migration or enabling database-wide retention. Register any
+checkpoint needed by an outstanding rollback in `pins`; do not infer that a
+historical reference is an unresolved rollback merely because its filename is
+mentioned in a completed test report. Run `maintain` explicitly after policy
+adoption; subsequent worker preflights continue the same retention automatically. Preserve configuration and use the supported explicit
 pending-job upgrade procedure if a code fingerprint changes; never silently reset
 frozen navigation, completed calls or staged events. Select the new immutable
 release and profile together under the existing worker lock. Reuse the existing

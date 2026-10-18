@@ -1,7 +1,7 @@
 """Owner-bound pre-write checkpoints. Caller holds the producer lock.
 
-Only registered, completed checkpoints can be retired. Historical imports are
-an explicitly preserved archive, never inferred to be disposable by age.
+Only registered, completed checkpoints can be retired. Database-wide retention
+explicitly includes historical imports; legacy policies preserve the archive.
 """
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import shutil
 import sqlite3
+import time
 
 from capturectl import digest
 from codex_coordinator import checkpoint, sync_directory
@@ -27,8 +28,10 @@ class SnapshotCapacityError(RuntimeError):
 
 def policy(value):
     required = {'directory', 'max_count', 'max_bytes', 'min_free_bytes', 'keep_latest', 'pins'}
-    if not isinstance(value, dict) or set(value)-{'timeout_seconds'} != required:
+    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope'} != required:
         raise ValueError('explicit snapshot placement, limits and rollback pins required')
+    if value.get('retention_scope', 'class') not in ('class', 'database'):
+        raise ValueError('unsupported checkpoint retention scope')
     if 'timeout_seconds' in value and (type(value['timeout_seconds']) is not int or value['timeout_seconds']<1):
         raise ValueError('positive snapshot timeout required')
     root = Path(value['directory'])
@@ -116,11 +119,22 @@ class Store:
     def maintain(self, reserve=0):
         """Reserve count/bytes before paid work. Unknown/protected entries block."""
         entries = self.manifest['entries']
-        active = {n:e for n,e in entries.items() if e['state'] in ('ready','retiring','creating')}
+        database_scope = self.policy.get('retention_scope') == 'database'
+        states = ('ready','retiring','creating','archive') if database_scope else ('ready','retiring','creating')
+        active = {n:e for n,e in entries.items() if e['state'] in states}
         keep = set(self.policy['pins'])
-        for kind in ('batch','embedding','organization','embedding-organization'):
-            names = [n for n,e in active.items() if NAME.fullmatch(n)[1]==kind and e['state']=='ready']
-            keep.update(sorted(names,key=lambda n:int(NAME.fullmatch(n)[2]),reverse=True)[:self.policy['keep_latest']])
+        if database_scope:
+            # Sequence numbers belong to separate streams. Snapshot creation order
+            # determines recent database recovery points, not cross-stream seqno.
+            for e in active.values():
+                if e['state'] in ('ready','archive') and 'created_ns' not in e:
+                    e['created_ns'] = Path(e['path']).stat().st_mtime_ns
+            names = [n for n,e in active.items() if e['state'] in ('ready','archive')]
+            keep.update(sorted(names, key=lambda n:(active[n]['created_ns'],n), reverse=True)[:self.policy['keep_latest']])
+        else:
+            for kind in ('batch','embedding','organization','embedding-organization'):
+                names = [n for n,e in active.items() if NAME.fullmatch(n)[1]==kind and e['state']=='ready']
+                keep.update(sorted(names,key=lambda n:int(NAME.fullmatch(n)[2]),reverse=True)[:self.policy['keep_latest']])
         partials=[p for p in self.root.glob('.*.partial-*') if p.is_file()]
         partial_bytes=sum(p.stat().st_size for p in partials)
         free = shutil.disk_usage(self.root).free
@@ -128,22 +142,38 @@ class Store:
             return (len(active)+len(partials)+(1 if reserve else 0)>self.policy['max_count'] or
                     sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values())+reserve+partial_bytes>self.policy['max_bytes'] or
                     free-reserve<self.policy['min_free_bytes'])
-        for n in sorted(active,key=lambda n:int(NAME.fullmatch(n)[2])):
+        checked_recovery = False
+        for n in sorted(active,key=lambda n:(active[n].get('created_ns',0),int(NAME.fullmatch(n)[2]))):
             e = active[n]
-            if not excess() and e['state']!='retiring': continue
+            if not database_scope and not excess() and e['state']!='retiring': continue
             if n in keep or e['state']=='creating' or not self.terminal(n): continue
             # A verified retained checkpoint is required before each retirement.
             if not keep: raise ValueError('no retained recovery checkpoint')
-            for retained in keep:
-                if retained not in entries or entries[retained]['state'] not in ('ready','archive'):
-                    raise ValueError('rollback pin unavailable')
-                self._check(entries[retained])
+            if not checked_recovery:
+                for retained in keep:
+                    if retained not in entries or entries[retained]['state'] not in ('ready','archive'):
+                        raise ValueError('rollback pin unavailable')
+                    self._check(entries[retained])
+                checked_recovery = True
             path = Path(e['path'])
-            if path != self.root/n or path.is_symlink(): raise ValueError('managed checkpoint path changed')
+            legacy = None
+            if 'legacy_path' in e:
+                legacy = Path(e['legacy_path'])
+                if legacy != self.state/n or (os.path.lexists(legacy) and
+                    (not legacy.is_symlink() or legacy.resolve()!=path)):
+                    raise ValueError('archive compatibility path changed')
+                if not os.path.lexists(legacy) and e['state']!='retiring':
+                    raise ValueError('archive compatibility path lost')
+            elif path != self.root/n:
+                raise ValueError('managed checkpoint path changed')
+            if path.is_symlink() or path != path.resolve():
+                raise ValueError('checkpoint destination changed')
             if path.exists(): self._check(e)
             elif e['state']!='retiring': raise ValueError('recovery checkpoint lost')
             e['state']='retiring'; self.save()  # Interrupted deletion is resumable.
-            if path.exists(): path.unlink(); sync_directory(self.root)
+            if path.exists(): path.unlink(); sync_directory(path.parent)
+            if legacy is not None and os.path.lexists(legacy):
+                legacy.unlink(); sync_directory(legacy.parent)
             e['state']='retired'; self.save()
             active.pop(n)
             free = shutil.disk_usage(self.root).free
@@ -184,7 +214,7 @@ class Store:
             entry = dict(state='creating',path=str(target),reserved_bytes=size)
             self.manifest['entries'][name]=entry; self.save()
         if not target.exists(): verified_snapshot(self.memory.DB_PATH,target,timeout=self.policy.get('timeout_seconds',30))
-        entry.update(verified(target),state='ready');entry.pop('reserved_bytes',None);self.save()
+        entry.update(verified(target),state='ready',created_ns=time.time_ns());entry.pop('reserved_bytes',None);self.save()
         self.maintain()
         return target
 
