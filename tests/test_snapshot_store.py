@@ -303,3 +303,21 @@ def test_registered_checkpoint_hash_proof_rejects_later_journal(setup,tmp_path):
     Path(str(path)+'-wal').write_bytes(b'unresolved writer state')
     with pytest.raises(ValueError,match='standalone'):
         store._check(store.manifest['entries']['batch-1-before.sqlite'])
+
+
+def test_archive_recency_uses_source_time_not_migration_copy_order(setup,tmp_path):
+    import os
+    from sqlite_snapshot import verified_snapshot
+    store=owned(setup,tmp_path)
+    # Alphabetical copy order and stream sequence order both differ from time.
+    times={'batch-2-before.sqlite':30,'embedding-1-before.sqlite':10,
+           'organization-1-before.sqlite':20}
+    for name,stamp in times.items():
+        path=store.state/name;verified_snapshot(store.memory.DB_PATH,path)
+        os.utime(path,ns=(stamp,stamp))
+        complete(store,int(name.split('-')[1]),'organization' in name)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=6)
+    store.migrate()
+    assert store.manifest['entries']['embedding-1-before.sqlite']['state']=='retired'
+    assert store.manifest['entries']['batch-2-before.sqlite']['created_ns']==30
+    assert store.manifest['entries']['organization-1-before.sqlite']['state']=='archive'
