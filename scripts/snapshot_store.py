@@ -5,6 +5,7 @@ an explicitly preserved archive, never inferred to be disposable by age.
 """
 from __future__ import annotations
 
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -47,7 +48,7 @@ def verified(path):
     if not path.is_file() or any(Path(str(path.resolve())+s).exists() for s in ('-wal', '-journal')):
         raise ValueError('standalone snapshot required; journal companions preserved')
     before = path.stat()
-    with sqlite3.connect(path.resolve().as_uri()+'?mode=ro', uri=True) as con:
+    with closing(sqlite3.connect(path.resolve().as_uri()+'?mode=ro', uri=True)) as con:
         if con.execute('pragma integrity_check').fetchall() != [('ok',)] or con.execute('pragma foreign_key_check').fetchall():
             raise ValueError('invalid recovery snapshot')
         schema = con.execute('select type,name,tbl_name,sql from sqlite_master order by type,name').fetchall()
