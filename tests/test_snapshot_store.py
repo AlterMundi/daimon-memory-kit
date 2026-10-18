@@ -196,3 +196,20 @@ def test_verification_closes_sqlite_handles_on_success_and_rejection(tmp_path,mo
         con.execute('insert into child values(5)')
     with pytest.raises((ValueError,sqlite3.DatabaseError)):verified(path)
     assert len(closed)==2
+
+
+def test_configured_copy_timeout_preserves_partial_and_resumes(setup,tmp_path,monkeypatch):
+    import snapshot_store
+    store=owned(setup,tmp_path);store.policy['timeout_seconds']=300
+    original=snapshot_store.verified_snapshot;seen=[]
+    def timeout_once(source,destination,*,timeout):
+        seen.append(timeout)
+        if len(seen)==1:
+            (Path(destination).parent/('.'+Path(destination).name+'.partial-fixture')).write_bytes(b'failed copy')
+            raise TimeoutError('bounded copy interrupted')
+        return original(source,destination,timeout=timeout)
+    monkeypatch.setattr(snapshot_store,'verified_snapshot',timeout_once)
+    with pytest.raises(TimeoutError):store.ensure('batch-1-before.sqlite')
+    store.ensure('batch-1-before.sqlite')
+    assert seen==[300,300]
+    assert (store.root/'.batch-1-before.sqlite.partial-fixture').read_bytes()==b'failed copy'
