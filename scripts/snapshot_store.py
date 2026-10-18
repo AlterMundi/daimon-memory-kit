@@ -27,8 +27,10 @@ class SnapshotCapacityError(RuntimeError):
 
 def policy(value):
     required = {'directory', 'max_count', 'max_bytes', 'min_free_bytes', 'keep_latest', 'pins'}
-    if not isinstance(value, dict) or set(value) != required:
+    if not isinstance(value, dict) or set(value)-{'timeout_seconds'} != required:
         raise ValueError('explicit snapshot placement, limits and rollback pins required')
+    if 'timeout_seconds' in value and (type(value['timeout_seconds']) is not int or value['timeout_seconds']<1):
+        raise ValueError('positive snapshot timeout required')
     root = Path(value['directory'])
     if not root.is_absolute() or any(p.is_symlink() for p in [root, *root.parents]):
         raise ValueError('snapshot storage must be an absolute non-symlink directory')
@@ -181,7 +183,7 @@ class Store:
             if os.path.lexists(target): raise ValueError('unregistered checkpoint destination exists')
             entry = dict(state='creating',path=str(target),reserved_bytes=size)
             self.manifest['entries'][name]=entry; self.save()
-        if not target.exists(): verified_snapshot(self.memory.DB_PATH,target)
+        if not target.exists(): verified_snapshot(self.memory.DB_PATH,target,timeout=self.policy.get('timeout_seconds',30))
         entry.update(verified(target),state='ready');entry.pop('reserved_bytes',None);self.save()
         self.maintain()
         return target

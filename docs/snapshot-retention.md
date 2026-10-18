@@ -11,11 +11,16 @@ this field, the legacy pre-write snapshot behavior remains available.
   "max_bytes": 2147483648,
   "min_free_bytes": 21474836480,
   "keep_latest": 2,
+  "timeout_seconds": 300,
   "pins": []
 }
 ```
 
-Select an existing data filesystem and its actual headroom policy. The directory
+Select an existing data filesystem and its actual headroom policy.
+`timeout_seconds` is optional (legacy default: 30); select a measured copy budget
+for the receiving host. A timed-out partial stays retained and cannot be mistaken
+for a verified checkpoint. Raising the budget resumes pending work without
+repeating completed model calls. The directory
 is explicit, owner-bound and separate from producer control state. It must not
 contain symlink components. Multiple owners cannot share one checkpoint directory.
 The private manifest remains in producer state and records exact paths, byte and
