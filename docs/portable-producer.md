@@ -73,3 +73,10 @@ The source bundle preserves model rationale as generated decision evidence. That
 The source inbox, frozen jobs, original dispatches, canonical history and artifact envelopes have distinct responsibilities. Removing a source session after verified capture does not remove retained evidence. Copying the inbox or an artifact neither admits Matrix events nor grants identity or capabilities. Existing authority boundaries remain unchanged.
 
 To stop this isolated experiment, restore or disable only the selected hook/launcher configuration, retaining its prior version. Leave the inbox, pending jobs, canonical database and later writes in place. Restoring a pre-install memory database would discard later learning and is not a configuration rollback. The isolated stock proxy rollback probe verifies an empty hook listing and unchanged capture/canonical hashes after a real learned record existed. No production CompAII, Eko or Oliva configuration is changed by these commands or documentation.
+
+## Pre-write checkpoint storage
+
+The optional [snapshot storage and retention policy](snapshot-retention.md) moves
+full pre-write copies onto an explicitly selected data volume and bounds the future
+working set through the existing finite worker. It preserves pending operations,
+rollback pins, exact restore evidence and the separately retained historical archive.

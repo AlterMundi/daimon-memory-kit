@@ -17,6 +17,7 @@ from consolidationctl import reconciliation_plan
 from portable_producer import process_once, maintain_index_once
 from provider_status import ACTIONS, Alerts, ProviderProblem
 from sqlite_snapshot import verified_snapshot
+from snapshot_store import SnapshotCapacityError
 
 SCHEMA = 'hmk.worker-status/v1'
 PHASES = ('capture','organization','index')
@@ -40,7 +41,7 @@ def observe(state_dir):
 
 def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps=6,
         source_budget_bytes=64000, navigation_steps=4, retrieval='hybrid',
-        capture_limit=32, index_limit=32, notice_sender=None):
+        capture_limit=32, index_limit=32, notice_sender=None, snapshot_policy=None):
     """Invoke finite phases under one launcher lock, preserving each phase journal.
 
     `organize()` must return idle/complete/pending/deferred and own resumable,
@@ -112,7 +113,7 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                     result=process_once(memory,inbox,state_dir,proposer,context,
                         limit=capture_limit,
                         navigation_steps=navigation_steps,retrieval=retrieval,
-                        source_budget_bytes=source_budget_bytes,notice_sender=notice_sender)
+                        source_budget_bytes=source_budget_bytes,notice_sender=notice_sender,snapshot_policy=snapshot_policy)
                 elif phase=='organization':
                     if organize:
                         result=organize()
@@ -122,11 +123,11 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                                     ready_accounts=backlog['ready_count'],blocked_accounts=backlog['blocked_count'])
                 else:
                     result=maintain_index_once(memory,inbox,state_dir,limit=index_limit,
-                                               notice_sender=notice_sender)
+                                               notice_sender=notice_sender,snapshot_policy=snapshot_policy)
                     if result['state']=='idle':
                         capture_cursor=result.get('indexed_through')
                         result=maintain_index_once(memory,inbox,state_dir,limit=index_limit,
-                            notice_sender=notice_sender,kind='organization')
+                            notice_sender=notice_sender,kind='organization',snapshot_policy=snapshot_policy)
                         result=dict(result,organization_indexed_through=result.get('indexed_through'),
                                     indexed_through=capture_cursor)
                 if not isinstance(result,dict) or result.get('state') not in {'idle','complete','pending','deferred'}:
@@ -137,6 +138,8 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                 if notice_sender is not None:
                     alerts.deliver(notice_sender)
                 result=dict(state='pending',alert_id=alert_id,reason_code=failure.problem['code'])
+            except SnapshotCapacityError:
+                result=dict(state='pending',reason_code='snapshot_capacity_exceeded',error_type='SnapshotCapacityError')
             except Exception as error:
                 # The phase's own journal, rather than arbitrary exception text,
                 # establishes whether any transaction or remote request committed.
