@@ -90,3 +90,42 @@ in place.
 
 Installation-specific locations, references and before/after measurements belong
 in the private receiving runbook. #23 tracks adoption and residual limitations.
+
+## Compact legacy history within the budget
+
+If old snapshots contain history or source metadata absent from the current
+canonical revision history, preserve those original bytes before retiring full
+working copies. A private, lossless `tar.zst` capsule can hold the selected cold
+files and their metadata, with a manifest of original paths, byte hashes and
+sizes. Long-distance Zstandard matching can avoid paying repeatedly for similar
+SQLite pages. This is original historical evidence, not an extra online database.
+
+Use a finite source inventory and the data filesystem. Verify every archived
+member against its recorded hash, ensure sources did not change, and verify a
+selected restoration before removing any source copy. Preserve active rollback
+paths separately; retain new or changed files. Leave the manifest/restore pointer
+at the old location. Never publish a private capsule or raw memory manifest.
+
+A capsule must not become another quota exemption. The snapshot policy accepts
+optional `retained_files`, for example:
+
+```json
+"retained_files": [
+  {"name": "history.tar.zst", "bytes": 12345, "sha256": "<actual 64-character lowercase SHA256>"}
+]
+```
+
+Each name identifies a regular file directly inside the selected snapshot
+storage directory. Register the actual measured size and hash, including a
+separate manifest when it is retained there. These files count toward the same
+`max_bytes` as snapshots and partials. Missing, modified or redirected files
+block maintenance; they are never silently expired. `retained_file_bytes` reports
+their contribution separately. The snapshot count limit continues to apply to
+recovery checkpoints. History preservation is bounded by actual compressed bytes,
+not hidden in an unlimited archive directory. New manual operations use the
+normal begin/complete rotation instead of appending full copies to this capsule.
+
+Standard restoration uses `zstd -dc` and `tar` into a new private directory on
+the data volume, selecting the manifest's exact relative member name. Check its
+SHA256 and SQLite integrity before using it. Do not extract over a live pool,
+follow untrusted archive links, or replace later memory with an older database.
