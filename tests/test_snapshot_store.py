@@ -213,3 +213,85 @@ def test_configured_copy_timeout_preserves_partial_and_resumes(setup,tmp_path,mo
     store.ensure('batch-1-before.sqlite')
     assert seen==[300,300]
     assert (store.root/'.batch-1-before.sqlite.partial-fixture').read_bytes()==b'failed copy'
+
+
+def test_database_retention_keeps_two_points_across_all_operation_classes(setup,tmp_path):
+    store=owned(setup,tmp_path)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=8)
+    names=['batch-1-before.sqlite','embedding-1-before.sqlite',
+           'organization-1-before.sqlite','embedding-organization-1-before.sqlite']
+    for name in names:
+        store.ensure(name)
+        complete(store,1,'organization' in name)
+    result=store.maintain()
+    assert result['active_count']==2
+    assert [n for n,e in store.manifest['entries'].items() if e['state']=='ready']==names[-2:]
+    assert store.restore(names[-1],tmp_path/'restore.sqlite')['restored']
+
+
+def test_database_archive_retirement_preserves_pending_and_pin_then_reconciles(setup,tmp_path):
+    from sqlite_snapshot import verified_snapshot
+    store=owned(setup,tmp_path)
+    for seq in range(1,5):
+        verified_snapshot(store.memory.DB_PATH,store.state/f'batch-{seq}-before.sqlite')
+    store.migrate()
+    for seq in (1,3,4):complete(store,seq)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=5,
+                        pins=['batch-1-before.sqlite'])
+    assert store.maintain()['active_count']==4  # seq2 has no terminal event.
+    store.policy['pins']=[]
+    assert store.maintain()['active_count']==3
+    entry=store.manifest['entries']['batch-1-before.sqlite']
+    assert entry['state']=='retired' and entry['sha256']
+    assert not Path(entry['path']).exists() and not (store.state/'batch-1-before.sqlite').is_symlink()
+    complete(store,2)
+    assert store.maintain()['active_count']==2
+    assert store.maintain()['active_count']==2  # idempotent maintenance
+    store.restore('batch-4-before.sqlite',tmp_path/'restored.sqlite')
+
+
+def test_database_archive_is_in_capacity_budget(setup,tmp_path):
+    from sqlite_snapshot import verified_snapshot
+    store=owned(setup,tmp_path)
+    for seq in (1,2):verified_snapshot(store.memory.DB_PATH,store.state/f'batch-{seq}-before.sqlite')
+    store.migrate()
+    store.policy.update(retention_scope='database',max_count=1)
+    with pytest.raises(SnapshotCapacityError):store.maintain()
+    assert all(Path(e['path']).exists() for e in store.manifest['entries'].values())
+
+
+def test_database_archive_retirement_resumes_after_unlink(setup,tmp_path,monkeypatch):
+    from sqlite_snapshot import verified_snapshot
+    store=owned(setup,tmp_path)
+    for seq in (1,2):
+        verified_snapshot(store.memory.DB_PATH,store.state/f'batch-{seq}-before.sqlite')
+        complete(store,seq)
+    store.migrate()
+    store.policy.update(retention_scope='database')
+    original=Path.unlink
+    def interrupted(path,*a,**kw):
+        result=original(path,*a,**kw)
+        if path==Path(store.manifest['entries']['batch-1-before.sqlite']['path']):
+            raise RuntimeError('after archive unlink')
+        return result
+    with monkeypatch.context() as patch:
+        patch.setattr(Path,'unlink',interrupted)
+        with pytest.raises(RuntimeError,match='after archive unlink'):store.maintain()
+    resumed=Store(store.memory,store.state,store.policy,store.producer)
+    assert resumed.maintain()['active_count']==1
+    assert not (store.state/'batch-1-before.sqlite').is_symlink()
+    assert resumed.manifest['entries']['batch-1-before.sqlite']['state']=='retired'
+
+
+def test_database_archive_changed_link_blocks_retirement(setup,tmp_path):
+    from sqlite_snapshot import verified_snapshot
+    store=owned(setup,tmp_path)
+    for seq in (1,2):
+        verified_snapshot(store.memory.DB_PATH,store.state/f'batch-{seq}-before.sqlite')
+        complete(store,seq)
+    store.migrate()
+    store.policy.update(retention_scope='database')
+    legacy=store.state/'batch-1-before.sqlite'
+    legacy.unlink();legacy.symlink_to(tmp_path/'foreign')
+    with pytest.raises(ValueError,match='compatibility path changed'):store.maintain()
+    assert Path(store.manifest['entries']['batch-1-before.sqlite']['path']).exists()
