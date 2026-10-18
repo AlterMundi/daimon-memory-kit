@@ -179,3 +179,20 @@ def test_profile_accepts_explicit_policy_and_rejects_invalid_limits(setup,tmp_pa
     assert profile(path)['snapshots']==value['snapshots']
     value['snapshots']['max_count']=True;checkpoint(path,value)
     with pytest.raises(ValueError):profile(path)
+
+
+def test_verification_closes_sqlite_handles_on_success_and_rejection(tmp_path,monkeypatch):
+    import snapshot_store
+    path=tmp_path/'checkpoint.db'
+    with sqlite3.connect(path) as con:con.execute('create table original(x)')
+    connect=sqlite3.connect;closed=[]
+    class Tracked(sqlite3.Connection):
+        def close(self):
+            closed.append(True);return super().close()
+    monkeypatch.setattr(snapshot_store.sqlite3,'connect',lambda *a,**k:connect(*a,**k,factory=Tracked))
+    verified(path);assert len(closed)==1
+    with connect(path) as con:
+        con.execute('create table child(parent references original(x))')
+        con.execute('insert into child values(5)')
+    with pytest.raises((ValueError,sqlite3.DatabaseError)):verified(path)
+    assert len(closed)==2
