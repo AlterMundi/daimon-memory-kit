@@ -80,6 +80,17 @@ uncertain provider attempts are original evidence, not cache. Keep their existin
 ownership and privacy. Do not clear them to make capacity numbers look healthy.
 Their eventual compaction must preserve reconstructible bytes and references.
 
+If capture repeatedly fails after an interrupted write, inspect the inbox's
+SQLite journal before blaming permissions or the provider. A hot rollback journal
+requires SQLite's native write-capable recovery even for a policy SELECT. The
+forward-capture policy probe opens an existing inbox with `mode=rw` for that
+reason; it must not create a missing inbox. Never delete the journal. For manual
+diagnosis, preserve the database and journal together with no active writer,
+verify recovery on a copy, then let SQLite recover the original. Recover retained
+selected sources through the capture path and resolve their matching supervisor
+attempts only after successful capture receipts; database integrity alone does
+not establish source coverage. Capture recovery invokes no models.
+
 Run large qualification copies on the data filesystem. At the end of a completed
 experiment, retain its inputs or reconstructible source references, implementation
 version, outputs, costs and acceptance evidence. Remove proven disposable working

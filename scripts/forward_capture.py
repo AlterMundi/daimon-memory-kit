@@ -24,7 +24,10 @@ GUARD_BYTES = 256
 def policy(inbox_path):
     if not Path(inbox_path).exists():
         return None
-    with sqlite3.connect(Path(inbox_path).resolve().as_uri()+'?mode=ro', uri=True) as con:
+    # Hooks may be killed during a write. SQLite needs write access to roll back
+    # a hot journal before even this SELECT; read-only mode strands every later
+    # hook behind SQLITE_READONLY_ROLLBACK. Do not create a missing inbox here.
+    with sqlite3.connect(Path(inbox_path).resolve().as_uri()+'?mode=rw', uri=True) as con:
         if not con.execute("SELECT 1 FROM sqlite_master WHERE name='forward_policy'").fetchone():
             return None
         row = con.execute('SELECT value FROM forward_policy').fetchone()
