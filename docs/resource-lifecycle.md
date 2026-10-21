@@ -172,4 +172,3 @@ an older model policy, use `repair_selection_response.py` with its original
 profile/request and an explicit reason, then resume normal validation. Do not
 overwrite the retained model-policy receipt to force an upgrade through pending
 work. Upgrade future model dispatch only after reconciling that work.
-
