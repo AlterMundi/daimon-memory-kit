@@ -155,3 +155,20 @@ manifest and restore pointer with the original experiment; source/model outputs
 remain evidence, not a new memory input. A capsule over its budget blocks source
 retirement until its owner selects a suitable preservation plan. Do not solve
 capacity by dropping evidence or by duplicating it into runtime installations.
+
+## Completed malformed selection responses
+
+Selection uses the configured native reviewer once when a completed,
+untruncated, tool-free generation response contains invalid JSON. The reviewer
+receives the original selected evidence and the malformed output, which is not
+treated as evidence. Both immutable dispatch receipts and separate usage records
+are retained. Reinvocation reuses the review receipt; a failed or malformed review
+remains visibly pending. Transport failures, uncertain requests, truncated output
+and tool execution are not automatically retried by this path.
+
+The repaired response still passes ordinary navigation, schema and evidence
+validation before any canonical write. For an existing unresolved operation on
+an older model policy, use `repair_selection_response.py` with its original
+profile/request and an explicit reason, then resume normal validation. Do not
+overwrite the retained model-policy receipt to force an upgrade through pending
+work. Upgrade future model dispatch only after reconciling that work.
