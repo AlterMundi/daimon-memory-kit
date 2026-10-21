@@ -31,8 +31,16 @@ dmk backupctl.py begin --operation correction-20261018-unique \
   --reason 'Before the authorized correction'
 ```
 
-A stable operation ID makes an interrupted begin resumable. Keep the returned
-snapshot and receipt. Perform the authorized write using the existing native API,
+Retry an interrupted begin with the same operation ID **and the original reason**;
+the journal rejects changed reasons. An interruption can leave a protected
+`.partial-*` candidate as well as a reserved checkpoint. Retrying does not reclaim
+that candidate and can fail the capacity check. Inspect the operation journal,
+manifest, candidate and actual writer state before retrying; repeated polling or
+new operation IDs do not recover it. Preserve failed candidates until their
+recovery or explicit disposition is verified. A process waiting for I/O alone
+does not establish the cause of the delay. Continue the authorized memory task
+after repairing the checkpoint path; reporting the error is not completion.
+Keep the returned snapshot and receipt. Perform the authorized write using the existing native API,
 then verify the intended result and preserved history. Only afterward release the
 operation's protection:
 
