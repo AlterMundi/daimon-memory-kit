@@ -16,6 +16,41 @@ from forward_capture import activate, set_enabled
 from portable_capture import codex_sources
 
 
+def test_capture_recovers_interrupted_sqlite_write(context):
+    """A killed writer leaves a hot journal; the next hook must recover it."""
+    import sqlite3
+    import subprocess
+    b, f, e = context
+    with sqlite3.connect(b['inbox']) as con:
+        con.execute('CREATE TABLE crash_fixture(value BLOB)')
+        con.execute('INSERT INTO crash_fixture VALUES(zeroblob(200000))')
+    child = subprocess.run([sys.executable, '-c', '''
+import os, sqlite3, sys
+con = sqlite3.connect(sys.argv[1])
+con.execute('PRAGMA cache_size=1')
+con.execute('BEGIN IMMEDIATE')
+con.execute('UPDATE crash_fixture SET value=randomblob(200000)')
+os._exit(7)
+''', b['inbox']], check=False)
+    assert child.returncode == 7
+    # Establish the precise failure, rather than merely creating a journal file.
+    with sqlite3.connect(Path(b['inbox']).as_uri()+'?mode=ro', uri=True) as con:
+        with pytest.raises(sqlite3.OperationalError, match='readonly'):
+            con.execute('SELECT value FROM forward_policy').fetchone()
+    append(f, turn('after-crash', 'Remember the recovered turn.'))
+    result = capture(b, e)
+    assert result['capture_complete']
+    inbox = Inbox(b['inbox'], b)
+    assert b'Remember the recovered turn.' in inbox.restore(result['revisions'][0])
+    with inbox.connect() as con:
+        assert con.execute('SELECT value=zeroblob(200000) FROM crash_fixture').fetchone()[0]
+        assert con.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+        count = con.execute('SELECT count(*) FROM revisions').fetchone()[0]
+    assert capture(b, e)['capture_complete']
+    with inbox.connect() as con:
+        assert con.execute('SELECT count(*) FROM revisions').fetchone()[0] == count
+
+
 def line(kind,payload):
     return (json.dumps(dict(type=kind,payload=payload))+'\n').encode()
 
