@@ -362,3 +362,56 @@ def test_explicit_credit_recovery_preserves_failure_and_retries_only_once(
     checkpoint(failed, dict(request_sha256=request_path.stem, state="started"))
     with pytest.raises(ValueError, match="retry decision"):
         model(request, request_path.parent.parent)
+
+
+def test_completed_invalid_selection_uses_one_review_and_keeps_both_receipts(setup, tmp_path, monkeypatch):
+    memory, inbox, state, _, context, _, _ = setup
+    value = configuration(tmp_path, memory, inbox, state, context)
+    model = Models(value['generation'], value['review'], 'fictional')
+    request = dict(phase='capture', messages=[dict(role='system', content='Selected fictional evidence only.')], response_schema={'type': 'object'})
+    calls = []
+    monkeypatch.setenv('HMK_TEST_DEEPSEEK_KEY', 'TEST_SECRET')
+
+    def dispatch(path, root, credential, provider):
+        calls.append('generation')
+        checkpoint(root/'dispatches'/path.name, dict(request_sha256=path.stem, state='completed', finish_reason='stop', content='[1] trailing text', usage={'total_tokens': 11}))
+
+    def review(path, root, catalog, **kwargs):
+        calls.append('review')
+        sent = json.loads(path.read_text())
+        assert sent['messages'][:-2] == request['messages']
+        assert sent['messages'][-2]['content'] == '[1] trailing text'
+        assert sent['tools_allowed'] is False and sent['native_memory_allowed'] is False
+        checkpoint(root/'dispatches'/path.name, dict(request_sha256=path.stem, state='completed', content='{"outcome":"lookup","requests":[]}', usage={'total_tokens': 17}))
+
+    monkeypatch.setattr(memory_models.text_api, 'dispatch', dispatch)
+    monkeypatch.setattr(memory_models.native, 'dispatch', review)
+    first = model(request, state)
+    assert first['selection']['outcome'] == 'lookup'  # Structural/evidence validation still belongs to navigation.
+    assert first['response_repair']['original_usage']['total_tokens'] == 11
+    assert first['response_repair']['review_usage']['total_tokens'] == 17
+    monkeypatch.delenv('HMK_TEST_DEEPSEEK_KEY')
+    assert model(request, state) == first and calls == ['generation', 'review']
+    original = next((state/'dispatches').glob('*.json'))
+    assert json.loads(original.read_text())['content'] == '[1] trailing text'
+    repaired = next((state/'completed-json-repair'/'dispatches').glob('*.json'))
+    receipt = json.loads(repaired.read_text()); receipt['content'] = 'invalid review too'
+    checkpoint(repaired, receipt)
+    with pytest.raises(ProviderProblem, match='response_incomplete'):
+        model(request, state)
+    assert calls == ['generation', 'review']
+
+
+@pytest.mark.parametrize('change', [dict(state='started'), dict(state='failed'), dict(finish_reason='length'), dict(tool_calls_observed=True)])
+def test_format_repair_never_retries_uncertain_truncated_or_tool_output(setup, tmp_path, monkeypatch, change):
+    memory, inbox, state, _, context, _, _ = setup
+    value = configuration(tmp_path, memory, inbox, state, context)
+    model = Models(value['generation'], value['review'], 'fictional')
+    monkeypatch.setenv('HMK_TEST_DEEPSEEK_KEY', 'TEST_SECRET')
+    def dispatch(path, root, credential, provider):
+        receipt = dict(request_sha256=path.stem, state='completed', finish_reason='stop', content='invalid')
+        receipt.update(change); checkpoint(root/'dispatches'/path.name, receipt)
+    monkeypatch.setattr(memory_models.text_api, 'dispatch', dispatch)
+    monkeypatch.setattr(memory_models.native, 'dispatch', lambda *a, **kw: pytest.fail('repair not authorized by completed output'))
+    with pytest.raises(ProviderProblem):
+        model(dict(phase='capture', messages=[dict(role='system', content='Fixture')], response_schema={'type':'object'}), state)
