@@ -2,7 +2,8 @@
 
 Development component of Matrix#376. The complete integration and real Legion
 acceptance are unfinished. Do not select this branch as a production replacement
-until the retained-content closure and legacy-provenance adapters are complete.
+as an implicit production update. The native-memory component is implemented;
+the cross-component integration and actual receiving adoption remain pending.
 
 `scripts/same_being_sync.py` uses the current initialized native API rather than
 requiring an old Git checkout, a whole-database restore or stopped harnesses.
@@ -25,6 +26,13 @@ access counters and queries do not require stopping consumers or replaying work.
 An untouched mirror accepts an explicitly linked source correction through the
 native revision API; local edits remain variants rather than being overwritten.
 
+Source revisions are retained once as content-addressed JSON. Packets carry exact
+SHA-256/byte references and only missing selected content; closure is checked
+before canonical effects or a new backup checkpoint. A missing or changed blob
+retains the selection instead of importing incomplete history. The read-only
+`inventory` command lists known origin/content hashes. These mean transport
+knowledge, not current adoption: `status` still checks actual owned effects.
+
 Original source versions are available through the ordinary native `history`
 reader, labelled with their unsigned source provenance and original UID/revision.
 They are never renumbered as receiving edits or signed Matrix events. Native
@@ -46,14 +54,34 @@ preserved history and retrieval are verified. A status/read does not dispatch
 recovery or complete the checkpoint. No models, providers, hooks, inbox attention,
 service controls or automatic retries are installed.
 
-## Remaining before production use
+## Existing unsigned native-sync imports
 
-- Deduplicate retained source revision bytes and carry exact content closure,
-  reusing known content across corrected pages; the prototype currently embeds
-  full source history in each origin document.
-- Connect the existing legacy native-sync provenance sidecar. Generated legacy
-  rows currently refuse export instead of acquiring the exporting body's origin.
-  Preserve both the original import and subsequent receiving edits.
+A caller may select its retained `compaii.private-native-sync/v1` provenance
+sidecar through `--legacy-provenance` and `--legacy-provenance-sha256`. It must
+be an owner-private regular file with the exact selected byte hash. This is a
+read-only compatibility adapter, not a new shared authority or a peer-selected
+local path. The old origin hash is verified using its original pool lineage,
+chapter ID and complete original row.
+
+An unchanged old import exports its preserved original, not the generated
+retrieval copy. The original pool lineage remains known; missing historical
+body, embodiment and incarnation stay null. Original bytes use the same
+content-addressed store. A receiving sidecar can reuse an unchanged old native
+representation and restore its original summary/metadata through the current
+native revision API, preserving receiving UID and history. A locally edited copy
+remains a distinct variant, with the original retained through native `history`.
+Ambiguous aliases never pick a winner by time. Missing provenance refuses a
+generated-row export rather than inventing exporting-body authorship.
+
+The command set is `export`, `inventory`, `apply` and read-only `status`. A parent
+operation supplies the receiving binding and stable page operation IDs. It may
+pass the receiver inventory's `origins` and `content` arrays as `--known` and
+`--known-content` JSON files on later exports. Packet and inventory files are
+private, exclusively created outputs. CLI stdout contains summaries/receipts,
+not raw memory. No command completes the parent's checkpoint implicitly.
+
+## Remaining integration
+
 - Connect exact references, local decisions and effect receipts to the maintained
   Matrix/Weave integration and selective Skills installer under one operation.
 - Qualify the exact receiving package, real source/Legion incorporation and
