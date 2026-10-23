@@ -2401,6 +2401,9 @@ def update_chapter(chapter_id, content=None, title=None, tags=None, importance=N
         # v3.9.0 — re-scan content for secrets on content change
         embed_disabled_new = old.get("embed_disabled", 0)
         embed_disable_reason_new = old.get("embed_disable_reason")
+        if source_kind in ('code', 'config'):
+            embed_disabled_new = 1
+            embed_disable_reason_new = f'source_kind={source_kind}'
         if content_changed and scan_content_for_secrets:
             secret_reason = scan_content_for_secrets(f'{new_title}\n{new_spr}\n{new_raw}')
             if secret_reason:
@@ -2461,7 +2464,7 @@ def update_chapter(chapter_id, content=None, title=None, tags=None, importance=N
         )
 
         embeddings_dropped = 0
-        if content_changed:
+        if content_changed or (embed_disabled_new and not old.get("embed_disabled", 0)):
             cur = con.execute("DELETE FROM chapter_embeddings WHERE chapter_id=?", (chapter_id,))
             embeddings_dropped = cur.rowcount
 
@@ -2491,7 +2494,9 @@ def history(chapter_id):
     con = connect()
     try:
         rows = con.execute('SELECT snapshot_json,reason,archived_at FROM chapter_revisions WHERE chapter_id=? ORDER BY revision', (chapter_id,)).fetchall()
-        return [{**json.loads(r['snapshot_json']), 'revision_reason': r['reason'], 'archived_at': r['archived_at']} for r in rows]
+        from same_being_sync import source_history
+        originals = source_history(con, chapter_id)
+        return originals + [{**json.loads(r['snapshot_json']), 'revision_reason': r['reason'], 'archived_at': r['archived_at']} for r in rows]
     finally:
         con.close()
 
