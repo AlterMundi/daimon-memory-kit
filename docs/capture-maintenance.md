@@ -122,3 +122,15 @@ with that original runtime. Changing validator/navigation source changes its cod
 identity; adopt the clearer validator diagnostic after the pending job completes,
 not by overwriting its code hash. Code rollback preserves newer journals and
 canonical memory.
+
+For a demonstrated add-title collision, the same command supports `--mode collision`.
+It reads each unambiguous conflicting canonical record completely and freezes that
+evidence alongside the original job. The native reviewer must judge whether the
+new material continues that same remembered matter. Only the exact add-to-update
+transformation is accepted: remove the add shelf, use the target's current ID and
+revision, and append its `memory:<integer ID>` reference. All other fields, links,
+selected sources and record order remain unchanged. The old original therefore
+survives in the updated record and revision history. Renaming to bypass duplication,
+dropping evidence and an unsupported continuity judgment remain pending for
+inspection. Ordinary revision checks still protect concurrent canonical changes.
+This mode does not admit a mere title match as proof of semantic continuity.

@@ -97,3 +97,69 @@ def test_repaired_title_collision_is_not_renamed_away(setup,tmp_path):
     with pytest.raises(ValueError,match='retained title repair rejected'):
         repair(value,1,'Repair title.',models=lambda *a:fixed(job))
     assert json.loads((setup[2]/'batch-1.json').read_text())==job
+
+
+def collided(setup,tmp_path):
+    memory,inbox,state,propose,binding,_,_=setup
+    cid=memory.add_text('episodes','Jo','Jo met us earlier; the earlier result remains uncertain.')
+    result=process_once(memory,inbox,state,propose,binding,retrieval='lexical')
+    assert result['state']=='pending'
+    job=json.loads((state/'batch-1.json').read_text())
+    assert job['navigation']['halted_reason']
+    return configuration(tmp_path,memory,inbox,state,binding),job,cid
+
+
+def reconciled(job,cid):
+    result=copy.deepcopy(job['navigation']['steps'][-1]['proposal'])
+    r=result['selection']['records'][0];r.pop('shelf')
+    r.update(operation='update',chapter_id=cid,expected_revision=1)
+    r['source_ids'].append('memory:'+str(cid))
+    return result
+
+
+def test_collision_reads_original_and_preserves_both_experiences_without_duplicate(setup,tmp_path):
+    value,job,cid=collided(setup,tmp_path);calls=[]
+    def native(request,directory):
+        calls.append(request)
+        canon=json.loads(request['messages'][1]['content'])['current_canon']
+        assert len(canon)==1 and 'earlier result remains uncertain' in canon[0]['raw']
+        return reconciled(job,cid)
+    repair(value,1,'Reconcile demonstrated collision.',mode='collision',models=native)
+    assert repair(value,1,'Reconcile demonstrated collision.',mode='collision',models=native)['state']=='replayed'
+    assert len(calls)==1
+    memory,inbox,state,_,binding,_,_=setup
+    current=json.loads((state/'batch-1.json').read_text())
+    assert current['navigation']['steps']==job['navigation']['steps']
+    assert current['navigation']['halted_reason']==job['navigation']['halted_reason']
+    assert process_once(memory,inbox,state,lambda *a:pytest.fail('no new selection'),binding,retrieval='lexical')['state']=='complete'
+    record=memory._read_chapter(cid)
+    assert record['revision']==2 and 'June 3' in record['raw'] and 'earlier result remains uncertain' in record['raw']
+    with memory.connect() as c:assert c.execute('select count(*) from chapters').fetchone()[0]==1
+    assert repair(value,1,'Reconcile demonstrated collision.',mode='collision',models=native)['state']=='replayed'
+
+
+@pytest.mark.parametrize('change',['omit','drop_original','rename'])
+def test_collision_cannot_drop_original_or_evade_duplication(setup,tmp_path,change):
+    value,job,cid=collided(setup,tmp_path);result=reconciled(job,cid)
+    if change=='omit':result['selection'].update(outcome='omitted',records=[],links=[])
+    if change=='drop_original':result['selection']['records'][0]['source_ids'].pop()
+    if change=='rename':result['selection']['records'][0]['title']='June 3'
+    calls=[]
+    def native(*a):calls.append(1);return result
+    for _ in range(2):
+        with pytest.raises(ValueError,match='retained title repair rejected'):
+            repair(value,1,'Reconcile collision.',mode='collision',models=native)
+    assert len(calls)==1 and json.loads((setup[2]/'batch-1.json').read_text())==job
+
+
+def test_collision_replay_refuses_changed_canonical_evidence_without_new_call(setup,tmp_path):
+    value,job,cid=collided(setup,tmp_path);calls=[]
+    def rejected(*a):
+        calls.append(1)
+        return dict(selection=dict(outcome='deferred',reason='Not established',records=[],links=[]))
+    with pytest.raises(ValueError,match='retained title repair rejected'):
+        repair(value,1,'Reconcile collision.',mode='collision',models=rejected)
+    with setup[0].connect() as c:c.execute('update chapters set revision=revision+1 where id=?',(cid,))
+    with pytest.raises(ValueError,match='canonical evidence changed'):
+        repair(value,1,'Reconcile collision.',mode='collision',models=rejected)
+    assert len(calls)==1
