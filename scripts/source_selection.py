@@ -32,7 +32,7 @@ def source_decision(value, sources, canon):
     # supplied original. Never resolve a guessed/external UID against the DB.
     available.update({'memory:'+r['record_uid']: r for r in canon if r.get('record_uid')})
     decision = json.loads(json.dumps(value))
-    for record in decision['records']:
+    for index, record in enumerate(decision['records']):
         refs = record.pop('source_ids', None)
         if not isinstance(refs, list) or not refs or any(
                 not isinstance(ref, str) or ref not in available for ref in refs):
@@ -57,7 +57,9 @@ def source_decision(value, sources, canon):
         title = record.get('title')
         if not isinstance(title, str) or not title.strip() or not any(
                 title in (available[ref].get('content') or available[ref].get('raw', '')) for ref in refs):
-            raise ValueError('title must be an exact recognition phrase in a selected source block')
+            raise ValueError(f'records[{index}].title must be an exact recognition phrase in a selected source block; '
+                             'copy a contiguous phrase verbatim, preserving case and punctuation, '
+                             'from that record\'s source_ids (not another record\'s evidence)')
         record['raw'] = '\n\n'.join(blocks)
         record['metadata'] = {'mode':'reported'}
     return decision
