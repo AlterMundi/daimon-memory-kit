@@ -10,7 +10,9 @@ age-based deletion to a being's state.
 Use the explicit database-wide policy in [snapshot retention](snapshot-retention.md).
 Keep two recent verified recovery points, plus checkpoints protecting pending,
 failed, unindexed or explicitly pinned operations. Include migrated copies in the
-same limits. Capacity blocks work visibly before new model calls; solve the
+same limits. For growing production stores, use the documented `database_copies`
+budget with two retained points plus creation margin; a fixed byte ceiling alone
+will eventually strand rotation. Capacity blocks work visibly before new model calls; solve the
 storage condition and resume the existing journal instead of resetting a job.
 
 ## Manual pre-write operations

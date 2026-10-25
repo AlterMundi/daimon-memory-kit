@@ -138,8 +138,8 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                 if notice_sender is not None:
                     alerts.deliver(notice_sender)
                 result=dict(state='pending',alert_id=alert_id,reason_code=failure.problem['code'])
-            except SnapshotCapacityError:
-                result=dict(state='pending',reason_code='snapshot_capacity_exceeded',error_type='SnapshotCapacityError')
+            except SnapshotCapacityError as error:
+                result=dict(state='pending',reason_code='snapshot_capacity_exceeded',error_type='SnapshotCapacityError',capacity=error.capacity)
             except Exception as error:
                 # The phase's own journal, rather than arbitrary exception text,
                 # establishes whether any transaction or remote request committed.
@@ -147,7 +147,7 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
             if result['state'] in {'idle','complete'}:
                 Alerts(inbox).resolve(operation)
             outcomes.append(dict(phase=phase,result=result))
-            safe={k:result[k] for k in ('state','reason_code','error_type','alert_id',
+            safe={k:result[k] for k in ('state','reason_code','error_type','alert_id','capacity',
                 'processed_through','indexed_through','source_group_complete',
                 'minimum_required_bytes','processed','proposer_invoked',
                 'ready_accounts','blocked_accounts','organized_through','organization_indexed_through') if k in result}
