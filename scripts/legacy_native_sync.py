@@ -37,7 +37,7 @@ def original_hash(label, original):
 
 
 class Legacy:
-    def __init__(self, state):
+    def __init__(self, state, *, receiving_lineage=None):
         if (
             not isinstance(state, dict)
             or set(state) != {"schema", "origins", "bindings", "plans", "edges"}
@@ -51,6 +51,13 @@ class Legacy:
             self.by_chapter.setdefault((lineage, value["chapter_id"]), []).append(
                 (origin, value)
             )
+        if receiving_lineage is not None and (
+            not isinstance(receiving_lineage, str)
+            or not 1 <= len(receiving_lineage) <= 256
+            or not any(label == receiving_lineage for label, _ in self.by_chapter)
+        ):
+            raise ValueError("selected legacy receiving lineage is absent or invalid")
+        self.receiving_lineage = receiving_lineage
 
     def source(self, key):
         value = self.state["origins"].get(key)
@@ -67,6 +74,7 @@ class Legacy:
         )
 
     def inspect(self, row, lineage):
+        lineage = self.receiving_lineage or lineage
         candidates = self.by_chapter.get((lineage, row["id"]), [])
         path = row.get("book_source_path") or ""
         if path.startswith(PREFIX):
@@ -109,6 +117,7 @@ class Legacy:
         )
 
     def receiving(self, con, source_hash, lineage):
+        lineage = self.receiving_lineage or lineage
         matches = []
         for (label, chapter), positions in self.by_chapter.items():
             if label != lineage or not any(key == source_hash for key, _ in positions):
@@ -134,7 +143,7 @@ class Legacy:
         return matches[0] if matches else None
 
 
-def load(path, expected_sha256):
+def load(path, expected_sha256, *, receiving_lineage=None):
     path = Path(path).absolute()
     if any(p.is_symlink() for p in [path, *path.parents]):
         raise ValueError("legacy provenance aliases require local reconciliation")
@@ -153,4 +162,4 @@ def load(path, expected_sha256):
         or hashlib.sha256(raw).hexdigest() != expected_sha256
     ):
         raise ValueError("selected legacy provenance changed")
-    return Legacy(json.loads(raw))
+    return Legacy(json.loads(raw), receiving_lineage=receiving_lineage)

@@ -63,6 +63,15 @@ read-only compatibility adapter, not a new shared authority or a peer-selected
 local path. The old origin hash is verified using its original pool lineage,
 chapter ID and complete original row.
 
+If the canonical native owner's `pool_lineage` differs from the local receiving
+namespace recorded by that sidecar, select the latter explicitly with
+`--legacy-receiving-lineage` (or `Legacy`/`load`'s `receiving_lineage` keyword).
+The selected namespace must exist in its retained receiving bindings. It only
+chooses local historical lookups; canonical native ownership and original source
+labels/hashes stay unchanged. Omission retains the existing behavior. Never
+guess the local namespace from a sidecar containing several pools. A mismatch
+can otherwise hide unchanged prior representations and create duplicate variants.
+
 An unchanged old import exports its preserved original, not the generated
 retrieval copy. The original pool lineage remains known; missing historical
 body, embodiment and incarnation stay null. Original bytes use the same
