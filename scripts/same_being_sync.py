@@ -1108,6 +1108,7 @@ def main():
     for command in (exporting, commands.choices["apply"]):
         command.add_argument("--legacy-provenance", type=Path)
         command.add_argument("--legacy-provenance-sha256")
+        command.add_argument("--legacy-receiving-lineage")
     args = parser.parse_args()
     os.umask(0o077)
     try:
@@ -1129,8 +1130,14 @@ def main():
         if getattr(args, "legacy_provenance", None) is not None:
             from legacy_native_sync import load
 
-            legacy = load(args.legacy_provenance, args.legacy_provenance_sha256)
-        elif getattr(args, "legacy_provenance_sha256", None):
+            legacy = load(
+                args.legacy_provenance,
+                args.legacy_provenance_sha256,
+                receiving_lineage=args.legacy_receiving_lineage,
+            )
+        elif getattr(args, "legacy_provenance_sha256", None) or getattr(
+            args, "legacy_receiving_lineage", None
+        ):
             raise ValueError("legacy provenance selection needs its local file")
         if args.command == "export":
             known = json.loads(args.known.read_text()) if args.known else []

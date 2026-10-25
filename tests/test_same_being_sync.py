@@ -12,7 +12,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import same_being_sync as sync
+import same_being_sync as sync  # noqa: E402 - resolve the selected source tree first
 
 
 def load_memory(monkeypatch, path, name):
@@ -536,6 +536,62 @@ def test_legacy_import_and_original_share_one_origin_without_reimporting(pools):
     )
 
 
+def test_selected_legacy_namespace_reuses_record_under_new_canonical_pool(pools):
+    from legacy_native_sync import Legacy
+
+    source, target = pools
+    _, old, _, previous = legacy_fixture(source, target)
+    retained = copy.deepcopy(previous.state)
+    selected = Legacy(previous.state, receiving_lineage="native-target")
+    renamed = dict(owner("target"), pool_lineage="canonical-target")
+    incoming = packet(source, legacy=previous)
+    reverse = sync.export(target.DB_PATH, renamed, legacy=selected)
+    assert reverse["records"] == incoming["records"]
+    first = sync.apply(
+        target, incoming, renamed, operation_id="renamed-pool", legacy=selected
+    )
+    assert first["entries"][0]["target_chapter_id"] == old
+    assert len(canonical_rows(target)) == 1
+    assert target.expand(old)["spr"] == "original chosen summary"
+    assert target.history(old)
+    assert sync.apply(
+        target, incoming, renamed, operation_id="renamed-pool", legacy=selected
+    )["reused"]
+    assert previous.state == retained
+
+
+def test_selected_legacy_namespace_preserves_edited_receiving_variant(pools):
+    from legacy_native_sync import Legacy
+
+    source, target = pools
+    _, old, key, previous = legacy_fixture(source, target)
+    selected = Legacy(previous.state, receiving_lineage="native-target")
+    renamed = dict(owner("target"), pool_lineage="canonical-target")
+    target.update_chapter(old, content="later receiving correction")
+    reverse = sync.export(target.DB_PATH, renamed, legacy=selected)
+    doc = reverse["records"][0]["document"]
+    assert doc["record"]["raw"] == "later receiving correction"
+    assert doc["source_binding"]["pool_lineage"] == "canonical-target"
+    assert doc["legacy_sources"][0]["origin_hash"] == key
+    incoming = packet(source, legacy=previous)
+    applied = sync.apply(
+        target, incoming, renamed, operation_id="original-with-variant", legacy=selected
+    )
+    assert applied["entries"][0]["target_chapter_id"] != old
+    assert target.expand(old)["raw"] == "later receiving correction"
+    assert len(canonical_rows(target)) == 2
+
+
+def test_selected_legacy_namespace_refuses_unknown_pool(pools):
+    from legacy_native_sync import Legacy
+
+    _, _, _, previous = legacy_fixture(*pools)
+    before = copy.deepcopy(previous.state)
+    with pytest.raises(ValueError, match="receiving lineage is absent or invalid"):
+        Legacy(previous.state, receiving_lineage="unrecorded-local-pool")
+    assert previous.state == before
+
+
 def test_edited_legacy_copy_keeps_original_and_receiving_variant(pools):
     source, target = pools
     _, old, key, legacy = legacy_fixture(source, target)
@@ -588,6 +644,9 @@ def test_legacy_sidecar_digest_and_immutable_original_are_required(pools, tmp_pa
 
     fingerprint = hashlib.sha256(sidecar.read_bytes()).hexdigest()
     assert load(sidecar, fingerprint).source(key) == legacy.source(key)
+    assert load(
+        sidecar, fingerprint, receiving_lineage="native-target"
+    ).receiving_lineage == "native-target"
     sidecar.write_bytes(sidecar.read_bytes() + b"\n")
     with pytest.raises(ValueError, match="selected legacy provenance changed"):
         load(sidecar, fingerprint)
