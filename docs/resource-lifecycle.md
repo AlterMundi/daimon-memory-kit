@@ -174,3 +174,9 @@ an older model policy, use `repair_selection_response.py` with its original
 profile/request and an explicit reason, then resume normal validation. Do not
 overwrite the retained model-policy receipt to force an upgrade through pending
 work. Upgrade future model dispatch only after reconciling that work.
+
+For completed schema-valid selections halted on unsupported recognition titles,
+use the bounded [title recovery](capture-maintenance.md#halted-source-selection-titles).
+It retains originals and permits only invalid-title changes, followed by normal
+admission. Recording an issue is a continuation pointer, not recovery: finish
+available authorized repairs and verify the real pending operation and its alert.

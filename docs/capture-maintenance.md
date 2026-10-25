@@ -82,3 +82,43 @@ companions, inspect it and the unchanged current job, and explicitly create a fr
 verified checkpoint before resuming. The helper's existing timeout argument can
 bound that operator recovery independently of model/selection budgets. Never delete
 or silently accept an uncertain old backup merely because its pathname exists.
+
+## Halted source-selection titles
+
+A valid JSON selection can exhaust its ordinary corrections because a proposed
+recognition title is not a literal phrase in that record's selected sources.
+Current validation identifies the record index and explains the exact substring
+requirement. Inspect the retained selection; do not clear its halt or keep
+invoking the generator. Transport retry does not repair a completed decision.
+
+For this specific failure, use the installed worker runtime and its original
+profile/model implementation:
+
+```
+python scripts/repair_selection_titles.py --profile <receiving-profile> \
+  --sequence <current-batch> --reason 'Repair unsupported recognition titles only'
+```
+
+This explicit operation uses the configured native reviewer once, without tools
+or native memory. It verifies the owner, unchanged source revisions, producer
+implementation and current complete canonical evidence. Only unsupported titles
+may change; sources, record count/order, valid titles, decisions and links must
+remain identical. Dropping work or changing interpretation fails validation.
+The complete repaired proposal must pass the ordinary evidence contract and
+canonical-title collision check. Original navigation, halt, proposal, sources and
+review receipts remain retained, including unsuccessful results and costs.
+
+The command does not write canonical memory or advance the source cursor. Resume
+the same producer explicitly; it validates and admits the retained proposal using
+the normal checkpoint, event and indexing path. Replaying the command reuses the
+same review result. A rejected review remains pending without another model call;
+uncertain dispatches follow the existing no-implicit-retry transport contract.
+Other semantic failures require their own diagnosis; this is not a general
+permission to rewrite a failed selection. Record real admission and alert
+resolution separately from successful title repair.
+
+For a pending job pinned to an older producer, compose only the new repair command
+with that original runtime. Changing validator/navigation source changes its code
+identity; adopt the clearer validator diagnostic after the pending job completes,
+not by overwriting its code hash. Code rollback preserves newer journals and
+canonical memory.
