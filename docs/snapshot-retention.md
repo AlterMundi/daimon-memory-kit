@@ -153,3 +153,32 @@ installation receipt; remove transport archives after installation verification.
 Do not modify an already selected immutable release to trim it. Select a separate
 qualified runtime package and retire the old package only after checking live,
 pending-writer and rollback references.
+
+## Budget that follows database growth
+
+For production database-wide retention, set `database_copies: 3` alongside
+`keep_latest: 2` and a `max_count` of at least three. This opt-in byte budget is the
+larger of `max_bytes` (now a floor) and three times the largest of the current
+SQLite size and registered retained recovery points. The old fixed hard byte
+limit remains unchanged when `database_copies` is absent. The copies setting must
+be an integer between `keep_latest + 1` and `max_count`.
+
+The third copy is creation margin, not a third permanently retained backup. Both
+old recovery points remain until the new copy is verified; only completed,
+indexed, unpinned checkpoints can then rotate. A shrinking/compacted database can
+replace its larger old checkpoints; retired entries no longer set the budget.
+Pending copies, failed partials and preserved archives still count toward the
+same budget. They are never discarded to permit another operation. More pending
+work can still block safely until its actual owning recovery finishes.
+
+The filesystem's `min_free_bytes` and independent count limit remain enforced.
+Growth does not promise infinite storage or bypass another host writer. Capacity
+receipts report the effective byte budget, required reservation, count and free
+headroom so an operator can distinguish genuine disk pressure from protected
+unfinished work. Use the existing snapshot/manual APIs and exact pending job;
+there is no new scheduler, bulk cleanup or automatic model retry.
+
+Adopt the new implementation before adding this field to a receiving profile.
+Keep the previous profile and executable selector for configuration rollback.
+Rolling software back must also remove unsupported policy fields, without
+restoring older memory, journals or manifests over subsequent writes.

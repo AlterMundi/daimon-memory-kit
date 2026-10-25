@@ -23,12 +23,14 @@ NAME = re.compile(r'(batch|embedding|organization|embedding-organization)-([1-9]
 
 
 class SnapshotCapacityError(RuntimeError):
-    pass
+    def __init__(self, message, *, capacity=None):
+        super().__init__(message)
+        self.capacity = capacity or {}
 
 
 def policy(value):
     required = {'directory', 'max_count', 'max_bytes', 'min_free_bytes', 'keep_latest', 'pins'}
-    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope', 'retained_files'} != required:
+    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope', 'retained_files', 'database_copies'} != required:
         raise ValueError('explicit snapshot placement, limits and rollback pins required')
     if value.get('retention_scope', 'class') not in ('class', 'database'):
         raise ValueError('unsupported checkpoint retention scope')
@@ -42,6 +44,11 @@ def policy(value):
             raise ValueError('positive snapshot limits required')
     if value['keep_latest'] > value['max_count']:
         raise ValueError('retained checkpoints exceed count budget')
+    if 'database_copies' in value:
+        copies = value['database_copies']
+        if (value.get('retention_scope') != 'database' or type(copies) is not int
+                or not value['keep_latest'] + 1 <= copies <= value['max_count']):
+            raise ValueError('database copies must budget retained points plus creation within count limit')
     if not isinstance(value['pins'], list) or any(not isinstance(n, str) or not NAME.fullmatch(n) for n in value['pins']):
         raise ValueError('rollback pins must be exact checkpoint names')
     retained = value.get('retained_files', [])
@@ -142,6 +149,18 @@ class Store:
                 (('organization:' if organization else 'portable:')+digest(self.producer),sequence)).fetchone()
         return bool(row and row[0] in ('applied','omitted'))
 
+    def byte_budget(self):
+        """Explicit opt-in growth budget; fixed policies retain their hard limit."""
+        if 'database_copies' not in self.policy:
+            return self.policy['max_bytes']
+        with closing(self.memory.connect()) as con:
+            size = con.execute('pragma page_count').fetchone()[0] * con.execute('pragma page_size').fetchone()[0]
+        # A compacted database must still be able to replace its larger old
+        # recovery points. Retired entries and partials never inflate this base.
+        size = max([size] + [e['bytes'] for e in self.manifest['entries'].values()
+                            if e['state'] in ('ready','archive')])
+        return max(self.policy['max_bytes'], size * self.policy['database_copies'])
+
     def maintain(self, reserve=0):
         """Reserve count/bytes before paid work. Unknown/protected entries block."""
         entries = self.manifest['entries']
@@ -170,9 +189,10 @@ class Store:
             self._check(dict(item,path=str(path),schema_sha256=None))
             retained_bytes+=item['bytes']
         free = shutil.disk_usage(self.root).free
+        byte_budget = self.byte_budget()
         def excess():
             return (len(active)+len(partials)+(1 if reserve else 0)>self.policy['max_count'] or
-                    sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values())+reserve+partial_bytes+retained_bytes>self.policy['max_bytes'] or
+                    sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values())+reserve+partial_bytes+retained_bytes>byte_budget or
                     free-reserve<self.policy['min_free_bytes'])
         checked_recovery = False
         for n in sorted(active,key=lambda n:(active[n].get('created_ns',0),int(NAME.fullmatch(n)[2]))):
@@ -210,10 +230,14 @@ class Store:
             active.pop(n)
             free = shutil.disk_usage(self.root).free
         if excess():
-            raise SnapshotCapacityError('protected checkpoints or storage headroom prevent reservation')
+            raise SnapshotCapacityError('protected checkpoints or storage headroom prevent reservation', capacity=dict(
+                required_bytes=sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values())+reserve+partial_bytes+retained_bytes,
+                byte_budget=byte_budget, required_count=len(active)+len(partials)+(1 if reserve else 0),
+                max_count=self.policy['max_count'], free_bytes=free, reserve_bytes=reserve,
+                min_free_bytes=self.policy['min_free_bytes']))
         return dict(active_count=len(active),active_bytes=sum(e.get('bytes',e.get('reserved_bytes',0)) for e in active.values()),
                     archive_count=sum(e['state']=='archive' for e in entries.values()),
-                    retained_file_bytes=retained_bytes,free_bytes=free)
+                    retained_file_bytes=retained_bytes,free_bytes=free,byte_budget=byte_budget)
 
     def preflight(self, name):
         if not NAME.fullmatch(name): raise ValueError('unsupported checkpoint class')
@@ -227,7 +251,7 @@ class Store:
             size = con.execute('pragma page_count').fetchone()[0]*con.execute('pragma page_size').fetchone()[0]
         # Bound target and failed partials separately; never silently delete them.
         partial_bytes = sum(p.stat().st_size for p in self.root.glob('.*.partial-*') if p.is_file())
-        if partial_bytes+size>self.policy['max_bytes']:
+        if partial_bytes+size>self.byte_budget():
             raise SnapshotCapacityError('retained partial snapshots require explicit recovery')
         self.maintain(reserve=size if not entry else 0)
         if shutil.disk_usage(self.root).free < size+self.policy['min_free_bytes']:

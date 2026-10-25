@@ -122,6 +122,7 @@ def test_capacity_failure_is_visible_before_models_and_pending_job_survives(setu
     p=config(tmp_path);p['min_free_bytes']=10**30
     result=run(memory,inbox,state,propose,context,snapshot_policy=p,max_steps=1)
     assert result['status']['phases']['capture']['reason_code']=='snapshot_capacity_exceeded'
+    assert result['status']['phases']['capture']['capacity']['min_free_bytes']==10**30
     assert not calls and (state/'batch-1.json').exists()
     pending=json.loads((state/'batch-1.json').read_text())['input_hash']
     p['min_free_bytes']=1
@@ -347,3 +348,70 @@ def test_preserved_history_cannot_escape_storage_or_alias_a_checkpoint(tmp_path)
     for name in ('../private','/elsewhere','owner.json','batch-1-before.sqlite'):
         p['retained_files']=[dict(name=name,bytes=1,sha256=hashlib.sha256(b'x').hexdigest())]
         with pytest.raises(ValueError):policy(p)
+
+
+def test_growth_budget_rotates_two_verified_points_and_restores_after_growth(setup,tmp_path):
+    store=owned(setup,tmp_path)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=6,
+                        max_bytes=1,database_copies=3)
+    old_budget=store.byte_budget()
+    for seq in range(1,7):
+        with store.memory.connect() as con:
+            con.execute('CREATE TABLE IF NOT EXISTS growth_test(data BLOB)')
+            con.execute('INSERT INTO growth_test VALUES(zeroblob(32768))')
+            con.commit()
+        store.ensure(f'batch-{seq}-before.sqlite');complete(store,seq)
+        if seq>=2: assert store.maintain()['active_count']==2
+    assert store.byte_budget()>old_budget
+    assert store.restore('batch-6-before.sqlite',tmp_path/'restored.sqlite')['restored']
+    with sqlite3.connect(tmp_path/'restored.sqlite') as con:
+        assert con.execute('SELECT count(*) FROM growth_test').fetchone()[0]==6
+
+
+def test_growth_budget_still_protects_pending_work_and_storage_headroom(setup,tmp_path,monkeypatch):
+    store=owned(setup,tmp_path)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=6,
+                        max_bytes=1,database_copies=3)
+    for seq in range(1,4): store.ensure(f'batch-{seq}-before.sqlite')
+    with pytest.raises(SnapshotCapacityError) as exc: store.ensure('batch-4-before.sqlite')
+    assert exc.value.capacity['required_bytes']>exc.value.capacity['byte_budget']
+    assert all(e['state']=='ready' and Path(e['path']).exists() for e in store.manifest['entries'].values())
+    for seq in range(1,4):complete(store,seq)
+    store.maintain()
+    from types import SimpleNamespace
+    monkeypatch.setattr(shutil,'disk_usage',lambda _:SimpleNamespace(free=0))
+    with pytest.raises(SnapshotCapacityError) as exc: store.ensure('batch-4-before.sqlite')
+    assert exc.value.capacity['free_bytes']==0
+    assert len([e for e in store.manifest['entries'].values() if e['state']=='ready'])==2
+
+
+@pytest.mark.parametrize('copies',[True,0,2,7,3.5])
+def test_growth_budget_rejects_missing_creation_margin_and_unbounded_count(tmp_path,copies):
+    from snapshot_store import policy
+    p=config(tmp_path);p.update(retention_scope='database',keep_latest=2,max_count=6,database_copies=copies)
+    with pytest.raises(ValueError,match='database copies'):policy(p)
+
+
+def test_growth_budget_allows_compaction_and_keeps_old_points_until_new_is_verified(setup,tmp_path,monkeypatch):
+    import snapshot_store
+    store=owned(setup,tmp_path)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=6,
+                        max_bytes=1,database_copies=3)
+    with store.memory.connect() as con:
+        con.execute('CREATE TABLE growth_test(data BLOB)')
+        con.execute('INSERT INTO growth_test VALUES(zeroblob(65536))');con.commit()
+    for seq in (1,2):store.ensure(f'batch-{seq}-before.sqlite');complete(store,seq)
+    large_budget=store.byte_budget()
+    with store.memory.connect() as con:
+        con.execute('DROP TABLE growth_test');con.commit();con.execute('VACUUM')
+    assert store.byte_budget()==large_budget
+    original=snapshot_store.verified_snapshot
+    def interrupted(*args,**kwargs):raise TimeoutError('fixture interrupted copy')
+    with monkeypatch.context() as patch:
+        patch.setattr(snapshot_store,'verified_snapshot',interrupted)
+        with pytest.raises(TimeoutError):store.ensure('batch-3-before.sqlite')
+    assert all(Path(store.manifest['entries'][f'batch-{n}-before.sqlite']['path']).exists() for n in (1,2))
+    store.ensure('batch-3-before.sqlite');complete(store,3)
+    store.ensure('batch-4-before.sqlite');complete(store,4)
+    assert store.maintain()['active_count']==2
+    assert store.byte_budget()<large_budget
