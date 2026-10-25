@@ -159,7 +159,10 @@ class Store:
         # recovery points. Retired entries and partials never inflate this base.
         size = max([size] + [e['bytes'] for e in self.manifest['entries'].values()
                             if e['state'] in ('ready','archive')])
-        return max(self.policy['max_bytes'], size * self.policy['database_copies'])
+        # Authorized fixed history capsules have exact registered sizes/hashes;
+        # they must not consume the slot needed to rotate database copies.
+        history = sum(item['bytes'] for item in self.policy.get('retained_files', []))
+        return max(self.policy['max_bytes'], size * self.policy['database_copies'] + history)
 
     def maintain(self, reserve=0):
         """Reserve count/bytes before paid work. Unknown/protected entries block."""

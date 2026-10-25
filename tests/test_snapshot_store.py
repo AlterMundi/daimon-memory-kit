@@ -415,3 +415,19 @@ def test_growth_budget_allows_compaction_and_keeps_old_points_until_new_is_verif
     store.ensure('batch-4-before.sqlite');complete(store,4)
     assert store.maintain()['active_count']==2
     assert store.byte_budget()<large_budget
+
+
+def test_growth_budget_reserves_registered_history_without_losing_rotation_slot(setup,tmp_path):
+    import hashlib
+    store=owned(setup,tmp_path)
+    store.policy.update(retention_scope='database',keep_latest=2,max_count=6,
+                        max_bytes=1,database_copies=3)
+    history=store.root/'history.tar.zst';history.write_bytes(b'fixed preserved history')
+    store.policy['retained_files']=[dict(name=history.name,bytes=history.stat().st_size,
+                                       sha256=hashlib.sha256(history.read_bytes()).hexdigest())]
+    for seq in range(1,5):
+        store.ensure(f'batch-{seq}-before.sqlite');complete(store,seq)
+    assert store.maintain()['active_count']==2
+    assert history.read_bytes()==b'fixed preserved history'
+    history.write_bytes(b'changed')
+    with pytest.raises(ValueError,match='content changed'):store.ensure('batch-5-before.sqlite')

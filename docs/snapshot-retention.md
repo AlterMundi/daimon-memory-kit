@@ -159,7 +159,9 @@ pending-writer and rollback references.
 For production database-wide retention, set `database_copies: 3` alongside
 `keep_latest: 2` and a `max_count` of at least three. This opt-in byte budget is the
 larger of `max_bytes` (now a floor) and three times the largest of the current
-SQLite size and registered retained recovery points. The old fixed hard byte
+SQLite size and registered retained recovery points, plus the explicitly registered
+fixed bytes of preserved history capsules. Capsule sizes/hashes are still checked;
+changes require explicit registration and are not inferred from disk usage. The old fixed hard byte
 limit remains unchanged when `database_copies` is absent. The copies setting must
 be an integer between `keep_latest + 1` and `max_count`.
 
