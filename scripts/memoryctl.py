@@ -791,16 +791,20 @@ def delete_chapter_fts(con, row):
 
 
 def add_text(shelf_name, title, raw, tags=None, importance=0.5, source_path=None, source_kind=None, replace=True,
-             engram_type=None, event_ts=None, actor=None, location=None, metadata=None, expected_revision=None, summary=None, _con=None):
+             engram_type=None, event_ts=None, actor=None, location=None, metadata=None, expected_revision=None, summary=None, _con=None, preserve_text=False):
+    if type(preserve_text) is not bool:
+        raise ValueError("preserve_text must be a boolean")
+    if preserve_text and (not isinstance(raw, str) or (summary is not None and not isinstance(summary, str))):
+        raise ValueError("preserved memory text must be strings")
     if source_kind == "daimon-projection" or shelf_name == "daimon-projection":
         raise SystemExit("Daimon projections require the versioned projection API")
     own_connection = _con is None
     if own_connection:
         init_db()
-    raw = normalize_text(raw)
+    raw = raw if preserve_text else normalize_text(raw)
     tags = tags or []
-    spr = normalize_text(summary) if summary is not None else simple_spr(raw)
-    if not spr:
+    spr = (summary if preserve_text else normalize_text(summary)) if summary is not None else simple_spr(raw)
+    if not spr and not preserve_text:
         raise ValueError("summary must not be empty")
     kind = engram_type or native_records.SHELF_TYPES.get(shelf_name, "semantic")
     if kind not in {"episodic", "semantic", "procedural"}:
@@ -826,7 +830,7 @@ def add_text(shelf_name, title, raw, tags=None, importance=0.5, source_path=None
                            actor=actor if actor is not None else _UNSET,
                            location=location if location is not None else _UNSET,
                            metadata=metadata, expected_revision=old['revision'],
-                           source_path=source_path if source_path is not None else _UNSET, source_kind=source_kind, summary=summary, _con=con)
+                           source_path=source_path if source_path is not None else _UNSET, source_kind=source_kind, summary=summary, _con=con, preserve_text=preserve_text)
             if own_connection:
                 con.commit()
             return old['id']
@@ -2326,7 +2330,7 @@ def review_link_suggestion(suggestion_id, action, note=None):
 
 def update_chapter(chapter_id, content=None, title=None, tags=None, importance=None,
                    engram_type=None, event_ts=_UNSET, actor=_UNSET, location=_UNSET,
-                   metadata=None, expected_revision=None, source_path=_UNSET, source_kind=None, summary=None, _con=None):
+                   metadata=None, expected_revision=None, source_path=_UNSET, source_kind=None, summary=None, _con=None, preserve_text=False):
     """Update a chapter in place (v3.8.0+).
 
     Only the fields explicitly passed are changed; the rest are preserved.
@@ -2341,6 +2345,11 @@ def update_chapter(chapter_id, content=None, title=None, tags=None, importance=N
 
     Returns a small report dict.
     """
+    if type(preserve_text) is not bool:
+        raise ValueError("preserve_text must be a boolean")
+    if preserve_text and ((content is not None and not isinstance(content, str))
+                          or (summary is not None and not isinstance(summary, str))):
+        raise ValueError("preserved memory text must be strings")
     if (content is None and title is None and tags is None and importance is None
             and engram_type is None and event_ts is _UNSET and actor is _UNSET
             and location is _UNSET and metadata is None and source_path is _UNSET and source_kind is None and summary is None):
@@ -2376,13 +2385,13 @@ def update_chapter(chapter_id, content=None, title=None, tags=None, importance=N
         new_location = old['location_json'] if location is _UNSET else (None if location is None else json.dumps(location))
         new_metadata = old['source_metadata_json'] if metadata is None else json.dumps(native_records.metadata(metadata), ensure_ascii=False)
 
-        new_raw = normalize_text(content) if content is not None else old["raw"]
+        new_raw = (content if preserve_text else normalize_text(content)) if content is not None else old["raw"]
         new_title = title if title is not None else old["title"]
         new_tags = list(tags) if tags is not None else json.loads(old["tags_json"] or "[]")
         new_importance = float(importance) if importance is not None else old["importance"]
-        new_spr = (normalize_text(summary) if summary is not None else
+        new_spr = ((summary if preserve_text else normalize_text(summary)) if summary is not None else
                    old["spr"] if new_raw == old["raw"] else simple_spr(new_raw))
-        if not new_spr:
+        if not new_spr and not preserve_text:
             raise ValueError("summary must not be empty")
         content_changed = (new_raw != old["raw"]) or (new_title != old["title"]) or (new_spr != old["spr"])
         book_before = con.execute('SELECT source_path,source_kind FROM books WHERE id=?', (old['book_id'],)).fetchone()

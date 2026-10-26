@@ -21,10 +21,23 @@ re-authors old experience. Existing metadata attribution remains unchanged.
 The native write API composes under one bounded SQLite transaction. Canonical
 retrieval changes and the operation receipt commit together. An interrupted
 transaction rolls back; an uncertain return reconciles the original operation.
+The receiver must first have the supported native revision schema. Upgrade an
+older receiver through its owning native migration, reusing the parent's verified
+pre-write checkpoint; retain original rows and the pending operation. Exporting
+an older pool successfully does not establish its readiness to receive writes.
 A return to the original pool reuses its native record. Unrelated additions,
 access counters and queries do not require stopping consumers or replaying work.
 An untouched mirror accepts an explicitly linked source correction through the
 native revision API; local edits remain variants rather than being overwritten.
+
+Historical text is preserved exactly in both the receiving record and its
+attributed original. The native `add_text` and `update_chapter` APIs offer explicit
+`preserve_text=True` for this purpose, including empty explicit summaries,
+whitespace and line endings. Ordinary calls retain their existing normalization.
+The importer requests this capability only when necessary, refuses unsupported
+APIs before writing, and verifies the received raw text and summary. The option
+does not bypass projection ownership, content scanning, embedding restrictions,
+revision history, FTS or the transaction. Existing packet hashes are unchanged.
 
 Source revisions are retained once as content-addressed JSON. Packets carry exact
 SHA-256/byte references and only missing selected content; closure is checked
@@ -91,10 +104,12 @@ not raw memory. No command completes the parent's checkpoint implicitly.
 
 ## Remaining integration
 
-- Connect exact references, local decisions and effect receipts to the maintained
-  Matrix/Weave integration and selective Skills installer under one operation.
+- Use the maintained Cluster same-being integration operator to connect exact
+  references, local decisions and effect receipts with the selective Skills
+  installer. Native event sync alone does not apply this content.
 - Qualify the exact receiving package, real source/Legion incorporation and
-  compatible rollback. The old Legion baseline remains unchanged meanwhile.
+  compatible rollback. Published source and a prepared binding do not prove
+  receiving adoption or actual harness consumption.
 
 Packets are bounded at sixteen MiB and at most128records per page. An oversized
 selection is an explicit unresolved input, never an excuse to omit source
