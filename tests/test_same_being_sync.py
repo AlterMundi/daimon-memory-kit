@@ -681,3 +681,67 @@ def test_inventory_is_transport_knowledge_and_not_adoption_evidence(pools):
         )
     with pytest.raises(ValueError, match="belongs to another being"):
         sync.inventory(target.DB_PATH, owner("other", "another-being"))
+
+
+@pytest.mark.parametrize('raw,summary', [
+    ('\r\n historical text \t\n', '\r\n original summary \n'),
+    ('', 'Summary of a historical empty record\n'),
+    ('An original without a summary', ''),
+])
+def test_exact_text_import_history_and_retry(pools, raw, summary):
+    source, target = pools
+    identifier = source.add_text('episodes', 'Exact historical text', raw,
+                                 summary=summary, preserve_text=True, source_kind='config')
+    first_packet = packet(source)
+    first = sync.apply(target, first_packet, owner('target'), operation_id='exact-text-first')
+    target_id = first['entries'][0]['target_chapter_id']
+    received = target.expand(target_id)
+    assert (received['raw'], received['spr']) == (raw, summary)
+    assert received['embed_disabled'] == 1
+    retry = sync.apply(target, first_packet, owner('target'), operation_id='exact-text-first')
+    assert retry == {**first, 'reused': True}
+    assert len(canonical_rows(target)) == 1
+
+    changed_raw, changed_summary = raw + '\r\nsecond version\n', summary + '\nsecond summary\n'
+    # Exercise add_text's existing replacement path and its delegated update.
+    source.add_text('episodes', 'Exact historical text', changed_raw,
+                    summary=changed_summary, preserve_text=True, source_kind='config')
+    assert source.expand(identifier)['raw'] == changed_raw
+    second_packet = packet(source)
+    second = sync.apply(target, second_packet, owner('target'), operation_id='exact-text-second')
+    updated = target.expand(second['entries'][0]['target_chapter_id'])
+    assert updated['id'] == target_id
+    assert (updated['raw'], updated['spr']) == (changed_raw, changed_summary)
+    with target.connect() as con:
+        prior = json.loads(con.execute('SELECT snapshot_json FROM chapter_revisions WHERE chapter_id=? ORDER BY id',
+                                      (target_id,)).fetchone()[0])
+    assert (prior['raw'], prior['spr']) == (raw, summary)
+    retry = sync.apply(target, second_packet, owner('target'), operation_id='exact-text-second')
+    assert retry == {**second, 'reused': True}
+
+
+def test_default_text_normalization_is_unchanged(pools):
+    source, _ = pools
+    identifier = source.add_text('episodes', 'Ordinary text', '\r\n text \n', summary=' summary \n')
+    assert (source.expand(identifier)['raw'], source.expand(identifier)['spr']) == ('text', 'summary')
+    source.update_chapter(identifier, content=' updated\r\ntext \n', summary=' updated summary \n')
+    assert (source.expand(identifier)['raw'], source.expand(identifier)['spr']) == ('updated\ntext', 'updated summary')
+    with pytest.raises(ValueError, match='boolean'):
+        source.add_text('episodes', 'Bad flag', 'text', preserve_text=1)
+
+
+def test_exact_text_requires_supported_api_before_write(pools, monkeypatch):
+    source, target = pools
+    source.add_text('episodes', 'Preserved summary', 'text', summary='', preserve_text=True)
+    incoming = packet(source)
+    actual_add = target.add_text
+
+    def older_add(*args, _con=None, **kwargs):
+        return actual_add(*args, _con=_con, **kwargs)
+
+    monkeypatch.setattr(target, 'add_text', older_add)
+    with pytest.raises(ValueError, match='exact-text import support'):
+        sync.apply(target, incoming, owner('target'), operation_id='old-api-refused')
+    assert canonical_rows(target) == []
+    with target.connect() as con:
+        assert con.execute("SELECT 1 FROM sqlite_master WHERE name='dmk_sync_origins'").fetchone() is None

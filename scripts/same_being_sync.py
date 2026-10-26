@@ -608,11 +608,12 @@ def _import(memory, con, entry, owner, legacy=None):
             raise ValueError("native origin lost its receiving binding")
         return target, False
     source = doc["record"]
-    if (
-        memory.normalize_text(source["raw"]) != source["raw"]
+    preserve_text = (
+        source["spr"] == ""
+        or memory.normalize_text(source["raw"]) != source["raw"]
         or memory.normalize_text(source["spr"]) != source["spr"]
-    ):
-        raise ValueError("native import would normalize original content")
+    )
+    text_options = {"preserve_text": True} if preserve_text else {}
     legacy_target = None
     for alias in doc["legacy_sources"]:
         original = _content(con, alias["record_ref"])
@@ -705,6 +706,7 @@ def _import(memory, con, entry, owner, legacy=None):
             summary=source["spr"],
             expected_revision=before["revision"],
             _con=con,
+            **text_options,
         )
     else:
         target = memory.add_text(
@@ -725,8 +727,11 @@ def _import(memory, con, entry, owner, legacy=None):
             metadata=metadata,
             summary=source["spr"],
             _con=con,
+            **text_options,
         )
     copied = record(con, target)
+    if copied["raw"] != source["raw"] or copied["spr"] != source["spr"]:
+        raise ValueError("native import would normalize original content")
     if source.get("embed_disabled") and not copied.get("embed_disabled"):
         raise ValueError("native import would relax original embedding policy")
     # The canonical native API creates receiving identity/history. Original UID,
@@ -842,6 +847,13 @@ def apply(memory, packet, owner, *, operation_id, after_effect=None, legacy=None
     for method in (memory.add_text, memory.add_link, memory.update_chapter):
         if "_con" not in inspect.signature(method).parameters:
             raise ValueError("receiving native API lacks transactional composition")
+    if (any(entry["document"]["record"]["spr"] == "" for entry in packet["records"]) or any(
+        memory.normalize_text(entry["document"]["record"][field])
+        != entry["document"]["record"][field]
+        for entry in packet["records"] for field in ("raw", "spr")
+    )) and any("preserve_text" not in inspect.signature(method).parameters
+              for method in (memory.add_text, memory.update_chapter)):
+        raise ValueError("receiving native API lacks exact-text import support")
     if not isinstance(operation_id, str) or not re.fullmatch(
         "[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", operation_id
     ):
