@@ -25,6 +25,7 @@ ACTIONS = {
     'response_incomplete':'Inspect the retained response and output limit before resuming.',
     'dispatch_unresolved':'Reconcile the retained dispatch before another billable request.',
     'provider_error':'Inspect the retained provider status before resuming.',
+    'storage_pressure':'Restore backup storage capacity and explicitly refresh the periodic backup; ordinary committed memory is preserved.',
 }
 
 
@@ -150,7 +151,7 @@ def safe_projection(inbox, *, after=0, limit=100):
         # Existing index incidents use "embedding" internally. Preserve their
         # journal history while exposing the shared receiving phase name.
         phase='index' if row['phase']=='embedding' else row['phase']
-        if code not in ACTIONS or phase not in {'capture','selection','organization','consolidation','index'}:
+        if code not in ACTIONS or phase not in {'capture','selection','organization','consolidation','index','backup'}:
             raise ValueError('unsupported operational projection')
         if row['state'] not in {'open','resolved'}:
             raise ValueError('unsupported processing state')
@@ -161,6 +162,11 @@ def safe_projection(inbox, *, after=0, limit=100):
             severity='error' if row['state']=='open' else 'info',problem_code=code,
             summary=(f'Memory {phase} pending: {code.replace("_"," ")}.' if row['state']=='open'
                      else f'Memory {phase} completed after explicit producer recovery.'),
-            action=ACTIONS[code],source_at=created,updated_at=max(created,updated),
+            action=(('Inspect the retained backup attempt and explicitly refresh protection; do not repeat memory writes.'
+                    if row['state']=='open' else 'Periodic backup protection was restored; memory processing has separate receipts.')
+                    if phase=='backup' else ACTIONS[code]),source_at=created,updated_at=max(created,updated),
             processing_state=row['state'],work_preserved=True))
+        if phase=='backup':
+            items[-1]['summary']=('Periodic memory backup needs recovery; committed memory writes have separate receipts.'
+                if row['state']=='open' else 'Periodic memory backup protection restored.')
     return dict(items=items,next_cursor=rows[-1]['rowid'] if more else None)

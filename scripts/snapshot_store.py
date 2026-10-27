@@ -30,7 +30,7 @@ class SnapshotCapacityError(RuntimeError):
 
 def policy(value):
     required = {'directory', 'max_count', 'max_bytes', 'min_free_bytes', 'keep_latest', 'pins'}
-    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope', 'retained_files', 'database_copies'} != required:
+    if not isinstance(value, dict) or set(value)-{'timeout_seconds', 'retention_scope', 'retained_files', 'database_copies', 'routine_backup'} != required:
         raise ValueError('explicit snapshot placement, limits and rollback pins required')
     if value.get('retention_scope', 'class') not in ('class', 'database'):
         raise ValueError('unsupported checkpoint retention scope')
@@ -49,6 +49,11 @@ def policy(value):
         if (value.get('retention_scope') != 'database' or type(copies) is not int
                 or not value['keep_latest'] + 1 <= copies <= value['max_count']):
             raise ValueError('database copies must budget retained points plus creation within count limit')
+    if 'routine_backup' in value:
+        from periodic_backups import configuration
+        configuration(value['routine_backup'])
+        if value.get('retention_scope') != 'database' or value['routine_backup']['directory'] == value['directory']:
+            raise ValueError('periodic baselines require database scope and a separate directory')
     if not isinstance(value['pins'], list) or any(not isinstance(n, str) or not NAME.fullmatch(n) for n in value['pins']):
         raise ValueError('rollback pins must be exact checkpoint names')
     retained = value.get('retained_files', [])
@@ -90,9 +95,16 @@ class Store:
         self.memory, self.state = memory, Path(state_dir)
         self.policy = policy(configuration)
         self.root = Path(configuration['directory'])
-        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.path = self.state/'snapshot-manifest.json'
         self.owner = dict(database=str(Path(memory.DB_PATH).resolve()),state_dir=str(self.state.resolve()),producer=digest(owner))
+        self.producer = owner
+        self.manifest = None
+        if 'routine_backup' not in self.policy:
+            self._initialize()
+
+    def _initialize(self):
+        if self.manifest is not None:return
+        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         if self.path.exists():
             self.manifest = json.loads(self.path.read_text())
             if self.manifest.get('schema')!='dmk.snapshot-store/v1' or self.manifest['owner']!=self.owner or self.manifest['directory']!=str(self.root):
@@ -108,7 +120,6 @@ class Store:
             with os.fdopen(fd,'w') as f:
                 json.dump(self.owner,f);f.flush();os.fsync(f.fileno())
             sync_directory(self.root)
-        self.producer = owner
 
     def save(self):
         checkpoint(self.path, self.manifest)
@@ -166,6 +177,7 @@ class Store:
 
     def maintain(self, reserve=0):
         """Reserve count/bytes before paid work. Unknown/protected entries block."""
+        self._initialize()
         entries = self.manifest['entries']
         database_scope = self.policy.get('retention_scope') == 'database'
         states = ('ready','retiring','creating','archive') if database_scope else ('ready','retiring','creating')
@@ -244,6 +256,11 @@ class Store:
 
     def preflight(self, name):
         if not NAME.fullmatch(name): raise ValueError('unsupported checkpoint class')
+        if 'routine_backup' in self.policy:
+            # A backup reserve is not an ordinary transaction's space budget.
+            # Legacy checkpoints stay registered/protected; do not scan them.
+            return 0
+        self._initialize()
         entry = self.manifest['entries'].get(name)
         if entry and entry['state'] in ('ready','archive'):
             self._check(entry); self.maintain(); return
@@ -261,7 +278,17 @@ class Store:
             raise SnapshotCapacityError('insufficient snapshot storage headroom')
         return size
 
-    def ensure(self, name):
+    def ensure(self, name, *, critical=False):
+        if 'routine_backup' in self.policy:
+            if not critical:
+                return None
+            # Explicit maintenance retains the original pre-operation contract.
+            original=self.policy
+            self.policy={k:v for k,v in original.items() if k!='routine_backup'}
+            try:
+                return self.ensure(name)
+            finally:
+                self.policy=original
         size = self.preflight(name)
         entry = self.manifest['entries'].get(name)
         if entry and entry['state'] in ('ready','archive'): return Path(entry['path'])
@@ -285,6 +312,7 @@ class Store:
         checked, then atomically replaced by a compatible link. Interrupted copies
         are never mistaken for a completed receipt.
         """
+        self._initialize()
         for source in sorted(self.state.glob('*-before.sqlite')):
             if not NAME.fullmatch(source.name): continue
             if source.name in self.manifest['entries']:
@@ -318,6 +346,7 @@ class Store:
         return self.maintain()
 
     def restore(self, name, destination):
+        if self.manifest is None:self._initialize()
         entry=self.manifest['entries'][name]
         if entry['state'] not in ('ready','archive'): raise ValueError('checkpoint unavailable for restore')
         self._check(entry)

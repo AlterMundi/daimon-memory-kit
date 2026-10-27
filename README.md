@@ -72,6 +72,7 @@ DMK can maintain attributed retrieval views. Native DMK records remain distinct.
 | `daimon_projection.py` | Attributed Matrix retrieval views |
 | `codex_projection.py`, `codex_coordinator.py` | Qualified native-projection experiments |
 | `sqlite_snapshot.py` | Verified snapshots including committed WAL data |
+| `periodic_backups.py` | Shared periodic baselines; ordinary writes avoid per-operation full copies |
 | `publish_collective.py` | Explicitly reviewed downstream publication |
 
 The Obsidian exporter and generated vault templates have been retired. Existing

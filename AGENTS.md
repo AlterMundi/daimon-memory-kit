@@ -9,7 +9,9 @@ a runtime or retaining a qualification corpus. Put large outputs on the receivin
 data volume. Runtime packages contain executable resources, not the research
 corpus. Reuse valid evidence and fixtures instead of repeating model calls.
 
-Use the configured worker checkpoint policy or manual `backupctl` lifecycle.
+Use the receiving backup policy. Qualified periodic profiles do not copy the
+whole database before ordinary memory/index writes. Use `backupctl begin --critical`
+for consequential maintenance; see docs/periodic-backups.md.
 Protect unfinished operations and concrete rollback dependencies. A backup's
 completion/retention must be explicit; do not leave untracked full copies after
 every edit. Keep compact preserved originals within an explicit byte budget.

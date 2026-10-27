@@ -5,7 +5,16 @@ recovery points and executable releases are not additional autobiographical
 history. Give each resource its owning lifecycle rather than applying recursive
 age-based deletion to a being's state.
 
-## Worker recovery points
+## Routine memory protection
+
+For opted-in receivers, use [periodic baselines](periodic-backups.md) shared by
+manual and worker callers. Ordinary writes go directly through the supported
+atomic APIs; they do not require a full pre-write copy. The existing finite worker
+refreshes backups separately and reports protection failures through Alerts.
+The policy has a bounded periodic recovery scope, not a universal delta-replay or
+zero-loss promise. Keep full operation-bound points for consequential maintenance.
+
+## Legacy and critical worker recovery points
 
 Use the explicit database-wide policy in [snapshot retention](snapshot-retention.md).
 Keep two recent verified recovery points, plus checkpoints protecting pending,
@@ -26,10 +35,10 @@ and explicit rollback `pins`. It uses its own owner-bound directory; never point
 it at the worker's store or another being's backups. The CLI checks the receiving
 `HMK_DB_PATH` binding when present.
 
-Before changing memory:
+Before consequential maintenance requiring its own rollback point:
 
 ```sh
-dmk backupctl.py begin --operation correction-20261018-unique \
+dmk backupctl.py begin --critical --operation correction-20261018-unique \
   --reason 'Before the authorized correction'
 ```
 
