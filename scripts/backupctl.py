@@ -33,7 +33,7 @@ class ManualStore(Store):
                    for v in self.operations['entries'].values())
 
 
-def operate(configuration, command, *, operation=None, reason=None, destination=None):
+def operate(configuration, command, *, operation=None, reason=None, destination=None, critical=False):
     required={'database','snapshots'}
     if not isinstance(configuration,dict) or set(configuration)!=required:
         raise ValueError('manual backup database and snapshots policy required')
@@ -53,6 +53,7 @@ def operate(configuration, command, *, operation=None, reason=None, destination=
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         store=ManualStore(Database(database.resolve()),state,p,
                           {'schema':'dmk.manual-backups/v1','database':str(database.resolve())})
+        store._initialize()  # Explicit manual control also preserves legacy pending operations.
         path=state/'operations.json'
         if store.manifest['entries'] and not path.exists():
             raise ValueError('manual operations journal lost; preserve checkpoints')
@@ -73,25 +74,38 @@ def operate(configuration, command, *, operation=None, reason=None, destination=
                 if f'batch-{seq}-before.sqlite' in store.manifest['entries']:
                     raise ValueError('manual sequence overlaps retained history')
                 entries[operation]={'name':f'batch-{seq}-before.sqlite','state':'pending','reason':reason}
+                if 'routine_backup' in p:
+                    entries[operation]['protection']='critical' if critical else 'periodic'
                 checkpoint(path,journal)
             entry=entries[operation]
             if entry['state']!='pending' or entry['reason']!=reason:
                 raise ValueError('operation already completed or reason changed; do not reuse its backup for a new write')
-            saved=store.ensure(entry['name'])
+            if entry.get('protection')=='periodic':
+                if critical:raise ValueError('ordinary operation cannot become critical after it began')
+                from periodic_backups import Baselines
+                return dict(operation=operation,state='pending',snapshot=None,sha256=None,
+                    recovery_scope='periodic_database',backup=Baselines(database,p).status())
+            if entry.get('protection')=='critical' and not critical:
+                raise ValueError('critical operation must retain --critical on replay')
+            saved=store.ensure(entry['name'],critical=True)
             return {'operation':operation,'state':'pending','snapshot':str(saved),
                     'sha256':store.manifest['entries'][entry['name']]['sha256']}
         if operation not in entries:raise ValueError('unknown manual operation')
         entry=entries[operation]
+        if command=='restore' and entry.get('protection')=='periodic':
+            raise ValueError('ordinary writes have no per-operation restore point; use a periodic baseline or logical correction')
         if command=='complete':
             if not isinstance(reason,str) or not reason.strip():
                 raise ValueError('verified completion or cancellation reason required')
             if entry['state']=='pending':
                 snapshot=store.manifest['entries'].get(entry['name'])
-                if not snapshot or snapshot['state']!='ready':
+                if entry.get('protection')!='periodic' and (not snapshot or snapshot['state']!='ready'):
                     raise ValueError('pending snapshot creation must be recovered before completion')
-                store._check(snapshot)
+                if entry.get('protection')!='periodic':store._check(snapshot)
                 entry.update(state='complete',completion_reason=reason)
                 checkpoint(path,journal)
+            if entry.get('protection')=='periodic':
+                return {'operation':operation,'state':'complete','recovery_scope':'periodic_database'}
             return {'operation':operation,'state':'complete','retention':store.maintain()}
         if command=='restore':
             if destination is None:raise ValueError('new restoration destination required')
@@ -104,9 +118,10 @@ def main():
     p.add_argument('command',choices=['begin','complete','maintain','restore'])
     p.add_argument('--profile',type=Path,default=Path.home()/'.config/daimon-memory-kit/backup.json')
     p.add_argument('--operation');p.add_argument('--reason');p.add_argument('--destination',type=Path)
+    p.add_argument('--critical',action='store_true',help='Require a dedicated pre-write snapshot for consequential maintenance')
     a=p.parse_args()
     print(json.dumps(operate(json.loads(a.profile.read_text()),a.command,
-                            operation=a.operation,reason=a.reason,destination=a.destination)))
+                            operation=a.operation,reason=a.reason,destination=a.destination,critical=a.critical)))
 
 
 if __name__=='__main__':main()

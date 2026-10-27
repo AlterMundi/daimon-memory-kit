@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import time
 
 from capture_inbox import Inbox
 import account_reconciliation
@@ -102,6 +103,9 @@ def profile(path):
         raise ValueError("explicit positive supported invocation budgets required")
     if "snapshots" in value:
         snapshot_store.policy(value["snapshots"])
+        routine=value['snapshots'].get('routine_backup')
+        if routine and routine['subject'] != context['subject']:
+            raise ValueError('periodic backup subject differs from receiving owner')
     return value
 
 
@@ -152,7 +156,7 @@ def run(value):
             snapshot_policy=value.get("snapshots"),
         )
 
-    return memory_worker.run(
+    result = memory_worker.run(
         memory,
         inbox,
         value["state_dir"],
@@ -162,6 +166,56 @@ def run(value):
         snapshot_policy=value.get("snapshots"),
         **value["budgets"],
     )
+    if 'routine_backup' in value.get('snapshots',{}):
+        refresh_backup(value,inbox,result)
+    return result
+
+
+def refresh_backup(value,inbox,result):
+    """One model-free backup maintenance step after the finite worker phases."""
+    from periodic_backups import Baselines
+    from codex_coordinator import checkpoint
+    path=Path(value['state_dir'])/'worker-status.json'
+    with open(str(inbox.path)+'.worker.lock','a+b') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        if json.loads(path.read_text()) != result['status']:
+            raise ValueError('another worker advanced; preserve its status')
+        checkpoint(path,dict(result['status'],state='running',phase='backup',updated_ns=time.time_ns()))
+        pool=Baselines(value['database'],value['snapshots'])
+        try:
+            backup=pool.refresh()
+        except (OSError,ValueError,KeyError,TypeError) as error:
+            backup=dict(state='failed',reason_code='backup_state_unreadable',error_type=type(error).__name__)
+        safe=backup_notice(value,inbox,backup)
+        result['backup']=safe; result['status']['backup']=safe
+        if backup['state']=='failed':
+            result['status']['state']='pending'
+        result['status'].update(phase=None,updated_ns=time.time_ns())
+        checkpoint(path,result['status'])
+
+
+def backup_notice(value,inbox,backup):
+    """Use the established durable producer outbox, including explicit refresh."""
+    from provider_status import Alerts, ProviderProblem
+    from capturectl import digest
+    binding=json.loads(inbox.binding)
+    if (value['context']['subject'] != value['snapshots']['routine_backup']['subject'] or
+            any(binding[k]!=value['context'][k] for k in ('subject','source_instance'))):
+        raise ValueError('backup notification owner differs')
+    alerts=Alerts(inbox)
+    operation='periodic-backup:'+digest(dict(database=str(Path(value['database']).resolve()),subject=value['context']['subject']))
+    safe={k:v for k,v in backup.items() if k not in {'snapshot','sha256'}}
+    if backup['state']=='failed':
+        with inbox.connect() as con:
+            prior=con.execute("SELECT id FROM operational_alerts WHERE operation_key=? AND phase='backup' AND state='open' LIMIT 1",(operation,)).fetchone()
+        if prior:alert_id=prior[0]
+        else:
+            failure=ProviderProblem('dmk-backup',backup.get('episode',str(time.time_ns())),
+                dict(code='storage_pressure' if backup.get('reason_code')=='backup_capacity' else 'provider_error'))
+            alert_id=alerts.report(operation,'backup',failure)
+        safe['alert_id']=alert_id
+    elif backup['state']=='current':alerts.resolve(operation)
+    return safe
 
 
 def retry(value, request_path, reason):

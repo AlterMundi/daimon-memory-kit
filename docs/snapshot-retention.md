@@ -1,4 +1,9 @@
-# Pre-write snapshot storage and retention
+# Operation-bound snapshot storage and retention
+
+For routine memory/index writes, the opted-in [periodic policy](periodic-backups.md)
+supersedes per-operation full copies. The contract below continues to protect
+legacy and explicit critical recovery points; existing checkpoints are preserved.
+
 
 DMK #19 adds optional `snapshots` configuration to the existing finite worker
 profile. No scheduler, source selection, model or memory owner changes. Without
