@@ -134,3 +134,33 @@ survives in the updated record and revision history. Renaming to bypass duplicat
 dropping evidence and an unsupported continuity judgment remain pending for
 inspection. Ordinary revision checks still protect concurrent canonical changes.
 This mode does not admit a mere title match as proof of semantic continuity.
+
+## Codex terminal hook deadlines
+
+The selected Codex0.163.0 (source93e7cf5) hard-caps SessionEnd/Interrupt at3seconds,
+default1second. SessionEnd cannot run asynchronously past shutdown. Other events
+have different semantics; preserve the independently qualified Stop hook.
+
+The Alerts supervisor now budgets terminal capture separately: at most1.5seconds
+for the child, further reduced by input/intent overhead against a2.5-second
+process budget. Receiving SessionEnd configuration uses timeout3 and child1.5;
+Stop retains its existing setting. This leaves time for a durable failure receipt
+instead of letting a nominal30-second child outlive its supervisor. It does not
+promise an upper bound on kernel/fsync/scheduling latency.
+
+Qualify with the actual binary: a model-free native SessionEnd on an isolated
+fictional thread must yield a complete capture receipt and exact source recovery
+after removing that source. Exercise a slow child to ensure it leaves an explicit
+pending gap under the native bound, with no invented preservation. Keep native
+memory disabled; do not stop active production threads to obtain an event.
+Config publication, trust/reload and naturally observed receiving hooks remain
+separate evidence. An old session can retain cached hooks.
+
+An attempt's source identifier is not a copy of the transcript. A hard deadline
+can still interrupt capture under resource pressure; preserve the native source,
+inbox/WAL and attempt and recover via the existing explicit supervisor/native
+capture path. No automatic queue, detached process, timer, source discovery,
+provider call or replay of human input is introduced. No unconditional guarantee
+of capturing an arbitrary source at shutdown is claimed. A future durable handoff
+would need separate qualification for source movement/deletion and bounded
+retention; a pointer-only queue would not solve byte preservation.

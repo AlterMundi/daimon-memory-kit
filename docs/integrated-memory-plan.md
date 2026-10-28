@@ -631,6 +631,12 @@ human's report and explicitly declined to invent the original wording or prior
 knowledge. Private names and source prose are not published. This is useful real
 receiving evidence, not another complete semantic benchmark.
 
+**Historical qualification, superseded for terminal-hook budgets:** Codex0.163.0
+caps SessionEnd/Interrupt at3seconds and makes SessionEnd synchronous. The outer
+budgets below cannot be adopted on that version. See
+[capture maintenance](capture-maintenance.md#codex-terminal-hook-deadlines) for the
+current contract; the earlier measurements remain attributed evidence.
+
 Actual supervised Stop/SessionEnd capture now succeeds on all three bodies and
 reconstructs the sources. Initial 1.5-second child deadlines failed on the
 containers; Eko's three-second SessionEnd deadline also killed its supervisor.
