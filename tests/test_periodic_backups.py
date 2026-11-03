@@ -1,4 +1,5 @@
 """Periodic recovery protection costs scale with intervals, not ordinary writes."""
+import time
 import json
 import sqlite3
 import sys
@@ -187,3 +188,55 @@ def test_recovered_publication_does_not_claim_later_changes_were_backed_up(confi
     pool.restore(Path(result['snapshot']).name,dest)
     with sqlite3.connect(dest) as c:assert c.execute('select count(*) from memories').fetchone()[0]==0
     with sqlite3.connect(value['database']) as c:assert c.execute('select value from memories').fetchone()[0]=='later'
+
+
+def test_metadata_revalidation_frees_proven_surplus_before_next_generation(config,tmp_path,monkeypatch):
+    value,pool=configured(config,tmp_path)
+    clock=[time.time_ns()]
+    monkeypatch.setattr(periodic_backups.time,'time_ns',lambda:clock[0])
+    names=[]
+    for i in range(3):
+        with sqlite3.connect(value['database']) as c:c.execute('insert into memories values(?)',(str(i),))
+        r=pool.refresh(recover=True);assert r['created'];names.append(Path(r['snapshot']).name)
+        if i<2:
+            p=pool.root/names[-1];st=p.stat();__import__('os').utime(p,ns=(st.st_atime_ns,st.st_mtime_ns+1_000_000_000))
+            # Metadata-only receiving change, not altered bytes.
+            assert pool.status()['state']=='failed'
+        clock[0]+=86401*1_000_000_000
+    assert pool.status()['quarantined_baselines']==2
+    for name in names[:2]:
+        assert pool.revalidate(name,'Verify receiving metadata change against original bytes')['state']=='revalidated'
+        assert pool.revalidate(name,'Verify receiving metadata change against original bytes')['replayed']
+    # Three verified points occupy the complete rolling budget. Safely retire
+    # only the surplus before reserving the next generation.
+    size=Path(value['database']).stat().st_size
+    pool.policy['max_bytes']=3*size
+    with sqlite3.connect(value['database']) as c:c.execute('insert into memories values(?)',('fresh',))
+    r=pool.refresh();assert r['created'] and r['state']=='current'
+    assert r['verified_baselines']==2 and r['quarantined_baselines']==0
+    assert sum(e['bytes'] for e in pool.read()['entries'].values() if e['state']!='retired')<=2*size
+    restored=tmp_path/'restored.sqlite';pool.restore(Path(r['snapshot']).name,restored)
+    with sqlite3.connect(restored) as c:assert c.execute('select value from memories order by rowid desc limit 1').fetchone()[0]=='fresh'
+
+
+def test_revalidation_rejects_changed_bytes_without_relabeling_evidence(config,tmp_path):
+    value,pool=configured(config,tmp_path);r=pool.refresh();p=Path(r['snapshot']);p.write_bytes(p.read_bytes()+b'changed')
+    pool.refresh(recover=True);before=pool.read()
+    with pytest.raises(ValueError,match='bytes or schema differ'):
+        pool.revalidate(p.name,'This candidate must keep its original checksum')
+    assert pool.read()==before and p.read_bytes().endswith(b'changed')
+
+
+def test_dirty_hint_detects_commit_when_size_and_timestamps_are_unchanged(config,tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    value,pool=configured(config,tmp_path);database=Path(value['database']);original=Path.stat
+    def coarse(p,*args,**kw):
+        st=original(p,*args,**kw)
+        if p==database:return SimpleNamespace(st_dev=st.st_dev,st_ino=st.st_ino,st_size=st.st_size,st_mtime_ns=1,st_ctime_ns=1,st_mode=st.st_mode)
+        return st
+    monkeypatch.setattr(Path,'stat',coarse)
+    before=pool.fingerprint()
+    with sqlite3.connect(database) as c:c.execute('insert into memories values(?)',('new commit',))
+    after=pool.fingerprint()
+    assert before[0][1:-1]==after[0][1:-1]
+    assert before[0][-1]!=after[0][-1]

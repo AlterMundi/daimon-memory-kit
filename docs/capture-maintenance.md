@@ -164,3 +164,22 @@ provider call or replay of human input is introduced. No unconditional guarantee
 of capturing an arbitrary source at shutdown is claimed. A future durable handoff
 would need separate qualification for source movement/deletion and bounded
 retention; a pointer-only queue would not solve byte preservation.
+
+## Halted non-applied selection with missing empty arrays
+
+`repair_selection_shape.py --profile <existing-profile> --sequence <pending-batch>
+--reason '<explicit reason>' handles one demonstrated formatting defect without a
+model: an explicit omitted/deferred result with a nonempty reason left out empty
+records/links arrays. It can only supply those absent empty arrays. Applied,
+lookup, nonempty/malformed arrays, unknown fields, wrong owners, changed source
+bytes and changed runtimes are refused. The original dispatch, navigation, halt,
+source inputs and decisions remain intact. Admission still runs the ordinary
+validator; the repair neither advances a cursor nor writes a memory by itself.
+Interrupted application and replay reuse the same retained authorization/proposal.
+
+Resume only that prepared batch through its original runtime; use a finite scoped
+worker invocation and forbid new model/embedding calls when only formatting
+recovery was authorized. Verify the omitted/deferred receipt and subsequent index
+separately. Do not restart an entire paid backlog to clear an observation notice.
+A human disposition of an unidentifiable old capture is a separate Alerts control,
+never an omitted selection or evidence that source bytes were preserved.

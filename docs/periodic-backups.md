@@ -75,6 +75,19 @@ the actual source/storage failure. Refresh with a worker profile publishes backu
 failure/resolution through its existing outbox; a manual-only profile reports its
 result locally. Service acceptance and human notification are separate evidence.
 
+After an authorized host/filesystem move, a changed timestamp alone does not
+establish corrupted backup bytes. `revalidate --profile <worker-profile> --name
+<exact-quarantined-baseline> --reason '<explicit reason>' checks the original byte
+hash, schema and SQLite integrity before returning that point to ready. It never
+accepts a new checksum or changes its snapshot date. Original metadata and the
+explicit recovery receipt remain; mismatching bytes remain quarantined. A refresh
+must still succeed before its backup incident resolves. A verified surplus above
+the two-point retention target can rotate before allocation, keeping those two
+old verified points while reserving the next generation. Pending publications and
+actual corruption remain protected; raising the byte budget is not the repair.
+The dirty hint includes only fixed-size SQLite/WAL header/checksum reads so coarse
+filesystem timestamps cannot hide same-size commits; it does not scan memory.
+
 For schema migrations, destructive bulk transformations, corruption repair or a
 concrete non-replayable operation, retain a dedicated point:
 
