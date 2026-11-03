@@ -183,3 +183,27 @@ recovery was authorized. Verify the omitted/deferred receipt and subsequent inde
 separately. Do not restart an entire paid backlog to clear an observation notice.
 A human disposition of an unidentifiable old capture is a separate Alerts control,
 never an omitted selection or evidence that source bytes were preserved.
+
+## Forward cursor after a host move
+
+A filesystem device/inode is host-local. Forward capture deliberately refuses a
+replacement file even when the session ID is unchanged; do not clear the cursor,
+activate again or dismiss identified capture failures to bypass this check.
+
+Use `rebind_forward_source.py --binding <existing-binding> --payload <exact-source-hook-payload>
+--reason '<verified receiving move>'` from the selected capture runtime. It checks
+the existing cursor, exact path and header, boundary guard, every retained range
+against restored original bytes, and any retained legacy prefix. A mutation during
+verification aborts the transaction. It updates only device/inode, with a bounded
+per-source receipt retaining the prior cursor. Offset, pause, scope, revisions,
+source bytes and policy remain unchanged. Replay is a no-op. It does not attest
+an unavailable pre-activation prefix. Baseline-only files without a cursor require
+separate evidence; this control refuses them.
+
+Then capture the same source explicitly through its existing supervisor, without
+model/embedding/selection calls. Verify exact newly retained ranges, replay without
+duplicate revisions, and resolve each original failed attempt against a later
+complete attempt with the same event and source. Confirm higher-revision Alerts
+resolution. Stop and SessionEnd need separate matching receipts. Installing this
+control does not authorize automatic inode rebinding, intake of other sessions,
+new hooks, source discovery or replay of human inputs.
