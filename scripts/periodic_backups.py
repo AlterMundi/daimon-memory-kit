@@ -7,6 +7,7 @@ does. Missing/failed backup protection is reported separately from write success
 from contextlib import closing
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -70,7 +71,21 @@ class Baselines:
         values=[]
         for p in (self.database,Path(str(self.database)+'-wal')):
             if p.exists():
-                s=p.stat(); values.append([str(p),s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns])
+                s=p.stat()
+                # Coarse receiving filesystem timestamps can hide two commits
+                # with equal file size. SQLite's header change counter and WAL
+                # frame checksum provide a constant-size additional dirty hint.
+                with p.open('rb') as f:
+                    header=f.read(100 if p==self.database else 32)
+                    tail=b''
+                    if p!=self.database and len(header)==32:
+                        page_size=int.from_bytes(header[8:12],'big')
+                        frames=(s.st_size-32)//(24+page_size) if page_size else 0
+                        if frames>0:
+                            f.seek(32+(frames-1)*(24+page_size));tail=f.read(24)
+                after=p.stat()
+                if (s.st_size,s.st_mtime_ns,s.st_ctime_ns)!=(after.st_size,after.st_mtime_ns,after.st_ctime_ns):return None
+                values.append([str(p),s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns,hashlib.sha256(header+tail).hexdigest()])
             else:
                 values.append([str(p),None])
         return values
@@ -103,6 +118,50 @@ class Baselines:
         from snapshot_store import Store
         if Path(entry['path']).is_symlink():raise ValueError('periodic baseline destination changed')
         return Store._check(self,entry)
+
+    def _rotate(self, value):
+        names=sorted((n for n,e in value['entries'].items() if e['state'] in {'ready','retiring'}),
+            key=lambda n:value['entries'][n]['created_ns'],reverse=True)
+        for old in names[self.policy['keep_latest']:]:
+            entry=value['entries'][old];path=Path(entry['path'])
+            if path.exists():self._check(entry)
+            elif entry['state']!='retiring':raise ValueError('periodic baseline missing')
+            entry['state']='retiring';checkpoint(self.manifest_path,value)
+            if path.exists():path.unlink();sync_directory(self.root)
+            entry['state']='retired';checkpoint(self.manifest_path,value)
+
+    def revalidate(self, name, reason):
+        """Explicitly recover identical bytes after receiving metadata changed.
+
+        Never accepts a new checksum/schema, creates a snapshot, or clears a
+        backup incident by itself. Refresh still has to establish protection.
+        """
+        from snapshot_store import verified
+        if not NAME.fullmatch(name) or not isinstance(reason,str) or not 1<=len(reason.strip())<=500:
+            raise ValueError('exact baseline and bounded explicit reason required')
+        with (self.root/'.lock').open('a+b') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            value=self.read();entry=value['entries'][name];path=Path(entry['path'])
+            if entry['state']=='ready' and entry.get('metadata_recovery'):
+                self._check(entry)
+                if path.stat().st_ctime_ns!=entry['file_ctime_ns'] or path.stat().st_mtime_ns!=entry['file_mtime_ns']:
+                    raise ValueError('changed metadata needs explicit quarantine first')
+                return dict(state='revalidated',replayed=True,name=name)
+            if entry['state']!='quarantined' or path.is_symlink():
+                raise ValueError('retained quarantined regular baseline required')
+            before=path.stat()
+            info=verified(path)
+            after=path.stat()
+            if (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns)!=(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns):
+                raise ValueError('baseline changed during metadata recovery')
+            if info!={k:entry[k] for k in ('bytes','sha256','schema_sha256')}:
+                raise ValueError('quarantined baseline bytes or schema differ; preserve evidence')
+            st=path.stat()
+            recovery=entry.setdefault('metadata_recovery',dict(original_mtime_ns=entry['file_mtime_ns'],original_ctime_ns=entry['file_ctime_ns'],count=0))
+            recovery.update(count=recovery['count']+1,verified_ns=time.time_ns(),reason=reason)
+            entry.update(state='ready',file_mtime_ns=st.st_mtime_ns,file_ctime_ns=st.st_ctime_ns)
+            checkpoint(self.manifest_path,value)
+            return dict(state='revalidated',replayed=False,name=name)
 
     def refresh(self, *, recover=False):
         from snapshot_store import verified
@@ -153,6 +212,10 @@ class Baselines:
                 published = bool(existing and existing.exists())
                 if partials and not (recover and published and all(p.samefile(existing) for p in partials)):
                     raise RuntimeError('retained partial needs explicit inspection')
+                # Revalidated receiving copies can leave more verified points
+                # than the retention target. Retire only that proven surplus,
+                # preserving keep_latest old points before reserving a new one.
+                if not value.get('attempt'):self._rotate(value)
                 retained=[e for e in value['entries'].values() if e['state']!='retired']
                 budget=max(self.policy['max_bytes'],(self.policy['keep_latest']+1)*max([size]+[e['bytes'] for e in retained]))
                 registered=bool(published and existing.name in value['entries'])
@@ -181,15 +244,7 @@ class Baselines:
                 checkpoint(self.manifest_path,value)
                 # Only periodic baselines rotate here. Operation-bound legacy
                 # checkpoints/pins and their unfinished journals are untouched.
-                names=sorted((n for n,e in value['entries'].items() if e['state'] in {'ready','retiring'}),
-                    key=lambda n:value['entries'][n]['created_ns'],reverse=True)
-                for old in names[self.policy['keep_latest']:]:
-                    entry=value['entries'][old];path=Path(entry['path'])
-                    if path.exists():self._check(entry)
-                    elif entry['state']!='retiring':raise ValueError('periodic baseline missing')
-                    entry['state']='retiring';checkpoint(self.manifest_path,value)
-                    if path.exists():path.unlink();sync_directory(self.root)
-                    entry['state']='retired';checkpoint(self.manifest_path,value)
+                self._rotate(value)
                 value.pop('attempt',None);checkpoint(self.manifest_path,value)
                 return dict(self.status(),created=True)
             except (OSError,ValueError,RuntimeError,sqlite3.Error) as error:
@@ -209,10 +264,10 @@ class Baselines:
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['status','refresh','restore'])
+    parser.add_argument('command',choices=['status','refresh','restore','revalidate'])
     parser.add_argument('--profile',type=Path,required=True)
     parser.add_argument('--recover',action='store_true')
-    parser.add_argument('--name');parser.add_argument('--destination',type=Path)
+    parser.add_argument('--reason');parser.add_argument('--name');parser.add_argument('--destination',type=Path)
     args=parser.parse_args();v=json.loads(args.profile.read_text())
     bound=os.environ.get('HMK_DB_PATH')
     if bound and Path(bound).resolve()!=Path(v['database']).resolve():
@@ -220,6 +275,9 @@ def main():
     pool=Baselines(v['database'],v['snapshots'])
     if args.command=='status':result=pool.status()
     elif args.command=='refresh':result=pool.refresh(recover=args.recover)
+    elif args.command=='revalidate':
+        if not args.name or not args.reason:parser.error('revalidate requires exact name and explicit reason')
+        result=pool.revalidate(args.name,args.reason)
     else:
         if not args.name or not args.destination:parser.error('restore requires name and new destination')
         result=pool.restore(args.name,args.destination)
