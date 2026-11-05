@@ -79,6 +79,15 @@ pool or one named pool. Read/history use a pool name plus stable record UID.
 Results retain the pool, being and body reference. One unavailable pool does not
 hide successful results from another. Empty results do not prove absence.
 
+Start a search without `pool`, unless narrowing to an actual configured name
+returned by an earlier search. Shelves such as `identity` and tags classify
+records; they do not select pools. Use the returned pool name and `record_uid`
+for record navigation, and `expected_revision` for further read pages. An unknown
+pool is refused for every action without opening a database or falling back to
+another pool. A legitimately configured pool may itself be named `identity`;
+names are owner-selected, not reserved shelf words. Both tool aliases advertise
+this selection guidance in their input schema.
+
 Each pool uses a coherent readonly SQLite transaction and the current revisions;
 there is no frozen UID selection to omit later memories. A search returns at most
 eight current and four historical navigation entries per pool, from bounded
@@ -101,8 +110,11 @@ excluded. DMK-native history uses the existing revision API.
 
 ## Adoption and rollback
 
-Before adoption, preserve exact config/instruction files and take verified
-SQLite snapshots using the backup API while ordinary writers remain available.
+Before adoption, preserve exact config/instruction files and the selected reader
+rollback. A reader-only code/configuration update changes no memory data/schema;
+reuse existing ordinary protection rather than creating another full database
+copy. Consequential database maintenance still requires the dedicated recovery
+point described in the [resource lifecycle](resource-lifecycle.md).
 Keep private bindings, memory and transcripts out of publications. Check SDK
 startup, native discovery and attributed reads using the actual owner account.
 Use fictional copies to test later writes and corrections; do not seed fake

@@ -39,8 +39,25 @@ def test_real_stdio_protocol_and_readonly_annotation(setup, tmp_path):
                 listing = await session.list_tools()
                 assert [t.name for t in listing.tools] == ["dmk_recall", "hmk_recall"]
                 assert listing.tools[0].annotations.readOnlyHint is True
+                for tool in listing.tools:
+                    schema = tool.inputSchema["properties"]["pool"]
+                    assert schema["default"] == ""
+                    assert "not a shelf/tag" in schema["description"]
+                denied = await session.call_tool(
+                    "dmk_recall", dict(action="search", query="invitation", pool="identity")
+                )
+                refusal = denied.structuredContent or json.loads(denied.content[0].text)
+                assert refusal["status"] == "invalid_request"
+                assert "Search without pool" in refusal["detail"]
+                discovered = await session.call_tool(
+                    "dmk_recall", dict(action="search", query="invitation")
+                )
+                navigation = discovered.structuredContent or json.loads(discovered.content[0].text)
+                selected_pool = navigation["pools"][0]
+                assert selected_pool["pool"] == "main"
+                assert selected_pool["result"]["items"][0]["record_uid"] == uid
                 response = await session.call_tool(
-                    "hmk_recall", dict(action="read", pool="main", record_uid=uid)
+                    "hmk_recall", dict(action="read", pool=selected_pool["pool"], record_uid=uid)
                 )
                 assert not response.isError
                 payload = response.structuredContent or json.loads(
@@ -73,6 +90,40 @@ def binding(mc):
         body_ref="fixture:body:voice",
         pools=[dict(name="main", database=str(mc.DB_PATH))],
     )
+
+
+@pytest.mark.parametrize("action", ["search", "read", "history", "checkpoint"])
+def test_unknown_pool_refuses_before_reader_without_default_fallback(setup, monkeypatch, action):
+    mc, _ = setup
+    from deep_recall import Reader
+    from hmk_mcp import recall
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Unknown pool must not open any reader")
+
+    monkeypatch.setattr(Reader, "live_pool", forbidden)
+    result = recall(binding(mc), action=action, query="memory", pool="identity")
+    assert result["status"] == "invalid_request"
+    assert "Unknown configured pool" in result["detail"]
+    assert "Search without pool" in result["detail"]
+    assert "database" not in result and "pools" not in result
+
+
+def test_configured_pool_can_share_a_shelf_name(setup):
+    mc, _ = setup
+    from hmk_mcp import recall
+
+    cid = mc.add_text("identity", "Fixture identity", "A retained fixture original.")
+    uid = mc._read_chapter(cid)["record_uid"]
+    selected = binding(mc)
+    selected["pools"][0]["name"] = "identity"
+    before = mc.DB_PATH.read_bytes()
+    found = recall(selected, action="search", pool="identity", query="fixture")
+    assert found["pools"][0]["pool"] == "identity"
+    assert found["pools"][0]["result"]["items"][0]["record_uid"] == uid
+    result = recall(selected, action="read", pool="identity", record_uid=uid)
+    assert result["pools"][0]["result"]["raw"] == "A retained fixture original."
+    assert mc.DB_PATH.read_bytes() == before
 
 
 def test_checkpoint_reads_only_revision_not_contents_and_sees_corrections(setup, monkeypatch):

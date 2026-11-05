@@ -18,7 +18,10 @@ INSTRUCTIONS = (
     "relationships, projects, decisions or lessons would help the current human task, "
     "without waiting for an explicit memory-search request. Skip self-contained tasks. "
     "Search returns candidates, not relevance verdicts: read originals and all pages "
-    "before factual claims. Use only evidence relevant to the question; if support is "
+    "before factual claims. Search without pool unless narrowing to a configured name "
+    "returned by search; shelves/tags are not pool selectors. Read/history/checkpoint "
+    "use the returned pool and record UID; further read pages need expected_revision. "
+    "Use only evidence relevant to the question; if support is "
     "missing, say what is missing without retelling unrelated memories. "
     "Distinguish event/report dates from later receipt or memory-write dates. "
     "Preserve source attribution, corrections, dates, uncertainty and failed outcomes. "
@@ -82,10 +85,15 @@ def recall(
     pools = binding["pools"]
     if pool:
         pools = [p for p in pools if p["name"] == pool]
-    if not pools or (action != "search" and len(pools) != 1):
+    if not pools:
         return dict(
             status="invalid_request",
-            detail="Read/history needs a known pool name from search.",
+            detail="Unknown configured pool. Search without pool to discover its name; shelves/tags are not pool selectors.",
+        )
+    if action != "search" and len(pools) != 1:
+        return dict(
+            status="invalid_request",
+            detail="Read/history/checkpoint needs one configured pool returned by search.",
         )
     if expected_revision is not None and (
         type(expected_revision) is not int or expected_revision < 1
@@ -143,6 +151,7 @@ def server(binding):
     # Optional dependency; ordinary DMK commands remain stdlib-only.
     from mcp.server.fastmcp import FastMCP
     from mcp.types import ToolAnnotations
+    from pydantic import Field
 
     app = FastMCP("DaimonMemoryKit durable recall", instructions=INSTRUCTIONS, log_level="WARNING")
 
@@ -160,7 +169,10 @@ def server(binding):
         action: Literal["search", "read", "history", "checkpoint"],
         query: str = "",
         record_uid: str = "",
-        pool: str = "",
+        pool: str = Field(default="", description=(
+            "Configured pool name returned by search, not a shelf/tag. "
+            "Omit for search across bound pools; use the returned name for record navigation."
+        )),
         offset: int = 0,
         expected_revision: int | None = None,
     ) -> dict:
