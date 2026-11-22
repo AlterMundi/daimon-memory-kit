@@ -170,6 +170,14 @@ body's everyday CLI. Keep the selected executable outside `CODEX_HOME`: native
 review deliberately hides that directory in its private mount namespace, except
 for its read-only authentication descriptor.
 
+The configured review model can select Sol 6.1 or Sol 6.2. Sol 6.2 requires an
+exact tool-disabled catalog entry that advertises low effort and a qualified
+CLI for the same authorized account. The selected model is part of each new
+request and receipt. A pending operation retains its original model policy. The successor can read
+an exact retained Sol 6.1 operation receipt under the same generation and
+review authority. It cannot dispatch a missing or failed request in that
+operation. Reconcile unresolved work through the existing owner path.
+
 Dispatch receipts pin request, provider/model settings, transport implementations
 and the native catalog. Pending work rejects a silent model change. A missing
 credential leaves an actionable authentication incident without a network attempt;

@@ -214,12 +214,24 @@ def test_selected_scope_paid_receipt_reuse_policy_change_and_no_fallback(
         model(request, state)
     assert len(calls) == 1
 
+    frozen = receipt.read_bytes(), (state / "model-policy.json").read_bytes()
+    upgraded = Models(value["generation"], dict(value["review"], model="gpt-6.2-sol"), model.scope)
+    with pytest.raises(ProviderProblem, match="payment_required"):
+        upgraded(request, state)
+    new_request = dict(request, messages=[dict(role="user", content="Different request.")])
+    with pytest.raises(ValueError, match="policy changed"):
+        upgraded(new_request, state)
+    assert (receipt.read_bytes(), (state / "model-policy.json").read_bytes()) == frozen
+    assert len(calls) == 1
 
+
+@pytest.mark.parametrize("review_model", ["gpt-6.1-sol", "gpt-6.2-sol"])
 def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
-    setup, tmp_path, monkeypatch
+    setup, tmp_path, monkeypatch, review_model
 ):
     memory, inbox, state, _, context, _, _ = setup
     value = configuration(tmp_path, memory, inbox, state, context)
+    value["review"]["model"] = review_model
     model = Models(
         value["generation"], value["review"], "human-authorized-selected-context"
     )
@@ -237,7 +249,7 @@ def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
         supplied = json.loads(path.read_text())
         calls.append(supplied)
         assert (
-            supplied["model"] == "gpt-6.1-sol"
+            supplied["model"] == review_model
             and supplied["format"] == "hmk-selected-receiving-request/v1"
         )
         assert supplied["source_scope"] == "human-authorized-selected-context"
@@ -263,6 +275,11 @@ def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
         lambda *a, **k: pytest.fail("wrong provider"),
     )
     assert model(request, state) == model(request, state) and len(calls) == 1
+
+    if review_model == "gpt-6.1-sol":
+        upgraded = Models(value["generation"], dict(value["review"], model="gpt-6.2-sol"), model.scope)
+        assert upgraded(request, state) == model(request, state)
+        assert len(calls) == 1
 
 
 def test_native_review_pins_explicit_binary(setup,tmp_path,monkeypatch):
@@ -392,6 +409,8 @@ def test_completed_invalid_selection_uses_one_review_and_keeps_both_receipts(set
     assert first['response_repair']['review_usage']['total_tokens'] == 17
     monkeypatch.delenv('HMK_TEST_DEEPSEEK_KEY')
     assert model(request, state) == first and calls == ['generation', 'review']
+    upgraded = Models(value['generation'], dict(value['review'], model='gpt-6.2-sol'), 'fictional')
+    assert upgraded(request, state) == first and calls == ['generation', 'review']
     original = next((state/'dispatches').glob('*.json'))
     assert json.loads(original.read_text())['content'] == '[1] trailing text'
     repaired = next((state/'completed-json-repair'/'dispatches').glob('*.json'))
