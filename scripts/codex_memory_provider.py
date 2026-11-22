@@ -16,6 +16,9 @@ import time
 from capturectl import digest
 from codex_coordinator import checkpoint
 
+NATIVE_REVIEW_MODELS = frozenset({"gpt-6.1-sol", "gpt-6.2-sol"})
+
+
 DISABLED = (
     "shell_tool",
     "unified_exec",
@@ -51,6 +54,7 @@ DISABLED = (
 
 
 def command(request, catalog, empty_cwd, logs, binary='codex'):
+    model = request.get("model")
     scope = request.get("source_scope")
     valid_source = (
         request.get("format") == "hmk-fictional-receiving-request/v1"
@@ -61,7 +65,9 @@ def command(request, catalog, empty_cwd, logs, binary='codex'):
     )
     if (
         not valid_source
-        or request.get("model") != "gpt-6.1-sol"
+        or not isinstance(model, str)
+        or model not in NATIVE_REVIEW_MODELS
+        or (model == "gpt-6.2-sol" and request.get("phase") != "narrative_review")
         or request.get("phase")
         not in {"narrative_generation", "narrative_revision", "narrative_review"}
         or request.get("reasoning_effort") not in {"low", "medium"}
@@ -138,7 +144,7 @@ def command(request, catalog, empty_cwd, logs, binary='codex'):
         "-C",
         str(empty_cwd),
         "-m",
-        "gpt-6.1-sol",
+        model,
         "--enable",
         "skip_host_skill_discovery",
     ]
@@ -172,8 +178,11 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
     d = digest(request)
     if request_path.stem != d:
         raise ValueError("request filename/hash mismatch")
+    model = request.get("model")
+    if not isinstance(model, str) or model not in NATIVE_REVIEW_MODELS:
+        raise ValueError("explicit supported native Sol review model required")
     models = json.loads(catalog.read_text())["models"]
-    selected = [m for m in models if m.get("slug") == "gpt-6.1-sol"]
+    selected = [m for m in models if m.get("slug") == model]
     if len(selected) != 1 or any(
         selected[0].get(k) != v
         for k, v in dict(
@@ -187,11 +196,12 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
         raise ValueError(
             "native catalog must disable all selected model tool capabilities"
         )
-    if request.get("reasoning_effort") == "medium" and "medium" not in {
+    effort = request.get("reasoning_effort")
+    if (model == "gpt-6.2-sol" or effort == "medium") and effort not in {
         level.get("effort")
         for level in selected[0].get("supported_reasoning_levels", [])
     }:
-        raise ValueError("native catalog does not establish medium reasoning support")
+        raise ValueError(f"native catalog does not establish {effort} reasoning support")
     cwd = root / "empty-cwd"
     cwd.mkdir(mode=0o700, exist_ok=True)
     argv, stdin = command(request, catalog, cwd.resolve(), (root / "logs").resolve(), binary=binary)
@@ -215,7 +225,7 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
         state="started",
         provider="openai-codex-native",
         source_scope=request.get("source_scope", "fictional"),
-        requested_model="gpt-6.1-sol",
+        requested_model=model,
         actual_response_model=None,
         request_sha256=d,
         reasoning_effort=request["reasoning_effort"],
@@ -313,7 +323,7 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
         response_path,
         dict(
             request_sha256=d,
-            requested_model="gpt-6.1-sol",
+            requested_model=model,
             response_model=None,
             fresh_context=True,
             tool_calls_observed=[],

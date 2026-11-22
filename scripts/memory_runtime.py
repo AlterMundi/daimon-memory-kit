@@ -14,6 +14,7 @@ import re
 import time
 
 from capture_inbox import Inbox
+from codex_memory_provider import NATIVE_REVIEW_MODELS
 import account_reconciliation
 import memory_worker
 from memory_models import Models, authorize_retry
@@ -77,7 +78,8 @@ def profile(path):
         set(review) - {"provider", "model", "effort", "catalog", "credential_file", "binary"}
         or not {"provider", "model", "effort", "catalog"} <= set(review)
         or review["provider"] != "openai-codex-native"
-        or review["model"] != "gpt-6.1-sol"
+        or not isinstance(review["model"], str)
+        or review["model"] not in NATIVE_REVIEW_MODELS
         or review["effort"] != "low"
     ):
         raise ValueError("explicit native OpenAI Codex Sol low review profile required")

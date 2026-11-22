@@ -18,28 +18,30 @@ def native(monkeypatch):
     return module
 
 
-def inputs(native, path):
-    request = dict(format='hmk-fictional-receiving-request/v1', model='gpt-6.1-sol',
-        phase='narrative_generation', reasoning_effort='low', fresh_context=True,
+def inputs(native, path, model="gpt-6.1-sol"):
+    request = dict(format='hmk-fictional-receiving-request/v1', model=model,
+        phase='narrative_review' if model == 'gpt-6.2-sol' else 'narrative_generation', reasoning_effort='low', fresh_context=True,
         tools_allowed=False, native_memory_allowed=False,
         messages=[dict(role='system', content='Fictional JSON only.'),
                   dict(role='user', content='Supplied fictional evidence.')], response_schema={'type':'object'})
     request_path = path/(native.exchange.pilot.digest(request)+'.json')
     native.exchange.pilot.save(request_path, request)
     catalog = path/'catalog.json'
-    native.exchange.pilot.save(catalog, {'models':[dict(slug='gpt-6.1-sol',
+    native.exchange.pilot.save(catalog, {'models':[dict(slug=model, supported_reasoning_levels=[dict(effort='low')],
         apply_patch_tool_type=None, shell_type='disabled', experimental_supported_tools=[],
         supports_search_tool=False, node_repl_disabled=True)]})
     return request_path, request, catalog
 
 
-def test_native_controls_and_usage_do_not_claim_an_invoice_or_model_label(native, tmp_path):
-    path, request, catalog = inputs(native, tmp_path)
+@pytest.mark.parametrize("model", ["gpt-6.1-sol", "gpt-6.2-sol"])
+def test_native_controls_and_usage_do_not_claim_an_invoice_or_model_label(native, tmp_path, model):
+    path, request, catalog = inputs(native, tmp_path, model)
     credential = tmp_path/'fixture-auth.json'; credential.write_text('{}')
     def runner(argv, **kwargs):
         assert argv[0] == 'bwrap' and '--tmpfs' in argv
         argv = argv[argv.index('--')+1:]
         assert argv[0:2] == ['codex', 'exec']
+        assert argv[argv.index('-m') + 1] == model
         assert '--ignore-user-config' in argv and '--ephemeral' in argv
         assert 'forced_login_method="chatgpt"' in argv and 'model_provider="openai"' in argv
         assert 'project_doc_max_bytes=0' in argv and 'orchestrator.mcp.enabled=false' in argv
@@ -52,6 +54,7 @@ def test_native_controls_and_usage_do_not_claim_an_invoice_or_model_label(native
     data = json.loads(receipt.read_text())
     assert data['usage']['total_tokens'] == 34 and data['native_usage']['cached_input_tokens'] == 10
     assert data['billed_cost_usd'] is None and data['actual_response_model'] is None
+    assert data['requested_model'] == model
     assert 'private stderr' not in receipt.read_text()
     with pytest.raises(ValueError, match='no implicit retry'):
         native.dispatch(path, tmp_path, catalog, lambda *_a, **_k: pytest.fail('repeated'), credential)

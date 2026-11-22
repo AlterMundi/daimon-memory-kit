@@ -215,11 +215,13 @@ def test_selected_scope_paid_receipt_reuse_policy_change_and_no_fallback(
     assert len(calls) == 1
 
 
+@pytest.mark.parametrize("review_model", ["gpt-6.1-sol", "gpt-6.2-sol"])
 def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
-    setup, tmp_path, monkeypatch
+    setup, tmp_path, monkeypatch, review_model
 ):
     memory, inbox, state, _, context, _, _ = setup
     value = configuration(tmp_path, memory, inbox, state, context)
+    value["review"]["model"] = review_model
     model = Models(
         value["generation"], value["review"], "human-authorized-selected-context"
     )
@@ -237,7 +239,7 @@ def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
         supplied = json.loads(path.read_text())
         calls.append(supplied)
         assert (
-            supplied["model"] == "gpt-6.1-sol"
+            supplied["model"] == review_model
             and supplied["format"] == "hmk-selected-receiving-request/v1"
         )
         assert supplied["source_scope"] == "human-authorized-selected-context"

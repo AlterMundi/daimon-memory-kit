@@ -134,7 +134,7 @@ class Models:
                     else "hmk-selected-receiving-request/v1"
                 ),
                 source_scope=self.scope,
-                model="gpt-6.1-sol",
+                model=self.review["model"],
                 phase="narrative_review",
             )
         else:
