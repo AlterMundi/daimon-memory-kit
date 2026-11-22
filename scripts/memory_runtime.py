@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sqlite3
 import time
 
 from capture_inbox import Inbox
@@ -36,7 +37,7 @@ def profile(path):
         "review",
         "budgets",
     }
-    if set(value) - (required | {"embedding_env_file", "snapshots"}) or not required <= set(value):
+    if set(value) - (required | {"embedding_env_file", "snapshots", "sleep_triage"}) or not required <= set(value):
         raise ValueError("worker profile has missing or unsupported fields")
     if value["schema"] != "hmk.worker-profile/v1" or value["source_scope"] not in {
         "fictional",
@@ -108,6 +109,21 @@ def profile(path):
         routine=value['snapshots'].get('routine_backup')
         if routine and routine['subject'] != context['subject']:
             raise ValueError('periodic backup subject differs from receiving owner')
+    if "sleep_triage" in value:
+        settings = value["sleep_triage"]
+        if (not isinstance(settings, dict)
+                or set(settings) != {"state_dir", "initial_after", "steps",
+                                     "credential_env", "source_review_report", "max_age_seconds"}
+                or any(not isinstance(settings[k], str) or not Path(settings[k]).is_absolute()
+                       for k in ("state_dir", "source_review_report"))
+                or not Path(settings["state_dir"]).resolve().is_relative_to(Path(value["state_dir"]).resolve())
+                or Path(settings["state_dir"]).resolve() == Path(value["state_dir"]).resolve()
+                or type(settings["initial_after"]) is not int or settings["initial_after"] < 0
+                or type(settings["steps"]) is not int or not 1 <= settings["steps"] <= 32
+                or type(settings["max_age_seconds"]) is not int or settings["max_age_seconds"] < 1
+                or not isinstance(settings["credential_env"], str)
+                or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", settings["credential_env"])):
+            raise ValueError("explicit bounded sleep triage profile required")
     return value
 
 
@@ -170,7 +186,49 @@ def run(value):
     )
     if 'routine_backup' in value.get('snapshots',{}):
         refresh_backup(value,inbox,result)
+    if "sleep_triage" in value:
+        run_sleep_triage(value, inbox, binding, result)
     return result
+
+
+def run_sleep_triage(value, inbox, binding, result):
+    from codex_coordinator import checkpoint
+    from provider_status import Alerts, ProviderProblem
+    import sleep_health
+    import sleep_triage
+
+    settings = value["sleep_triage"]
+    root = Path(settings["state_dir"])
+    path = Path(value["state_dir"]) / "worker-status.json"
+    with open(str(inbox.path) + ".worker.lock", "a+b") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if json.loads(path.read_text()) != result["status"]:
+            raise ValueError("another worker advanced; preserve its status")
+        operation = "sleep-triage:" + result["status"]["owner"]
+        alerts = Alerts(inbox)
+        after = None if (root / "cursor.json").exists() else settings["initial_after"]
+        try:
+            receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
+                                       api_key=os.environ.get(settings["credential_env"]))
+        except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
+            active = root / "dispatch.json"
+            attempt = json.loads(active.read_text()) if active.is_file() else {}
+            receipt = dict(state="blocked", reason_code="inspect_sleep_triage", error_type=type(error).__name__)
+            if attempt and attempt.get("state") != "complete":
+                problem = attempt.get("problem", {"code": "dispatch_unresolved"})
+                failure = ProviderProblem("openai-decisions", attempt["request_sha256"], problem)
+                receipt.update(alert_id=alerts.report(operation, "selection", failure),
+                               reason_code=failure.problem["code"])
+            result["status"]["state"] = "pending"
+        else:
+            alerts.resolve(operation)
+        result["status"]["sleep_triage"] = receipt
+        result["status"]["sleep_health"] = sleep_health.health(
+            value["state_dir"], settings["source_review_report"],
+            max_age_seconds=settings["max_age_seconds"],
+        )
+        result["status"]["updated_ns"] = time.time_ns()
+        checkpoint(path, result["status"])
 
 
 def refresh_backup(value,inbox,result):
