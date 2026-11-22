@@ -491,3 +491,39 @@ def test_format_repair_never_retries_uncertain_truncated_or_tool_output(setup, t
     monkeypatch.setattr(memory_models.native, 'dispatch', lambda *a, **kw: pytest.fail('repair not authorized by completed output'))
     with pytest.raises(ProviderProblem):
         model(dict(phase='capture', messages=[dict(role='system', content='Fixture')], response_schema={'type':'object'}), state)
+
+
+def test_worker_profile_selects_progressive_capture_without_changing_provider(setup,tmp_path,monkeypatch):
+    from tests.test_source_windows import message, omitted
+    from capturectl import wire
+
+    memory,inbox,state,_,context,_,raw=setup
+    oversized=raw+message('Historia ficticia con ñ y 🐦. '*8200,'large')
+    inbox.observe('session-a',{'hook_event_name':'Stop'},oversized)
+    value=configuration(tmp_path,memory,inbox,state,context)
+    value['budgets'].update(max_steps=3,source_max_bytes=128000,source_page_bytes=16000)
+    config=tmp_path/'worker.json'
+    checkpoint(config,value)
+    seen=[]
+    class SelectedProvider:
+        policy='fixture-policy'
+        def __call__(self, request, directory):
+            sources=json.loads(request['messages'][1]['content'])['sources']
+            seen.append(sources)
+            assert len(wire(sources).encode()) <= value['budgets']['source_max_bytes']
+            return omitted(request,directory)
+    def configured_provider(generation,review,scope):
+        assert generation==value['generation'] and review==value['review'] and scope=='fictional'
+        return SelectedProvider()
+    monkeypatch.setattr(memory_runtime,'Models',configured_provider)
+    monkeypatch.setattr(memory_runtime,'load_memory',lambda _:memory)
+    for _ in range(12):
+        receipt=memory_runtime.run(memory_runtime.profile(config))
+        if receipt['status']['phases']['capture'].get('source_group_complete'):
+            break
+    else:
+        pytest.fail('bounded worker invocations did not consume the source')
+    index=json.loads((state/'index.json').read_text())
+    assert index['after']==2 and 'window_paging' not in index
+    assert len(seen)>1 and inbox.restore(2)==oversized
+    assert memory_runtime.run(memory_runtime.profile(config))['status']['state']=='idle'

@@ -53,6 +53,10 @@ def source_decision(value, sources, canon):
                         'Attributed peer communication' if channel == 'authorized_peer_message' else channel)
                 label = (f"{role}; source {ref}; received {source.get('received_at', 'unknown')} "
                          f"through {source['originating_body']}")
+                span = source.get('source_range')
+                if span:
+                    label += (f"; excerpt bytes {span['start_byte']}–{span['end_byte']} of "
+                              f"{span['total_bytes']} in capture revision {span['capture_revision']}")
             blocks.append(label + ':\n' + json.dumps(text, ensure_ascii=False))
         title = record.get('title')
         if not isinstance(title, str) or not title.strip() or not any(

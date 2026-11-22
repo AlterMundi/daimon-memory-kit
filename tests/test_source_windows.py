@@ -256,3 +256,88 @@ def test_retained_lookup_survives_window_upgrade_and_does_not_repeat_search(setu
     assert result['state']=='complete' and len(calls)==2 and len(searches)==1
     job=json.loads((state/'batch-2.json').read_text())
     assert job['code_hash']==old
+
+
+def test_oversized_utf8_dependency_progress_reuses_commit_and_preserves_ranges(setup):
+    from capture_inbox import sha
+    from capturectl import wire
+    from codex_projection import load_learning
+
+    memory,inbox,state,_,binding,_,raw=setup
+    # A separate completed observation must not be re-evaluated after paging.
+    process_once(memory,inbox,state,omitted,binding)
+    opener = 'Lámpara de Ada.\n' + ('Conversación 🕯️ con café y comillas "\\":\n' * 4200) + 'Fin del informe.'
+    end = dict(type='response_item',payload=dict(type='message',role='assistant',content=[
+        dict(type='output_text',text='Confirmamos el próximo ensayo.')]))
+    captured = raw + message(opener,'large') + (json.dumps(end)+'\n').encode()
+    inbox.observe('session-a',{'hook_event_name':'Stop'},captured)
+    observed, seen, chooser = [], set(), []
+
+    def propose(request,path):
+        packet=json.loads(request['messages'][1]['content'])
+        sources=packet['sources']
+        assert len(wire(sources).encode()) <= 128000
+        fresh=[b for b in sources if b['status']=='new']
+        assert not seen.intersection(b['id'] for b in fresh)
+        seen.update(b['id'] for b in fresh)
+        observed.extend(b for b in fresh if 'source_range' in b)
+        first=next((b for b in fresh if b['content'].startswith('Lámpara de Ada.')),None)
+        if first:
+            chooser.append(first)
+            return dict(selection=dict(outcome='applied',reason='Fictional finding',records=[
+                dict(key='lamp',operation='add',shelf='episodes',title='Lámpara de Ada.',source_ids=[first['id']])],links=[]))
+        dependent=next((b for b in fresh if 'paged_dependencies' in b),None)
+        if dependent:
+            tail=next(b for b in sources if b['id'] in dependent['dependencies'])
+            assert tail['source_range']['end_byte']==len(opener.encode())
+            assert tail['content'].endswith('Fin del informe.')
+            return dict(selection=dict(outcome='applied',reason='Fictional reply with its source',records=[
+                dict(key='test',operation='add',shelf='episodes',title='Confirmamos el próximo ensayo.',
+                     source_ids=[tail['id'],dependent['id']])],links=[]))
+        return omitted(request,path)
+
+    def crash(point):
+        if point=='after_canon_commit':
+            raise RuntimeError('interrupted after paged commit')
+
+    def run(**kw):
+        return process_once(memory,inbox,state,propose,binding,source_budget_bytes=64000,
+                            source_max_bytes=128000,source_page_bytes=16000,**kw)
+
+    with pytest.raises(RuntimeError,match='interrupted after paged commit'):
+        run(_fault=crash)
+    old_seen=set(seen)
+    result=run()
+    assert not result['proposer_invoked'] and seen==old_seen
+    evidence=json.loads(load_learning(memory,result['artifact_id'])['source-evidence.json'])
+    assert evidence['excerpts'][0]['source_range']==chooser[0]['source_range']
+    assert json.loads((state/'index.json').read_text())['after']==1
+    for _ in range(12):
+        if result['source_group_complete']:
+            break
+        result=run()
+    assert result['source_group_complete'] and result['processed_through']==2
+    assert b''.join(page['content'].encode() for page in observed)==opener.encode()
+    assert all(page['source_range']['range_sha256']==sha(page['content'].encode())
+               and page['source_range']['capture_sha256']==sha(captured)
+               and page['source_range']['capture_revision']==2 for page in observed)
+    assert inbox.restore(2)==captured
+    assert run()['state']=='idle'
+    with memory.connect() as con:
+        assert con.execute('SELECT count(*) FROM chapters').fetchone()[0]==2
+        assert con.execute('SELECT count(*) FROM native_learning_artifacts').fetchone()[0]==2
+
+
+def test_paged_causal_citation_requires_visible_evidence():
+    from source_pages import expand, validate_citations
+    from source_windows import ContextReader
+    groups, _ = expand({'s':[block('opener','A'*12000),block('response','Correction',dependencies=['opener'])]},
+                       {'s':{'revision':2,'sha256':'fixture'}},4096)
+    *pages,response=groups['s']
+    with pytest.raises(ValueError,match='requires a supplied citation'):
+        validate_citations({'records':[{'source_ids':['response', 'opener']}]},[pages[-1], response])
+    reader=ContextReader(groups,10000)
+    prior=reader.before(pages[-1]['id'],{pages[-1]['id']})
+    assert prior['sources'][0]['id']==pages[-2]['id']
+    validate_citations({'records':[{'source_ids':['response',pages[-2]['id']]}]},
+                       [pages[-2], response])

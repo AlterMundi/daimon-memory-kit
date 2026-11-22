@@ -222,6 +222,25 @@ worker reports the measured requirement and keeps the source and cursor pending.
 There is no automatic ceiling escalation, trimming or partial admission.
 The preceding compatible producer fingerprint can resume its frozen job and
 its saved lookup without rewriting its original dispatch or attribution.
+An opted-in worker can additionally set `budgets.source_page_bytes` (4,096 to
+32,768, at most the ordinary window). If the ordinary elastic reader encounters
+an oversized source or dependency closure, it pins a versioned page plan on the
+same frozen group. Each page preserves exact UTF-8 ranges in the normalized
+item, the original item ID and raw-line checksum, the capture revision and
+checksum, and the range checksum. The inbox retains the unchanged original
+bytes. The artifact records bounded excerpts and their original locators, not
+another full copy of the capture in every successful page. Keep the inbox
+revisions when exporting original-source preservation.
+
+Subsequent windows resume at the next committed page. A citation to an excerpt
+does not attest unread ranges. For a dependent item, the terminal excerpt of a
+paged dependency anchors backward navigation. A selected dependent record must
+cite supplied evidence from that original where it is selectable. When the
+necessary excerpts cannot coexist within the ceiling or support the requested
+meaning, leave the work deferred. Previously frozen unpaged requests preserve
+their original inputs. Before reverting code, finish any paged group or retain
+its compatible code; prior code cannot interpret a paged frontier.
+
 No global source-length ceiling replaces the removed canonical-record ceiling.
 
 The selector can request `source_before` from an already supplied source ID to

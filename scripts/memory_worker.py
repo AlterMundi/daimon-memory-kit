@@ -40,7 +40,8 @@ def observe(state_dir):
 
 
 def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps=6,
-        source_budget_bytes=64000, source_max_bytes=None, navigation_steps=4, retrieval='hybrid',
+        source_budget_bytes=64000, source_max_bytes=None, source_page_bytes=None,
+        navigation_steps=4, retrieval='hybrid',
         capture_limit=32, index_limit=32, notice_sender=None, snapshot_policy=None):
     """Invoke finite phases under one launcher lock, preserving each phase journal.
 
@@ -114,6 +115,7 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                         limit=capture_limit,
                         navigation_steps=navigation_steps,retrieval=retrieval,
                         source_budget_bytes=source_budget_bytes,source_max_bytes=source_max_bytes,
+                        source_page_bytes=source_page_bytes,
                         notice_sender=notice_sender,snapshot_policy=snapshot_policy)
                 elif phase=='organization':
                     if organize:

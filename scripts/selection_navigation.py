@@ -13,6 +13,7 @@ from capturectl import wire, title_conflicts
 from codex_coordinator import checkpoint
 from deep_recall import Reader, tool_spec
 import portable_capture as selection
+import source_pages
 
 POLICY = '''You may return outcome=lookup with requests to search, read or inspect
 history in the bound canonical pool before making your final selection. Search
@@ -66,6 +67,8 @@ def request_for(job):
     state = job['navigation']
     messages = selection.block_messages(effective_sources(job), state['canon'], job['inputs']['context'])
     messages[0]['content'] += '\n' + POLICY
+    if job['inputs'].get('source_window', {}).get('paging'):
+        messages[0]['content'] += '\n' + source_pages.GUIDANCE
     if job.get('context_attempt'):
         payload=json.loads(messages[1]['content'])
         payload['context_refresh'] = 'A concurrent canonical revision invalidated the previous uncommitted decision. Read current originals again; source input is unchanged.'
@@ -82,8 +85,21 @@ def request_for(job):
     for step in state['steps']:
         if 'results' in step or 'feedback' in step:
             messages.append({'role':'assistant','content':wire(step['proposal']['selection'])})
-            messages.append({'role':'user','content':wire(
-                {'lookup_results':step['results']} if 'results' in step else step['feedback'])})
+            if 'results' in step:
+                results = step['results']
+                if job['inputs'].get('source_window', {}).get('paging'):
+                    # Exact source text is already in the source window. Keep
+                    # the receipt's original bytes in the journal only once.
+                    results = [
+                        {**{k: v for k, v in result.items() if k != 'sources'},
+                         'source_ids': [item['id'] for item in result['sources']]}
+                        if 'previous_id' in result and 'sources' in result else result
+                        for result in results
+                    ]
+                reply = {'lookup_results':results}
+            else:
+                reply = step['feedback']
+            messages.append({'role':'user','content':wire(reply)})
     return {'messages':messages,'response_schema':response_schema()}
 
 
@@ -153,6 +169,7 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
         if not isinstance(value,dict) or value.get('outcome') != 'lookup':
             try:
                 decision = selection.selected_decision(value,effective_sources(job),state['canon'])
+                source_pages.validate_citations(value, effective_sources(job))
                 if backend is not None:
                     with backend.connect() as con:
                         conflicts = title_conflicts(con, decision)
