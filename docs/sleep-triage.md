@@ -9,6 +9,11 @@ technical session can qualify, and one source item can qualify for several
 destinations. A proposal, an attributed report and an observed result remain
 distinct. Routine traffic should score low for all three.
 
+Examples are not admission categories. A memory candidate qualifies when it
+helps the being understand its history, what changed, or where to resume years
+later. Consider meaningful material outside any supplied list unless that list
+is explicitly exhaustive.
+
 Use the OpenAI [Decisions API](https://developers.openai.com/api/docs/guides/decisions)
 with `gpt-6-luna` at `/v1/decisions`. This is the typed predicate endpoint.
 The first request includes up to eight pieces of the human side of one

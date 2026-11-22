@@ -20,7 +20,7 @@ MODEL = 'gpt-6-luna'
 ENDPOINT = 'https://api.openai.com/v1/decisions'
 POLICY = 'dmk.sleep-triage/v2'
 ROUTES = {
-    'memory': 'a concrete durable fact or experience worth recalling later: a visit, encounter, relationship, dated shared episode, first evidenced appearance of an idea, lasting preference or lesson. Casual disclosures count. Routine work status alone does not',
+    'memory': 'something of lasting value that would help this being recognize its history, understand what changed, or find the thread again. Visits, encounters, relationships, first evidenced appearances of ideas, preferences and lessons are examples, never a closed list. Casual disclosures count. Routine work status alone does not',
     'work_map': 'a meaningful change to a shared project, relationship between efforts, decision, actual milestone or blocker that changes the shared picture. Routine commands and minor status do not count',
     'bitacora': 'source evidence for a potential story: a meaningful human question, discovery, obstacle, turning point or outcome that could matter outside this task. Routine progress and a proposal without a turning point are insufficient',
 }
