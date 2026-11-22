@@ -207,13 +207,21 @@ observation cursor advances only after the group finishes. Later observations
 continue accumulating independently and cannot replace the pinned source halfway
 through processing. Originals stay in the inbox and selected artifact history.
 
-`source_budget_bytes` (CLI `--source-budget-bytes`, default 64,000) budgets source
-context for an invocation, not total corpus/history size. A block or dependency
-closure is never truncated to fit. An indivisible closure reports the required
-budget and remains pending. A retained source-context lookup similarly resumes
-with a larger budget without repeating its paid model request. This is not a
-claim that every individual input fits every provider's context capacity; a
-paged-source design would need its own qualification if such an input appears.
+`source_budget_bytes` (CLI `--source-budget-bytes`, default 64,000) is the
+ordinary source-window target. The existing worker may select a separate
+`budgets.source_max_bytes` ceiling. An indivisible initial dependency closure
+can use exactly its measured size up to that ceiling. Later source lookups can
+add only the complete originals that fit the ceiling; local source checks run
+before canonical searches that could use a provider. Account reconciliation
+can use the same ceiling for a complete frozen account packet. Without the
+optional ceiling the target remains a hard limit.
+
+The ceiling bounds the serialized source evidence rather than all prompt tokens.
+Choose it against the actual deployed provider and cost budget. Above it, the
+worker reports the measured requirement and keeps the source and cursor pending.
+There is no automatic ceiling escalation, trimming or partial admission.
+The preceding compatible producer fingerprint can resume its frozen job and
+its saved lookup without rewriting its original dispatch or attribution.
 No global source-length ceiling replaces the removed canonical-record ceiling.
 
 The selector can request `source_before` from an already supplied source ID to

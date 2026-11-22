@@ -40,7 +40,7 @@ def observe(state_dir):
 
 
 def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps=6,
-        source_budget_bytes=64000, navigation_steps=4, retrieval='hybrid',
+        source_budget_bytes=64000, source_max_bytes=None, navigation_steps=4, retrieval='hybrid',
         capture_limit=32, index_limit=32, notice_sender=None, snapshot_policy=None):
     """Invoke finite phases under one launcher lock, preserving each phase journal.
 
@@ -113,7 +113,8 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
                     result=process_once(memory,inbox,state_dir,proposer,context,
                         limit=capture_limit,
                         navigation_steps=navigation_steps,retrieval=retrieval,
-                        source_budget_bytes=source_budget_bytes,notice_sender=notice_sender,snapshot_policy=snapshot_policy)
+                        source_budget_bytes=source_budget_bytes,source_max_bytes=source_max_bytes,
+                        notice_sender=notice_sender,snapshot_policy=snapshot_policy)
                 elif phase=='organization':
                     if organize:
                         result=organize()
@@ -149,7 +150,7 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
             outcomes.append(dict(phase=phase,result=result))
             safe={k:result[k] for k in ('state','reason_code','error_type','alert_id','capacity',
                 'processed_through','indexed_through','source_group_complete',
-                'minimum_required_bytes','processed','proposer_invoked',
+                'minimum_required_bytes','source_max_bytes','processed','proposer_invoked',
                 'ready_accounts','blocked_accounts','organized_through','organization_indexed_through') if k in result}
             problem=result.get('provider_problem',{})
             code=problem.get('code') or result.get('reason_code')

@@ -204,3 +204,55 @@ def test_source_context_budget_applies_to_accumulated_evidence(setup):
     assert again['state']=='pending' and not again['proposer_invoked'] and len(calls)==1
     done=process_once(memory,inbox,state,proposer,binding,source_budget_bytes=pending['minimum_required_bytes'])
     assert done['state']=='complete' and len(calls)==2
+
+
+def test_elastic_window_admits_only_exact_first_dependency_closure(setup):
+    memory,inbox,state,_,binding,_,raw=setup
+    text='Large independent evidence '+('x'*4000)
+    inbox.observe('session-a',{'hook_event_name':'Stop'},raw+message(text,'large')+message('Next window','next'))
+    process_once(memory,inbox,state,omitted,binding,source_budget_bytes=1000,source_max_bytes=6000)
+    seen=[]
+    def collect(request,path):
+        sources=json.loads(request['messages'][1]['content'])['sources']
+        seen.extend(s['content'] for s in sources if s['status']=='new')
+        return omitted(request,path)
+    result=process_once(memory,inbox,state,collect,binding,source_budget_bytes=1000,source_max_bytes=6000)
+    assert result['state']=='complete' and not result['source_group_complete']
+    assert seen==[text]
+    inputs=json.loads((state/'batch-2.json').read_text())['inputs']['source_window']
+    assert 1000 < inputs['used_bytes'] == inputs['budget_bytes'] < 6000
+    assert process_once(memory,inbox,state,collect,binding,source_budget_bytes=1000,
+                        source_max_bytes=6000)['source_group_complete']
+    assert seen==[text,'Next window']
+
+
+def test_retained_lookup_survives_window_upgrade_and_does_not_repeat_search(setup, monkeypatch):
+    import portable_producer
+    import selection_navigation
+    memory,inbox,state,_,binding,_,raw=setup
+    process_once(memory,inbox,state,omitted,binding)
+    inbox.observe('session-a',{'hook_event_name':'Stop'},raw+message('A correction.','correction'))
+    calls=[]
+    searches=[]
+    monkeypatch.setattr(selection_navigation,'_lookup',
+                        lambda *a: searches.append(True) or dict(status='no_match'))
+    def proposer(request,path):
+        source=json.loads(request['messages'][1]['content'])['sources']
+        calls.append(request)
+        if len(calls)==1:
+            return dict(selection=dict(outcome='lookup',requests=[
+                dict(action='search',record_uid='',query='encounter',offset=0,expected_revision=0),
+                dict(action='source_before',record_uid=source[0]['id'],query='',offset=0,expected_revision=0),
+            ]))
+        assert [s['status'] for s in source]==['earlier_context','new']
+        return omitted(request,path)
+    old=portable_producer.COMPATIBLE_WINDOW_PREDECESSOR
+    with monkeypatch.context() as patch:
+        patch.setattr(portable_producer,'_code_hash',lambda: old)
+        result=process_once(memory,inbox,state,proposer,binding,source_budget_bytes=500)
+    assert result['state']=='pending'
+    assert result['minimum_required_bytes']>500 and len(calls)==1 and not searches
+    result=process_once(memory,inbox,state,proposer,binding,source_budget_bytes=500,source_max_bytes=2000)
+    assert result['state']=='complete' and len(calls)==2 and len(searches)==1
+    job=json.loads((state/'batch-2.json').read_text())
+    assert job['code_hash']==old
