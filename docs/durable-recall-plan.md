@@ -428,6 +428,15 @@ contract. No timer, hook, startup prefetch or autonomous peer attention is
 installed by this roadmap. Automatic cadence cannot compensate for losing a
 meaningful source before its first durable capture.
 
+### Sleep triage for missed conversation evidence
+
+The optional [Decisions-based triage pass](sleep-triage.md) reads an independent
+cursor over authorized forward capture and leaves evidence-backed candidates for
+DMK, the shared work map and Bitácora. Select the classifier only after measuring
+three-destination quality/cost and qualifying receiving handoffs. Each configured
+cycle also checks observed DMK phases and Source review freshness; cross-being
+receiving use needs its own Matrix evidence.
+
 ### HMK, Matrix and native memory have explicit roles
 
 Keep the current HMK-native corpus and its revisions recoverable. For accepted
