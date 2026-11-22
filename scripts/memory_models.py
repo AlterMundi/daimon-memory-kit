@@ -63,7 +63,7 @@ def authorize_retry(request_path, reason):
     return value
 
 
-def dispatch_directory(directory, key):
+def dispatch_directory(directory, key, *, create=True):
     """Follow only explicit, receipt-bound decisions; preserve the full chain."""
     while (directory / "retries" / f"{key}.json").exists():
         decision = json.loads((directory / "retries" / f"{key}.json").read_text())
@@ -77,7 +77,8 @@ def dispatch_directory(directory, key):
         ):
             raise ValueError("retry decision does not match retained dispatch")
         directory = directory / expected
-    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if create:
+        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     return directory
 
 
@@ -99,16 +100,29 @@ class Models:
         if review.get('binary'):
             self.policy['binary_sha256'] = hashlib.sha256(Path(review['binary']).read_bytes()).hexdigest()
 
-    def __call__(self, request, directory):
+    def __call__(self, request, directory, *, reuse_only=False):
         directory = Path(directory)
-        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         policy_path = directory / "model-policy.json"
+        policy = self.policy
+        policy_changed = "pending model policy changed; explicit reconciliation required"
         if policy_path.exists():
-            if json.loads(policy_path.read_text()) != self.policy:
-                raise ValueError(
-                    "pending model policy changed; explicit reconciliation required"
-                )
+            policy = json.loads(policy_path.read_text())
+            if policy != self.policy:
+                retained_review = policy.get("review", {})
+                if (
+                    policy.get("source_scope") != self.scope
+                    or policy.get("generation") != self.generation
+                    or any(retained_review.get(field) != self.review.get(field)
+                           for field in ("provider", "effort", "credential_file"))
+                    or retained_review.get("model") != "gpt-6.1-sol"
+                    or self.review.get("model") != "gpt-6.2-sol"
+                ):
+                    raise ValueError(policy_changed)
+                reuse_only = True
+        elif reuse_only:
+            raise ValueError(policy_changed)
         else:
+            directory.mkdir(parents=True, exist_ok=True, mode=0o700)
             checkpoint(policy_path, self.policy)
         review = request.get("phase") == "consolidation_review"
         fictional = self.scope == "fictional"
@@ -122,7 +136,7 @@ class Models:
         )
         if review:
             provider = "openai-codex-native"
-            if (
+            if (not reuse_only and
                 hashlib.sha256(Path(self.review["catalog"]).read_bytes()).hexdigest()
                 != self.policy["catalog_sha256"]
             ):
@@ -134,7 +148,7 @@ class Models:
                     else "hmk-selected-receiving-request/v1"
                 ),
                 source_scope=self.scope,
-                model=self.review["model"],
+                model=policy["review"]["model"],
                 phase="narrative_review",
             )
         else:
@@ -152,16 +166,20 @@ class Models:
                 output_token_limit=self.generation["output_token_limit"],
             )
         key = digest(value)
-        directory = dispatch_directory(directory, key)
+        directory = dispatch_directory(directory, key, create=not reuse_only)
         request_path = directory / "requests" / f"{key}.json"
-        request_path.parent.mkdir(exist_ok=True)
-        if request_path.exists():
+        receipt_path = directory / "dispatches" / request_path.name
+        if request_path.is_file():
             if json.loads(request_path.read_text()) != value:
                 raise ValueError("retained request differs")
+        elif reuse_only:
+            raise ValueError(policy_changed)
         else:
+            request_path.parent.mkdir(exist_ok=True)
             checkpoint(request_path, value)
-        receipt_path = directory / "dispatches" / request_path.name
-        if not receipt_path.exists():
+        if not receipt_path.is_file():
+            if reuse_only:
+                raise ValueError(policy_changed)
             try:
                 if review:
                     options = {}
@@ -237,7 +255,7 @@ class Models:
                          "identifiers, capabilities or outcomes. Return a lookup if "
                          "further source reads are needed. No tools or external access "
                          "are available. Ordinary evidence validation still follows.")])
-                repaired = self(repair_request, directory / "completed-json-repair")
+                repaired = self(repair_request, directory / "completed-json-repair", reuse_only=reuse_only)
                 return dict(repaired, response_repair=dict(
                     reason="invalid_json", original_request_sha256=key,
                     original_receipt_sha256=digest(receipt),
