@@ -225,6 +225,63 @@ def test_selected_scope_paid_receipt_reuse_policy_change_and_no_fallback(
     assert len(calls) == 1
 
 
+def test_generation_provider_migration_reuses_old_receipts_and_bounds_new_dispatches(
+    setup, tmp_path, monkeypatch
+):
+    memory, inbox, state, _, context, _, _ = setup
+    value = configuration(tmp_path, memory, inbox, state, context)
+    review = dict(
+        value["review"], model="gpt-6.2-sol",
+        credential_file=str(tmp_path / "existing-credential"),
+        binary=str(tmp_path / "codex"),
+    )
+    Path(review["binary"]).write_text("synthetic pinned executable")
+    before = Models(value["generation"], review, "fictional")
+    request = dict(
+        messages=[dict(role="system", content="Fixture."), dict(role="user", content="Facts.")],
+        response_schema={"type": "object"}, phase="capture",
+    )
+    calls = []
+    monkeypatch.setenv(value["generation"]["credential_env"], "fixture")
+    monkeypatch.setattr(memory_models.text_api, "dispatch", lambda path, root, *_:
+                        record(path, root, "deepseek", "stop"))
+    monkeypatch.setattr(memory_models.native, "dispatch", lambda path, root, *_a, **_k:
+                        record(path, root, "native", "native_turn_completed"))
+
+    def record(path, root, provider, finish):
+        supplied = json.loads(path.read_text())
+        calls.append((provider, supplied))
+        target = root / "dispatches" / path.name
+        target.parent.mkdir(exist_ok=True)
+        checkpoint(target, dict(request_sha256=path.stem, state="completed", content="{}",
+                                tool_calls_observed=[], finish_reason=finish))
+
+    old = state / "old"
+    final = before(request, old)
+    retained = next((old / "dispatches").glob("*.json"))
+    frozen = retained.read_bytes(), (old / "model-policy.json").read_bytes()
+    limit = value["generation"]["output_token_limit"]
+    generation = dict(provider="openai-codex-native", model="gpt-6.2-sol",
+                      effort="low", output_token_limit=limit)
+    path = tmp_path / "new-profile.json"
+    checkpoint(path, dict(value, generation=generation, review=review))
+    assert memory_runtime.profile(path)["generation"] == generation
+    after = Models(generation, review, "fictional")
+    assert after(request, old) == final
+    assert (retained.read_bytes(), (old / "model-policy.json").read_bytes()) == frozen
+    assert len(calls) == 1
+    with pytest.raises(ValueError, match="policy changed"):
+        after(dict(request, phase="recall"), old)
+    assert len(calls) == 1
+
+    after(request, state / "fresh")
+    provider, sent = calls[-1]
+    assert provider == "native" and sent["model"] == "gpt-6.2-sol"
+    assert sent["output_token_limit"] == limit and sent["reasoning_effort"] == "low"
+    assert sent["format"] == "hmk-fictional-bounded-memory-operation/v1"
+
+
+
 @pytest.mark.parametrize("review_model", ["gpt-6.1-sol", "gpt-6.2-sol"])
 def test_native_review_route_uses_selected_evidence_and_reuses_receipt(
     setup, tmp_path, monkeypatch, review_model

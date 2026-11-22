@@ -13,6 +13,7 @@ from pathlib import Path
 import subprocess
 import time
 
+import bounded_native_turn
 from capturectl import digest
 from codex_coordinator import checkpoint
 
@@ -63,13 +64,29 @@ def command(request, catalog, empty_cwd, logs, binary='codex'):
         request.get("format") == "hmk-selected-receiving-request/v1"
         and scope == "human-authorized-selected-context"
     )
+    output_limit = request.get("output_token_limit")
+    bounded = (
+        request.get("format") == "hmk-fictional-bounded-memory-operation/v1"
+        and scope == "fictional"
+    ) or (
+        request.get("format") == "hmk-selected-bounded-memory-operation/v1"
+        and scope == "human-authorized-selected-context"
+    )
+    if bounded:
+        if (model != "gpt-6.2-sol" or request.get("reasoning_effort") != "low"
+                or request.get("phase") not in {"capture", "capture_review", "recall", "consolidation"}
+                or type(output_limit) is not int or not 1 <= output_limit <= 32768):
+            raise ValueError("explicit bounded native memory generation required")
+    elif output_limit is not None:
+        raise ValueError("output ceiling requires the bounded native operation")
     if (
-        not valid_source
+        not (valid_source or bounded)
         or not isinstance(model, str)
         or model not in NATIVE_REVIEW_MODELS
-        or (model == "gpt-6.2-sol" and request.get("phase") != "narrative_review")
-        or request.get("phase")
-        not in {"narrative_generation", "narrative_revision", "narrative_review"}
+        or (not bounded and (
+            (model == "gpt-6.2-sol" and request.get("phase") != "narrative_review")
+            or request.get("phase") not in {"narrative_generation", "narrative_revision", "narrative_review"}
+        ))
         or request.get("reasoning_effort") not in {"low", "medium"}
         or (
             request.get("reasoning_effort") == "medium"
@@ -129,25 +146,15 @@ def command(request, catalog, empty_cwd, logs, binary='codex'):
             "log_dir": str(logs),
         },
     )
-    argv = [
-        str(binary),
-        "exec",
-        "--ignore-user-config",
-        "--ignore-rules",
-        "--ephemeral",
-        "--skip-git-repo-check",
-        "--json",
-        "--color",
-        "never",
-        "-s",
-        "read-only",
-        "-C",
-        str(empty_cwd),
-        "-m",
-        model,
-        "--enable",
-        "skip_host_skill_discovery",
-    ]
+    if bounded:
+        argv = [str(binary), "app-server", "--listen", "stdio://",
+                "--enable", "skip_host_skill_discovery"]
+    else:
+        argv = [
+            str(binary), "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
+            "--skip-git-repo-check", "--json", "--color", "never", "-s", "read-only",
+            "-C", str(empty_cwd), "-m", model, "--enable", "skip_host_skill_discovery",
+        ]
     for flag in DISABLED:
         argv += ["--disable", flag]
     for key, value in config.items():
@@ -165,7 +172,7 @@ def command(request, catalog, empty_cwd, logs, binary='codex'):
             + json.dumps(messages[1:], ensure_ascii=False)
         )
     )
-    return argv + ["-"], stdin
+    return (argv if bounded else argv + ["-"]), stdin
 
 
 def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file=None, binary='codex'):
@@ -246,6 +253,13 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
         qualification=False,
         timeout_seconds=300,
     )
+    bounded = request.get("output_token_limit") is not None
+    if bounded:
+        receipt.pop("command")
+        receipt.update(
+            max_output_tokens=request["output_token_limit"],
+            fresh_context_basis="new tool-less ephemeral app-server thread; no resume or fork",
+        )
     checkpoint(receipt_path, receipt)
     started = time.monotonic()
     credential_fd = None
@@ -265,49 +279,65 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
             "--",
             *argv,
         ]
-        result = runner(
-            isolated,
-            input=stdin,
-            text=True,
-            capture_output=True,
-            timeout=300,
-            pass_fds=(credential_fd,),
-        )
-        events = [
-            json.loads(line) for line in result.stdout.splitlines() if line.strip()
-        ]
-        receipt["exit_code"] = result.returncode
-        receipt["event_types"] = [e.get("type") for e in events]
-        items = [e["item"] for e in events if e.get("type") == "item.completed"]
-        receipt["item_types"] = [i.get("type") for i in items]
-        # Only final messages and usage survive; no reasoning, stderr or auth
-        # data from CLI diagnostics is copied to the shared evidence.
-        receipt["warnings"] = [
-            i.get("message") for i in items if i.get("type") == "error"
-        ]
-        turns = [e for e in events if e.get("type") == "turn.completed"]
-        if turns:
-            receipt["native_usage"] = turns[-1].get("usage")
-            u = receipt["native_usage"]
-            if u is not None:
-                receipt["usage"] = dict(
-                    prompt_tokens=u["input_tokens"],
-                    completion_tokens=u["output_tokens"],
-                    total_tokens=u["input_tokens"] + u["output_tokens"],
-                )
-        unexpected = [
-            i.get("type")
-            for i in items
-            if i.get("type") not in {"error", "agent_message"}
-        ]
-        messages = [i for i in items if i.get("type") == "agent_message"]
-        if result.returncode or not turns or unexpected or len(messages) != 1:
-            raise ValueError(
-                "native attempt failed, used tools or did not return one final message"
+        if bounded:
+            def retain(key, evidence):
+                receipt[key] = evidence
+                checkpoint(receipt_path, receipt)
+
+            content, usage = bounded_native_turn.execute(
+                isolated, credential_fd=credential_fd, model=model, cwd=str(cwd.resolve()),
+                text=stdin, schema=request["response_schema"],
+                output_limit=request["output_token_limit"], retain=retain,
             )
-        receipt.update(
-            state="completed", content=messages[0]["text"], tool_calls_observed=[]
-        )
+            receipt.update(
+                state="completed", content=content, usage=usage, tool_calls_observed=[],
+                actual_response_model=receipt["provider_usage"]["observed_model"],
+                finish_reason="native_turn_completed",
+            )
+        else:
+            result = runner(
+                isolated,
+                input=stdin,
+                text=True,
+                capture_output=True,
+                timeout=300,
+                pass_fds=(credential_fd,),
+            )
+            events = [
+                json.loads(line) for line in result.stdout.splitlines() if line.strip()
+            ]
+            receipt["exit_code"] = result.returncode
+            receipt["event_types"] = [e.get("type") for e in events]
+            items = [e["item"] for e in events if e.get("type") == "item.completed"]
+            receipt["item_types"] = [i.get("type") for i in items]
+            # Only final messages and usage survive; no reasoning, stderr or auth
+            # data from CLI diagnostics is copied to the shared evidence.
+            receipt["warnings"] = [
+                i.get("message") for i in items if i.get("type") == "error"
+            ]
+            turns = [e for e in events if e.get("type") == "turn.completed"]
+            if turns:
+                receipt["native_usage"] = turns[-1].get("usage")
+                u = receipt["native_usage"]
+                if u is not None:
+                    receipt["usage"] = dict(
+                        prompt_tokens=u["input_tokens"],
+                        completion_tokens=u["output_tokens"],
+                        total_tokens=u["input_tokens"] + u["output_tokens"],
+                    )
+            unexpected = [
+                i.get("type")
+                for i in items
+                if i.get("type") not in {"error", "agent_message"}
+            ]
+            messages = [i for i in items if i.get("type") == "agent_message"]
+            if result.returncode or not turns or unexpected or len(messages) != 1:
+                raise ValueError(
+                    "native attempt failed, used tools or did not return one final message"
+                )
+            receipt.update(
+                state="completed", content=messages[0]["text"], tool_calls_observed=[]
+            )
     except BaseException as error:
         # Preserve every ended attempt, including foreground interruption,
         # without exporting exception text, authentication data or CLI stderr.
@@ -324,7 +354,7 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
         dict(
             request_sha256=d,
             requested_model=model,
-            response_model=None,
+            response_model=receipt["actual_response_model"],
             fresh_context=True,
             tool_calls_observed=[],
             dispatch_receipt=str(receipt_path),

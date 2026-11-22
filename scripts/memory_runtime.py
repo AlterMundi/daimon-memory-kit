@@ -63,18 +63,28 @@ def profile(path):
     ):
         raise ValueError("explicit subject and source_instance required")
     generation, review = value["generation"], value["review"]
+    generation_fields = {"provider", "model", "effort", "output_token_limit"}
+    legacy_generation = (
+        set(generation) == generation_fields | {"credential_env"}
+        and generation["provider"] == "deepseek"
+        and generation["model"] == "deepseek-flash"
+        and isinstance(generation["credential_env"], str)
+        and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", generation["credential_env"])
+    )
+    native_generation = (
+        set(generation) == generation_fields
+        and generation["provider"] == "openai-codex-native"
+        and generation["model"] == "gpt-6.2-sol"
+        and review.get("model") == "gpt-6.2-sol"
+        and bool(review.get("credential_file")) and bool(review.get("binary"))
+    )
     if (
-        set(generation)
-        != {"provider", "model", "effort", "output_token_limit", "credential_env"}
-        or generation["provider"] != "deepseek"
-        or generation["model"] != "deepseek-flash"
+        not (legacy_generation or native_generation)
         or generation["effort"] != "low"
         or type(generation["output_token_limit"]) is not int
         or not 1 <= generation["output_token_limit"] <= 32768
-        or not isinstance(generation["credential_env"], str)
-        or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", generation["credential_env"])
     ):
-        raise ValueError("explicit DeepSeek Flash low generation profile required")
+        raise ValueError("explicit supported low-effort bounded generation profile required")
     if (
         set(review) - {"provider", "model", "effort", "catalog", "credential_file", "binary"}
         or not {"provider", "model", "effort", "catalog"} <= set(review)
