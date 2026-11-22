@@ -107,7 +107,7 @@ def profile(path):
         "source_budget_bytes": None,
         "navigation_steps": 32,
     }
-    if set(budgets) - (set(limits) | {"source_max_bytes"}) or not set(limits) <= set(budgets) or any(
+    if set(budgets) - (set(limits) | {"source_max_bytes", "source_page_bytes"}) or not set(limits) <= set(budgets) or any(
         type(budgets[k]) is not int
         or budgets[k] < 1
         or (ceiling is not None and budgets[k] > ceiling)
@@ -117,6 +117,10 @@ def profile(path):
     ceiling = budgets.get("source_max_bytes", budgets["source_budget_bytes"])
     if type(ceiling) is not int or ceiling < budgets["source_budget_bytes"]:
         raise ValueError("source_max_bytes must cover source_budget_bytes")
+    if "source_page_bytes" in budgets:
+        page_bytes = budgets["source_page_bytes"]
+        if type(page_bytes) is not int or not 4096 <= page_bytes <= min(32768, budgets["source_budget_bytes"]):
+            raise ValueError("source_page_bytes must be between 4096 and 32768 and fit the ordinary window")
     if "snapshots" in value:
         snapshot_store.policy(value["snapshots"])
         routine=value['snapshots'].get('routine_backup')
@@ -224,8 +228,14 @@ def run_sleep_triage(value, inbox, binding, result):
             receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
                                        api_key=os.environ.get(settings["credential_env"]))
         except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
-            active = root / "dispatch.json"
-            attempt = json.loads(active.read_text()) if active.is_file() else {}
+            attempt = {}
+            for name in ("context-dispatch.json", "dispatch.json"):
+                active = root / name
+                if active.is_file():
+                    retained = json.loads(active.read_text())
+                    if retained.get("state") != "complete":
+                        attempt = retained
+                        break
             receipt = dict(state="blocked", reason_code="inspect_sleep_triage", error_type=type(error).__name__)
             if attempt and attempt.get("state") != "complete":
                 problem = attempt.get("problem", {"code": "dispatch_unresolved"})

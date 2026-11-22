@@ -46,7 +46,7 @@ def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_pa
     assert result['state'] == 'caught_up'
     assert len(seen) == 1
     assert 'Renata' in json.dumps(seen[0]) and 'old story' not in json.dumps(seen[0])
-    assert set(q['name'] for q in seen[0]['questions']) == {'memory_0', 'work_map_0', 'bitacora_0'}
+    assert set(q['name'] for q in seen[0]['questions']) == {'memory_0', 'work_map_0', 'bitacora_0', 'needs_context_0'}
     packet = json.loads(next((state / 'packets').glob('*.json')).read_text())
     assert packet['decision']['scores']['memory_0'] == 0.9
     assert packet['sources'][0]['source_id'] and 'Renata' not in json.dumps(packet)
@@ -144,3 +144,38 @@ def test_selected_worker_exports_triage_receipt_and_current_health(context, tmp_
     assert observed['sleep_health']['dmk']['capture']['status'] == 'blocked'
     assert observed['sleep_health']['matrix']['source_review']['status'] == 'unobserved'
     assert observed['state'] == 'pending'
+
+
+def test_human_first_reads_assistant_only_on_requested_page(context, tmp_path):
+    binding, source, event = context
+    opposite=line('response_item',dict(type='message',role='assistant',
+                                      content=[dict(type='output_text',text='The prototype naming decision.')]))
+    append(source,turn('incident','Eso merece quedar registrado.')+opposite)
+    assert capture(binding,event)['capture_complete']
+    payloads=[]
+    def decide(request,timeout):
+        payload=json.loads(request.data)
+        payloads.append(payload)
+        keys=[q['name'] for q in payload['questions']]
+        return BytesIO(json.dumps({'answers': [
+            dict(type='predicate',name=name,probability=0.95) for name in keys
+        ]}).encode())
+    state=tmp_path/'conditional'
+    sleep_triage.run(binding,state,after=0,api_key='fictional',opener=decide)
+    assert len(payloads)==2
+    assert 'prototype naming' not in json.dumps(payloads[0])
+    assert 'prototype naming' in json.dumps(payloads[1])
+    packet=json.loads(next((state/'packets').glob('*.json')).read_text())
+    assert packet['context_decision'] and packet['assistant_context']
+    assert len(packet['sources'])==1 and packet['sources'][0]['channel']=='human_message'
+    assert 'prototype naming' not in json.dumps(packet)
+    assert sleep_triage.run(binding,state,opener=decide)['completed_pages']==0
+
+
+def test_telecodex_human_frame_excludes_controller_and_session_helpers():
+    frame=('[Interaction controller]\nTransport provenance: '
+           '{"author":null,"original_human_author":123,"authorized_human":123}\n'
+           'Current instruction: fixture\n\nCurrent attributed input:\n'
+           'Vino Ada.\n\nReturn your answer followed by <daimon-result>')
+    assert sleep_triage.human_text(frame)=='Vino Ada.'
+    assert sleep_triage.human_text(frame.replace('"author":null','"author":{"kind":"session_request"}'))==''

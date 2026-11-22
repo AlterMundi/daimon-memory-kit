@@ -17,6 +17,7 @@ import codex_projection as artifacts
 import portable_capture as selection
 import selection_navigation
 import source_windows
+import source_pages
 from provider_status import Alerts, ProviderProblem, classify
 import snapshot_store
 
@@ -25,6 +26,7 @@ SCHEMA = 'hmk.portable-producer/v1'
 # dispatch protocol and commit path. Only window sizing and lookup preflight
 # changed. Preserve its fingerprint in jobs and their eventual artifacts.
 COMPATIBLE_WINDOW_PREDECESSOR = '56eb7b559a17f26943ad84074c4e28e984d96b72073e0d0212fb0e7e0c446922'
+COMPATIBLE_ELASTIC_PREDECESSOR = '1c25d55ba67012a1bf3059561521e96d25dc335d7bfc47ee5856defc9933a5fd'
 
 
 class CanonicalContextChanged(ValueError):
@@ -36,11 +38,12 @@ def _code_hash():
                    Path(selection.source_decision.__code__.co_filename).read_text(),
                    Path(selection_navigation.__file__).read_text(),
                    Path(source_windows.__file__).read_text(),
-                   Path(__file__).read_text()])
+                   Path(__file__).read_text(), Path(source_pages.__file__).read_text()])
 
 
 def compatible_code_hash(fingerprint, *, current=None):
-    return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR}
+    return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR,
+                           COMPATIBLE_ELASTIC_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -79,9 +82,17 @@ def _refresh_changed_context(memory, job, job_path):
     checkpoint(job_path,job)
 
 
+def bounded_window(groups, progress, target, ceiling):
+    window = source_windows.select(groups, progress, target)
+    required = window['minimum_required_bytes']
+    if required is not None and required <= ceiling:
+        return source_windows.select(groups, progress, required), required
+    return window, target
+
+
 def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                  navigation_steps=4, retrieval='hybrid', source_budget_bytes=64000,
-                 source_max_bytes=None, notice_sender=None, _fault=None, snapshot_policy=None):
+                 source_max_bytes=None, source_page_bytes=None, notice_sender=None, _fault=None, snapshot_policy=None):
     """Process at most one frozen batch. Reinvocation resumes uncertain commits.
 
     proposer(request, directory) returns an auditable JSON object containing
@@ -99,6 +110,9 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
     source_max_bytes = source_budget_bytes if source_max_bytes is None else source_max_bytes
     if type(source_max_bytes) is not int or source_max_bytes < source_budget_bytes:
         raise ValueError('source ceiling must cover the ordinary window')
+    if source_page_bytes is not None and (type(source_page_bytes) is not int
+            or not 4096 <= source_page_bytes <= min(32768, source_budget_bytes)):
+        raise ValueError('source pages must be between 4096 and 32768 bytes and fit the ordinary window')
     binding = json.loads(inbox.binding)
     if any(context.get(k) != binding[k] for k in ('subject','source_instance')):
         raise ValueError('producer context conflicts with capture binding')
@@ -203,12 +217,22 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                             'processed_through':index['after'],'proposer_invoked':False}
             if not group_path.exists():
                 checkpoint(group_path,dict(group=group,hash=digest(group)))
-            window = source_windows.select(groups,index.get('window_progress',{}),source_budget_bytes)
-            required = window['minimum_required_bytes']
-            budget_used = source_budget_bytes
-            if required is not None and required <= source_max_bytes:
-                budget_used = required
-                window = source_windows.select(groups,index.get('window_progress',{}),budget_used)
+            progress = index.get('window_progress', {})
+            paging = index.get('window_paging')
+            if paging is not None:
+                if paging.get('schema') != source_pages.SCHEMA:
+                    raise ValueError('unknown retained paging schema')
+                groups, _ = source_pages.expand(groups, revisions, paging['page_bytes'])
+            window, budget_used = bounded_window(groups, progress, source_budget_bytes, source_max_bytes)
+            oversized_context = (paging is None and source_page_bytes is not None
+                                 and any(len(wire(block).encode()) > source_max_bytes
+                                         for blocks in groups.values() for block in blocks))
+            if (paging is None and source_page_bytes is not None
+                    and (window['minimum_required_bytes'] is not None or oversized_context)):
+                groups, boundaries = source_pages.expand(groups, revisions, source_page_bytes)
+                progress = {source: boundaries[source][position] for source, position in progress.items()}
+                paging = dict(schema=source_pages.SCHEMA, page_bytes=source_page_bytes)
+                window, budget_used = bounded_window(groups, progress, source_budget_bytes, source_max_bytes)
             if window['minimum_required_bytes'] is not None:
                 return {'state':'pending','reason':'source dependency closure exceeds invocation budget',
                         'minimum_required_bytes':window['minimum_required_bytes'],
@@ -221,6 +245,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                           source_window=dict(group_hash=digest(group),progress=window['progress'],
                               complete=window['complete'],budget_bytes=budget_used,
                               used_bytes=window['used_bytes']))
+            if paging is not None:
+                inputs['source_window']['paging'] = paging
             request = dict(messages=selection.block_messages(sources,[],context),
                            response_schema=selection_navigation.response_schema())
             job = dict(owner=owner, sequence=sequence, inputs=inputs,
@@ -234,12 +260,18 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         # Each resume verifies the original dependency chain; metadata IDs alone
         # never prove that the source bytes needed by this job survived.
         originals, source_groups = {}, {}
+        paging = inputs.get('source_window', {}).get('paging')
         for source, revision in inputs['revisions'].items():
             data = inbox.restore(revision['revision'])
             if artifacts.sha(data) != revision['sha256']:
                 raise ValueError('prepared source differs from retained bytes')
-            originals['sources/'+digest(source)+'.jsonl'] = data
+            if paging is None:
+                originals['sources/'+digest(source)+'.jsonl'] = data
             source_groups[source] = selection.block_sources(selection.codex_sources(data,source=source),binding['source_instance'])
+        if paging is not None:
+            if paging.get('schema') != source_pages.SCHEMA:
+                raise ValueError('unknown retained paging schema')
+            source_groups, _ = source_pages.expand(source_groups, inputs['revisions'], paging['page_bytes'])
         proposer_invoked = False
         if snapshot_policy is not None:
             snapshot_store.Store(memory,state_dir,snapshot_policy,owner).preflight(f'batch-{sequence}-before.sqlite')
@@ -283,13 +315,20 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         if decision['outcome'] == 'deferred':
             return {'state':'deferred','reason':decision['reason'],
                     'processed_through':index['after'],'proposer_invoked':proposer_invoked}
+        if paging is not None:
+            source_blocks = selection_navigation.effective_sources(job)
+            source_pages.validate_citations(job['proposal']['selection'], source_blocks)
+            originals['source-evidence.json'] = wire(dict(
+                schema=source_pages.SCHEMA, revisions=inputs['revisions'],
+                excerpts=source_blocks,
+            )).encode()
         originals.update({'request.json':wire(job['request']).encode(),
                           'navigation.json':wire(job.get('navigation',{})).encode(),
                           'prior-attempts.json':wire(job.get('prior_attempts',[])).encode(),
                           'proposal.json':wire(job['proposal']).encode(),
                           'capture.json':wire(inputs['observations']).encode(),
                           'producer.json':wire({'schema':SCHEMA,'owner':owner,
-                            'code_hash':code_hash,'input_hash':job['input_hash']}).encode()})
+                            'code_hash':job['code_hash'],'input_hash':job['input_hash']}).encode()})
         bundle = artifacts.learning_bundle(originals,source_instance=binding['source_instance'],
             subject=binding['subject'],source_event_id='portable-batch:'+job['input_hash'])
         for record in decision['records']:
@@ -342,9 +381,12 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             index['source_revisions'].update({s:r['revision'] for s,r in inputs['revisions'].items()})
             index.pop('window_group',None)
             index.pop('window_progress',None)
+            index.pop('window_paging',None)
         else:
             index['window_group'] = window['group_hash']
             index['window_progress'] = window['progress']
+            if paging is not None:
+                index['window_paging'] = paging
         index['sequence'] = sequence
         Alerts(inbox).resolve(job['input_hash'])
         checkpoint(index_path,index)

@@ -11,15 +11,23 @@ distinct. Routine traffic should score low for all three.
 
 Use the OpenAI [Decisions API](https://developers.openai.com/api/docs/guides/decisions)
 with `gpt-6-luna` at `/v1/decisions`. This is the typed predicate endpoint.
-Each request includes up to eight dialogue pieces from one captured conversation
-range and three independent questions per piece. Their shared evidence is sent
-once. The result is probabilities and exact source pointers. No generated
-prose, tools, or second model is used by this step. Usage is recorded when the
-service returns it. Reconcile actual cost with [organization Decisions usage](https://developers.openai.com/api/docs/guides/decisions#monitor-usage)
-and account billing before projecting cost. Low scores remain reviewable during
-qualification; refused predicates remain explicitly unresolved.
+The first request includes up to eight pieces of the human side of one
+captured conversation range. It asks three independent destination questions and
+a question about whether the assistant's side is materially needed. A context
+probability of at least 0.8 opens at most one follow-up per page, covering only
+the flagged items. The worker may include at most two assistant excerpts, each
+at most 900 characters, from the current and preceding admitted range of that
+conversation. Assistant excerpts clarify the human text and cannot become
+independent candidates. Unknown context stays visible for review. This threshold
+is provisional until measured against labeled examples.
 
-The first profile reviews dialogue from the selected forward inbox. Its separate
+The result is probabilities and exact source pointers. No generated prose,
+tools, or second model is used. Usage is recorded when the service returns it.
+Reconcile actual cost with [organization Decisions usage](https://developers.openai.com/api/docs/guides/decisions#monitor-usage)
+and account billing before projecting cost. Low scores remain reviewable and
+refused predicates remain unresolved during qualification.
+
+The first profile reviews human dialogue from the selected forward inbox. Its separate
 cursor starts at an explicit observation, walks forward through a fixed
 high-water mark per invocation, and never reopens the original native logs. Long
 dialogue is paged without dropping text. Pending pages retain their place. Scope
@@ -60,8 +68,8 @@ inbox; the example value is a placeholder, not a backfill instruction.
 
 The existing `memory_runtime.py run --profile ...` invokes it after the original
 phases. The ordinary worker, authority and cadence remain the owners. Keep the
-step count within the actual unit's time budget (30 seconds maximum per external
-attempt); no new scheduler is required. The isolated `sleep_triage.py --binding
+step count within the actual unit's time budget (up to two external
+attempts of at most 30 seconds per step); no new scheduler is required. The isolated `sleep_triage.py --binding
 ... --state-dir ... --after ... --steps ...` entry point uses the same state
 contract. Omit `--after` after the first run. Use an API project credential
 through the launcher's existing environment route.
@@ -75,8 +83,9 @@ second call after a timeout or ambiguous server result without reconciliation.
 The worker projects retained provider failures through the existing DMK outbox.
 A standalone run returns the failure directly.
 
-Each step uses at most 12,000 bytes of dialogue packet and 24 predicates, with
-at most 32 steps per invocation. One active receipt, 2,048 result packets and
+Each step uses at most 12,000 bytes of human dialogue packet and 32 initial
+predicates, plus the bounded optional follow-up. There are at most 32 steps per
+invocation and 30 seconds per attempt. Two active receipts, 2,048 result packets and
 256 retained rejection records are hard limits; no whole request or raw dialogue
 copy is retained by this stage. Retire or move a packet only after its owning
 review or handoff has retained its receipt and source pointer. At capacity,
@@ -112,3 +121,7 @@ refusals and downstream review effort. Exercise interruption, budget boundary,
 and unchanged-input replay. Require real cost and latencies for the three
 destinations together. Tests with a mock transport validate invariants and the
 wire shape, not classifier quality or actual provider acceptance.
+
+Version 2 pins the human-first request policy. Retained version 1 runs require
+explicit reconciliation before adopting this version. Do not reinterpret their
+in-flight pages as human-first or redispatch a retained attempt.
