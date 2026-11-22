@@ -109,13 +109,30 @@ class Models:
             policy = json.loads(policy_path.read_text())
             if policy != self.policy:
                 retained_review = policy.get("review", {})
+                retained_generation = policy.get("generation", {})
+                native_generation_upgrade = (
+                    retained_generation.get("provider") == "deepseek"
+                    and retained_generation.get("model") == "deepseek-flash"
+                    and retained_generation.get("effort") == "low"
+                    and self.generation.get("provider") == "openai-codex-native"
+                    and self.generation.get("model") == "gpt-6.2-sol"
+                    and self.generation.get("effort") == "low"
+                    and self.generation.get("output_token_limit")
+                    == retained_generation.get("output_token_limit")
+                )
+                review_upgrade = (
+                    retained_review.get("model") == "gpt-6.1-sol"
+                    and self.review.get("model") == "gpt-6.2-sol"
+                    and all(retained_review.get(field) == self.review.get(field)
+                            for field in ("provider", "effort", "credential_file"))
+                )
                 if (
                     policy.get("source_scope") != self.scope
-                    or policy.get("generation") != self.generation
-                    or any(retained_review.get(field) != self.review.get(field)
-                           for field in ("provider", "effort", "credential_file"))
-                    or retained_review.get("model") != "gpt-6.1-sol"
-                    or self.review.get("model") != "gpt-6.2-sol"
+                    or not (retained_generation == self.generation or native_generation_upgrade)
+                    or not (
+                        review_upgrade
+                        or (native_generation_upgrade and retained_review == self.review)
+                    )
                 ):
                     raise ValueError(policy_changed)
                 reuse_only = True
@@ -152,18 +169,20 @@ class Models:
                 phase="narrative_review",
             )
         else:
-            provider = "deepseek"
+            generation = policy["generation"]
+            provider = generation["provider"]
+            operation = (
+                "bounded-memory-operation" if provider == "openai-codex-native"
+                else "memory-operation"
+            )
+            audience = "fictional" if fictional else "selected"
             value.update(
-                format=(
-                    "hmk-fictional-memory-operation/v1"
-                    if fictional
-                    else "hmk-selected-memory-operation/v1"
-                ),
+                format=f"hmk-{audience}-{operation}/v1",
                 source_scope=self.scope,
                 fictional=fictional,
-                model="deepseek-flash",
+                model=generation["model"],
                 phase=request.get("phase", "capture"),
-                output_token_limit=self.generation["output_token_limit"],
+                output_token_limit=generation["output_token_limit"],
             )
         key = digest(value)
         directory = dispatch_directory(directory, key, create=not reuse_only)
@@ -181,7 +200,10 @@ class Models:
             if reuse_only:
                 raise ValueError(policy_changed)
             try:
-                if review:
+                if provider == "openai-codex-native":
+                    if (hashlib.sha256(Path(self.review["catalog"]).read_bytes()).hexdigest()
+                            != self.policy["catalog_sha256"]):
+                        raise ValueError("native catalog changed during invocation")
                     options = {}
                     if self.review.get('binary'):
                         if hashlib.sha256(Path(self.review['binary']).read_bytes()).hexdigest() != self.policy['binary_sha256']:
@@ -220,7 +242,9 @@ class Models:
         if (
             receipt.get("state") != "completed"
             or receipt.get("tool_calls_observed")
-            or (not review and receipt.get("finish_reason") != "stop")
+            or (provider == "deepseek" and receipt.get("finish_reason") != "stop")
+            or (provider == "openai-codex-native" and not review
+                and receipt.get("finish_reason") != "native_turn_completed")
         ):
             raise ProviderProblem(
                 provider,

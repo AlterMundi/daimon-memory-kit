@@ -143,6 +143,20 @@ suppressed by the established adapter. An optional `review.credential_file` may
 select the receiver's existing auth file by reference. No credential value belongs
 in this JSON. Historical fictional Nous comparison support is not a runtime route.
 
+To use bounded native generation, select `openai-codex-native`, `gpt-6.2-sol`
+and `low` in `generation`, retaining its existing `output_token_limit`. Omit
+`generation.credential_env`. The review profile must select the same Sol model,
+the receiving tool-disabled catalog, the pinned Codex binary and the existing
+owner's auth file. Generation uses a separate tool-less ephemeral app server
+with the provider-side token ceiling. The worker records its single reservation
+before authorizing it and requires matching usage and terminal response evidence.
+An unsupported native protocol fails closed.
+
+A generation policy change can read an exact retained DeepSeek receipt under
+its original budget. In-flight, failed and missing attempts remain owned by
+their original journal. A new generation selection cannot use a missing old
+receipt as permission to dispatch Sol or repeat the original call.
+
 ```sh
 hmk memory_runtime.py run --profile /selected/worker.json
 hmk memory_runtime.py status --profile /selected/worker.json
