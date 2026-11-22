@@ -171,33 +171,33 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
             return step['proposal'], dispatched
         if set(value) != {'outcome','requests'} or not isinstance(value['requests'],list) or not 1 <= len(value['requests']) <= 8:
             raise ValueError('lookup requires one to eight read requests')
-        results = []
-        for request in value['requests']:
-            if isinstance(request,dict) and request.get('action') == 'source_before':
-                if (set(request) != {'action','query','record_uid','offset','expected_revision'}
-                        or request['query'] != '' or type(request['offset']) is not int
-                        or request['offset'] != 0 or type(request['expected_revision']) is not int
-                        or request['expected_revision'] != 0 or not isinstance(request['record_uid'],str)):
-                    raise ValueError('source context navigation requires a supplied anchor and zero offsets')
-                known = {s['id'] for s in effective_sources(job)}
-                result = source_reader.before(request['record_uid'],known) if source_reader else dict(status='source_context_unavailable')
-                if result['status']=='ok':
-                    added = [b for b in result['sources'] if b['id'] not in known]
-                    required = len(wire(effective_sources(job)+added).encode())
-                    if required > source_reader.budget_bytes:
-                        result = dict(status='source_context_budget_exceeded',anchor=request['record_uid'],
-                                      minimum_required_bytes=required)
-                if result['status']=='ok':
-                    extra = state.setdefault('source_context',[])
-                    for block in result['sources']:
-                        if block['id'] not in known:
-                            extra.append(block)
-                            known.add(block['id'])
-                    state['source_order'] = source_reader.order(effective_sources(job))
-                results.append(result)
-            else:
-                results.append(_lookup(reader,request,state))
-        waits = [r for r in results if r['status']=='source_context_budget_exceeded']
+        # Preflight local source reads before canonical searches (which may
+        # use paid embeddings). A budget obstruction leaves the lookup intact
+        # without spending on searches whose results cannot yet be committed.
+        results = [None] * len(value['requests'])
+        sources = effective_sources(job)
+        known = {block['id'] for block in sources}
+        added = []
+        for i, request in enumerate(value['requests']):
+            if not isinstance(request, dict) or request.get('action') != 'source_before':
+                continue
+            if (set(request) != {'action','query','record_uid','offset','expected_revision'}
+                    or request['query'] != '' or type(request['offset']) is not int
+                    or request['offset'] != 0 or type(request['expected_revision']) is not int
+                    or request['expected_revision'] != 0 or not isinstance(request['record_uid'],str)):
+                raise ValueError('source context navigation requires a supplied anchor and zero offsets')
+            result = source_reader.before(request['record_uid'],known) if source_reader else dict(status='source_context_unavailable')
+            if result['status'] == 'ok':
+                fresh = [block for block in result['sources'] if block['id'] not in known]
+                required = len(wire(sources + added + fresh).encode())
+                if required > source_reader.budget_bytes:
+                    result = dict(status='source_context_budget_exceeded',anchor=request['record_uid'],
+                                  minimum_required_bytes=required)
+                else:
+                    added.extend(fresh)
+                    known.update(block['id'] for block in fresh)
+            results[i] = result
+        waits = [r for r in results if r is not None and r['status']=='source_context_budget_exceeded']
         if waits:
             pending = dict(reason='source context exceeds invocation budget',
                            minimum_required_bytes=max(r['minimum_required_bytes'] for r in waits))
@@ -205,9 +205,13 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
             if pending not in step.setdefault('source_budget_waits',[]):
                 step['source_budget_waits'].append(pending)
             checkpoint(job_path,job)
-            # Re-evaluate this saved lookup when its caller supplies more context
-            # budget. Do not pay for another model decision about the same limit.
             return None, dispatched
+        if added:
+            state.setdefault('source_context',[]).extend(added)
+            state['source_order'] = source_reader.order(effective_sources(job))
+        for i, request in enumerate(value['requests']):
+            if results[i] is None:
+                results[i] = _lookup(reader,request,state)
         state.pop('source_budget_pending',None)
         step['results'] = results
         checkpoint(job_path,job)

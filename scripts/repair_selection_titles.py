@@ -15,7 +15,7 @@ from capturectl import digest, title_conflicts, wire
 from codex_coordinator import checkpoint
 from memory_models import Models
 from memory_runtime import load_memory, profile
-from portable_producer import _code_hash
+from portable_producer import compatible_code_hash
 from selection_navigation import effective_sources
 import portable_capture as selection
 
@@ -130,7 +130,7 @@ def repair(value, sequence, reason, *, models=None, mode='titles'):
         index_path = state/'index.json'
         current = json.loads(index_path.read_text())['sequence']+1 if index_path.exists() else 1
         if (sequence != current or job['state'] != 'prepared' or 'proposal' in job
-                or not nav.get('halted_reason') or job['code_hash'] != _code_hash()):
+                or not nav.get('halted_reason') or not compatible_code_hash(job['code_hash'])):
             raise ValueError('current uncommitted halted job and original producer implementation required')
         # The last proposal is a completed successful model result, not an
         # interrupted transport. No mutation/retry of its dispatch is authorized.

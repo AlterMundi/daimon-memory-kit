@@ -12,7 +12,7 @@ from capture_inbox import Inbox, sha
 from capturectl import digest, wire
 from codex_coordinator import checkpoint
 from memory_runtime import profile
-from portable_producer import _code_hash
+from portable_producer import compatible_code_hash
 from portable_capture import selected_decision
 from selection_navigation import effective_sources
 
@@ -39,7 +39,7 @@ def repair(value,sequence,reason):
         with inbox.connect() as c:owner=json.loads(c.execute('select value from producer_owner').fetchone()[0])
         if (job['owner']!=owner or owner['database']!=str(Path(value['database']).resolve()) or owner['state_dir']!=str(state)
                 or owner['capture_binding']!=digest(binding) or owner['context']!=value['context']
-                or job['input_hash']!=digest(job['inputs']) or job['code_hash']!=_code_hash()):
+                or job['input_hash']!=digest(job['inputs']) or not compatible_code_hash(job['code_hash'])):
             raise ValueError('original source-bound pending runtime required')
         for r in job['inputs']['revisions'].values():
             if sha(inbox.restore(r['revision']))!=r['sha256']:raise ValueError('retained sources changed')

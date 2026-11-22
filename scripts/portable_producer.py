@@ -21,6 +21,10 @@ from provider_status import Alerts, ProviderProblem, classify
 import snapshot_store
 
 SCHEMA = 'hmk.portable-producer/v1'
+# The predecessor uses the same frozen inputs, source IDs, decision validation,
+# dispatch protocol and commit path. Only window sizing and lookup preflight
+# changed. Preserve its fingerprint in jobs and their eventual artifacts.
+COMPATIBLE_WINDOW_PREDECESSOR = '56eb7b559a17f26943ad84074c4e28e984d96b72073e0d0212fb0e7e0c446922'
 
 
 class CanonicalContextChanged(ValueError):
@@ -33,6 +37,10 @@ def _code_hash():
                    Path(selection_navigation.__file__).read_text(),
                    Path(source_windows.__file__).read_text(),
                    Path(__file__).read_text()])
+
+
+def compatible_code_hash(fingerprint, *, current=None):
+    return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -72,7 +80,8 @@ def _refresh_changed_context(memory, job, job_path):
 
 
 def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
-                 navigation_steps=4, retrieval='hybrid', source_budget_bytes=64000, notice_sender=None, _fault=None, snapshot_policy=None):
+                 navigation_steps=4, retrieval='hybrid', source_budget_bytes=64000,
+                 source_max_bytes=None, notice_sender=None, _fault=None, snapshot_policy=None):
     """Process at most one frozen batch. Reinvocation resumes uncertain commits.
 
     proposer(request, directory) returns an auditable JSON object containing
@@ -87,6 +96,9 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         raise ValueError('unsupported retrieval mode')
     if type(source_budget_bytes) is not int or source_budget_bytes < 1:
         raise ValueError('positive source window byte budget required')
+    source_max_bytes = source_budget_bytes if source_max_bytes is None else source_max_bytes
+    if type(source_max_bytes) is not int or source_max_bytes < source_budget_bytes:
+        raise ValueError('source ceiling must cover the ordinary window')
     binding = json.loads(inbox.binding)
     if any(context.get(k) != binding[k] for k in ('subject','source_instance')):
         raise ValueError('producer context conflicts with capture binding')
@@ -118,7 +130,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         code_hash = _code_hash()
         if job_path.exists():
             job = json.loads(job_path.read_text())
-            if job['owner'] != owner or job['code_hash'] != code_hash:
+            if job['owner'] != owner or not compatible_code_hash(job['code_hash'], current=code_hash):
                 raise ValueError('pending producer code/binding changed; preserve and reconcile explicitly')
             if digest(job['inputs']) != job['input_hash']:
                 raise ValueError('producer inputs changed')
@@ -192,17 +204,22 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             if not group_path.exists():
                 checkpoint(group_path,dict(group=group,hash=digest(group)))
             window = source_windows.select(groups,index.get('window_progress',{}),source_budget_bytes)
+            required = window['minimum_required_bytes']
+            budget_used = source_budget_bytes
+            if required is not None and required <= source_max_bytes:
+                budget_used = required
+                window = source_windows.select(groups,index.get('window_progress',{}),budget_used)
             if window['minimum_required_bytes'] is not None:
                 return {'state':'pending','reason':'source dependency closure exceeds invocation budget',
                         'minimum_required_bytes':window['minimum_required_bytes'],
-                        'source_budget_bytes':source_budget_bytes,
+                        'source_budget_bytes':source_budget_bytes,'source_max_bytes':source_max_bytes,
                         'processed_through':index['after'],'proposer_invoked':False}
             sources = window['sources']
             memory.init_db()
             inputs = dict(observations=observations, sources=sources, revisions=revisions,
                           context=context, supporting_observations=list(latest.values()),
                           source_window=dict(group_hash=digest(group),progress=window['progress'],
-                              complete=window['complete'],budget_bytes=source_budget_bytes,
+                              complete=window['complete'],budget_bytes=budget_used,
                               used_bytes=window['used_bytes']))
             request = dict(messages=selection.block_messages(sources,[],context),
                            response_schema=selection_navigation.response_schema())
@@ -236,7 +253,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                     proposal, dispatches = selection_navigation.advance(job,job_path,work,proposer,
                         database=memory.DB_PATH,steps=navigation_steps,retrieval=retrieval,
                         backend=memory,
-                        source_reader=source_windows.ContextReader(source_groups,source_budget_bytes))
+                        source_reader=source_windows.ContextReader(source_groups,source_max_bytes))
                 except ProviderProblem as failure:
                     alerts=Alerts(inbox)
                     alert_id=alerts.report(job['input_hash'],'selection',failure)
@@ -252,6 +269,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                     return {'state':'pending','reason':pending.get('reason') or job['navigation'].get('halted_reason','navigation invocation budget reached'),
                         'processed_through':index['after'],'proposer_invoked':proposer_invoked,
                         'minimum_required_bytes':pending.get('minimum_required_bytes'),
+                        'source_max_bytes':source_max_bytes,
                         'navigation_steps':len(job['navigation']['steps'])}
             else:
                 proposal = {'selection':dict(outcome='omitted',reason='No new source items; lifecycle metadata only.',records=[],links=[]),

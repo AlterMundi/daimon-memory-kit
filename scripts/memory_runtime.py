@@ -97,13 +97,16 @@ def profile(path):
         "source_budget_bytes": None,
         "navigation_steps": 32,
     }
-    if set(budgets) != set(limits) or any(
+    if set(budgets) - (set(limits) | {"source_max_bytes"}) or not set(limits) <= set(budgets) or any(
         type(budgets[k]) is not int
         or budgets[k] < 1
         or (ceiling is not None and budgets[k] > ceiling)
         for k, ceiling in limits.items()
     ):
         raise ValueError("explicit positive supported invocation budgets required")
+    ceiling = budgets.get("source_max_bytes", budgets["source_budget_bytes"])
+    if type(ceiling) is not int or ceiling < budgets["source_budget_bytes"]:
+        raise ValueError("source_max_bytes must cover source_budget_bytes")
     if "snapshots" in value:
         snapshot_store.policy(value["snapshots"])
         routine=value['snapshots'].get('routine_backup')
@@ -170,7 +173,7 @@ def run(value):
             models,
             value["context"],
             model_policy=models.policy,
-            source_budget_bytes=value["budgets"]["source_budget_bytes"],
+            source_budget_bytes=value["budgets"].get("source_max_bytes", value["budgets"]["source_budget_bytes"]),
             snapshot_policy=value.get("snapshots"),
         )
 
