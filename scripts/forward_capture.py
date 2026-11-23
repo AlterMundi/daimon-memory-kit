@@ -193,16 +193,34 @@ def capture(binding, payload, source, path, header, before, *, _fault=None):
                     return deferred('session_scope_unverified')
                 cursor['admitted'] = admitted
                 groups[-1]['admitted'] = admitted
+            if (cursor['admitted'] is None and item.get('type') == 'event_msg'
+                    and event.get('type') == 'task_complete'
+                    and cursor['turn_id'] is not None and event.get('turn_id') == cursor['turn_id']):
+                # A native turn can terminate before Codex records turn_context.
+                # Keep its exact source reference without giving its bytes the
+                # scope of a neighboring turn.
+                groups[-1]['scope_gap'] = True
+                cursor.update(awaiting_turn=True, segment=None, segment_start=None,
+                              turn_id=None, admitted=None)
         # A chunk may end before a new turn's context arrives. Commit earlier
         # verified groups, but keep that turn's start for the next bounded read.
         for index, group in enumerate(groups):
-            if group['admitted'] is None:
+            if group['admitted'] is None and not group.get('scope_gap'):
                 end = group['start']
                 cursor = group['cursor_before']
                 groups = groups[:index]
                 break
         revisions = []
         for group in groups:
+            if group.get('scope_gap'):
+                con.execute('''CREATE TABLE IF NOT EXISTS forward_scope_gaps(
+                    source TEXT NOT NULL, turn_id TEXT NOT NULL, file_start INTEGER NOT NULL,
+                    file_end INTEGER NOT NULL, delta_sha256 TEXT NOT NULL,
+                    PRIMARY KEY(source,file_start))''')
+                con.execute('INSERT INTO forward_scope_gaps VALUES(?,?,?,?,?)',
+                            (sid, group['turn_id'], group['start'], group['end'],
+                             sha(b''.join(group['parts']))))
+                continue
             if not group['admitted']:
                 continue
             segment = group['segment']; delta = b''.join(group['parts'])
@@ -226,11 +244,17 @@ def capture(binding, payload, source, path, header, before, *, _fault=None):
             revisions.append(revision)
         cursor.update(offset=end,guard=guard(fd,end))
         con.execute('INSERT INTO forward_cursors VALUES(?,?) ON CONFLICT(source) DO UPDATE SET value=excluded.value', (sid,wire(cursor)))
+        has_gap_table = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='forward_scope_gaps'").fetchone()
+        has_scope_gap = bool(has_gap_table and con.execute(
+            'SELECT 1 FROM forward_scope_gaps WHERE source=? LIMIT 1', (sid,)).fetchone())
         if _fault:
             _fault('before_commit')
     if _fault:
         _fault('after_commit')
-    return dict(capture_complete=end==before.st_size,error=None if end==before.st_size else 'capture_deferred',
+    error = ('capture_deferred' if end != before.st_size else
+             'session_scope_unverified' if has_scope_gap else None)
+    return dict(capture_complete=error is None,error=error,
                 revisions=revisions,source_offset=end,remaining_bytes=before.st_size-end,
                 awaiting_new_turn=cursor['awaiting_turn'],scope=SCHEMA)
 

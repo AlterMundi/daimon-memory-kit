@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
-from tests.test_forward_capture import context, append, turn
+from tests.test_forward_capture import context, append, line, turn
 from capture_inbox import Inbox
 from codex_hook_capture import capture
 from rebind_forward_source import rebind
@@ -33,6 +33,21 @@ def test_rebind_preserves_pending_ranges_pause_and_replay(context):
     assert not rebind(b,e,reason='Verified host move')['rebound']
     assert capture(b,e)['capture_complete']
     assert capture(b,e)['revisions']==[]
+
+
+def test_rebind_requires_exact_bytes_for_retained_scope_gap(context):
+    b, f, e = context
+    append(f, line('event_msg', dict(type='task_started', turn_id='unknown'))
+           + line('response_item', dict(type='message', role='user', content=['PRESERVE']))
+           + line('event_msg', dict(type='task_complete', turn_id='unknown'))
+           + turn('known', 'Later selected source.'))
+    assert capture(b, e)['error'] == 'session_scope_unverified'
+    relocate(f)
+    assert rebind(b, e, reason='Same retained bytes after move')['rebound']
+    relocate(f)
+    f.write_bytes(f.read_bytes().replace(b'PRESERVE', b'ALTERED!'))
+    with pytest.raises(ValueError, match='retained scope gap differs'):
+        rebind(b, e, reason='Changed unverified original')
 
 
 @pytest.mark.parametrize('damage',['header','range','boundary','truncate','race'])

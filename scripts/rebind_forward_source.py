@@ -68,6 +68,14 @@ def rebind(binding, payload, *, reason, _fault=None):
                     raise ValueError('retained source range differs')
                 proof.update(wire([r['revision'], start, end, r['delta_sha256']]).encode())
                 checked += end-start; ranges += 1
+            if con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='forward_scope_gaps'").fetchone():
+                for gap in con.execute(
+                    'SELECT * FROM forward_scope_gaps WHERE source=? ORDER BY file_start', (sid,)
+                ):
+                    start, end = gap['file_start'], gap['file_end']
+                    if not 0 <= start < end <= cursor['offset'] or sha(os.pread(fd, end-start, start)) != gap['delta_sha256']:
+                        raise ValueError('retained scope gap differs')
+                    proof.update(wire(['scope_gap', gap['turn_id'], start, end, gap['delta_sha256']]).encode())
             if _fault:
                 _fault()
             after = os.fstat(fd); live = path.stat()
