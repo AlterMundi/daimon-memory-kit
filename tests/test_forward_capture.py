@@ -185,6 +185,30 @@ def test_bounded_catchup_keeps_tool_dependencies(context):
     assert normalized['sources'][-1]['dependencies']
 
 
+def test_indivisible_record_uses_its_own_bounded_read(context):
+    b, f, e = context
+    b = dict(b, inbox=str(f.parent.parent / 'elastic.sqlite'))
+    activate(b, f.parent.parent / 'before-elastic.sqlite', read_budget_bytes=512)
+    started = turn('one', 'Keep the resulting action.')
+    oversized = line('response_item', dict(type='message', role='user',
+                                           content=[dict(type='input_text', text='π' * 160)]))
+    tail = line('event_msg', dict(type='task_complete', turn_id='one'))
+    assert 512 < len(oversized) < b['max_source_bytes']
+    start = f.stat().st_size
+    append(f, started + oversized + tail)
+    assert capture(b, e)['source_offset'] == start+len(started)
+    assert capture(b, e)['source_offset'] == start+len(started+oversized)
+    final = capture(b, e)
+    assert final['capture_complete']
+    assert Inbox(b['inbox'], b).restore(final['revisions'][0]).endswith(started + oversized + tail)
+    assert not capture(b, e)['revisions']
+    append(f, line('response_item', dict(type='message', role='user', content=['x' * 3000])))
+    assert capture(b, e)['error'] == 'source_exceeds_capture_limit'
+    with Inbox(b['inbox'], b).connect() as con:
+        cursor = json.loads(con.execute('SELECT value FROM forward_cursors').fetchone()[0])
+    assert cursor['offset'] == final['source_offset']
+
+
 def test_pause_resume_preserves_cursor_and_does_not_fallback(context):
     b,f,e=context;append(f,turn('one','First.'));first=capture(b,e)
     set_enabled(b,False);append(f,turn('two','Second.'));assert not capture(b,e)['capture_complete']

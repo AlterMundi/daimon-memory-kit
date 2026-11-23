@@ -94,6 +94,27 @@ def deferred(reason='capture_deferred'):
     return dict(capture_complete=False, error=reason, scope_verified=False)
 
 
+def read_window(fd, start, size, budget, ceiling):
+    """Read ordinary batches, extending only for one indivisible JSONL record."""
+    data = os.pread(fd, min(budget, size-start), start)
+    complete = data.rfind(b'\n')+1
+    if complete or len(data) < budget or budget == ceiling:
+        return data[:complete], not complete and len(data) == ceiling
+    parts = [data]
+    length = len(data)
+    while length < min(ceiling, size-start):
+        chunk = os.pread(fd, min(budget, ceiling-length, size-start-length), start+length)
+        if not chunk:
+            break
+        complete = chunk.find(b'\n')+1
+        if complete:
+            parts.append(chunk[:complete])
+            return b''.join(parts), False
+        parts.append(chunk)
+        length += len(chunk)
+    return b'', length == ceiling
+
+
 def capture(binding, payload, source, path, header, before, *, _fault=None):
     """Read only a bounded unread suffix; commit ranges and cursor atomically."""
     inbox = Inbox(binding['inbox'], binding)
@@ -142,13 +163,10 @@ def capture(binding, payload, source, path, header, before, *, _fault=None):
                 or cursor['guard'] != guard(fd,cursor['offset'])):
             return deferred('source_changed_during_capture')
         start = cursor['offset']
-        limit = selected['read_budget_bytes']
-        data = os.pread(fd, min(limit, before.st_size-start), start)
-        # Never consume a partial JSONL record. A later invocation resumes it.
-        complete = data.rfind(b'\n')+1
-        data = data[:complete]
+        data, oversized = read_window(
+            fd, start, before.st_size, selected['read_budget_bytes'], binding['max_source_bytes'])
         if not data and start < before.st_size:
-            return deferred('source_exceeds_capture_limit' if before.st_size-start >= limit else 'source_changed_during_capture')
+            return deferred('source_exceeds_capture_limit' if oversized else 'source_changed_during_capture')
         end = start+len(data)
         after = os.fstat(fd)
         if (after.st_size < before.st_size or guard(fd,start) != cursor['guard']

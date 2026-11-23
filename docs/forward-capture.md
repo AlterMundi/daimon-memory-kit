@@ -35,16 +35,18 @@ source remains separate from selecting lasting meaning, writing memory and index
 
 ## Bounded capture and preserved source
 
-A hook seeks to its durable cursor and reads at most its configured forward
-`read_budget_bytes` (default 4 MiB, bounded by `max_source_bytes`). This budget
-limits one operation, not total session history. Complete
+A hook seeks to its durable cursor. Ordinary batches read up to the configured
+forward `read_budget_bytes` (default 4 MiB). If the very first JSONL record
+does not fit, that read may extend to preserve the single complete record,
+up to the existing binding's `max_source_bytes`. This limit bounds each
+indivisible record, not total session history. Complete
 JSONL records form per-turn source segments. Larger backlogs retain their cursor
 and report `capture_deferred`; repeated explicit capture can continue without
 models. `drain --binding ... --payload ... --max-steps 32` performs bounded
 catch-up with an explicitly selected native payload; it stops on completion, no
-progress or its step budget and invokes no models. An individual record exceeding
-the read budget remains a visible failure; select an adequate explicit budget
-before activation when unusually large individual records are expected.
+progress or its step budget and invokes no models. An individual record
+exceeding the binding's byte ceiling remains a visible failure with the
+cursor before the record.
 Incomplete records, replacement, truncation and a changed cursor boundary never
 silently advance. Concurrent appends beyond the observed size wait for the next
 capture. Native rollouts are append-only inputs: this detects identity/boundary
