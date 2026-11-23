@@ -196,9 +196,15 @@ the existing cursor, exact path and header, boundary guard, every retained range
 against restored original bytes, and any retained legacy prefix. A mutation during
 verification aborts the transaction. It updates only device/inode, with a bounded
 per-source receipt retaining the prior cursor. Offset, pause, scope, revisions,
-source bytes and policy remain unchanged. Replay is a no-op. It does not attest
-an unavailable pre-activation prefix. Baseline-only files without a cursor require
-separate evidence; this control refuses them.
+source bytes and policy remain unchanged. Replay is a no-op.
+
+For a source moved before its first capture, add
+`--baseline-source-ref <source_ref from the matching retained capture attempt>`.
+The control needs the exact activation-inventoried path, matching native session
+identity, an intact boundary guard and line alignment, and no prior capture
+history requiring a cursor. It saves a cursor at the activation boundary and
+keeps the original baseline. The next capture still waits for a new independently
+scoped turn. This attests the activation boundary, not the earlier prefix.
 
 Then capture the same source explicitly through its existing supervisor, without
 model/embedding/selection calls. Verify exact newly retained ranges, replay without

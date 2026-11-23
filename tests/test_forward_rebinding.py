@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -48,6 +49,53 @@ def test_rebind_requires_exact_bytes_for_retained_scope_gap(context):
     f.write_bytes(f.read_bytes().replace(b'PRESERVE', b'ALTERED!'))
     with pytest.raises(ValueError, match='retained scope gap differs'):
         rebind(b, e, reason='Changed unverified original')
+
+
+def test_rebind_migrated_baseline_without_opening_pre_activation_history(context):
+    b, f, e = context
+    offset = f.stat().st_size
+    inbox = Inbox(b['inbox'], b)
+    with inbox.connect() as con:
+        baseline = dict(con.execute('SELECT * FROM forward_baselines').fetchone())
+    append(f, line('response_item', dict(type='message', role='user', content=['old trailing bytes'])))
+    selected = turn('later', 'Selected after the activation boundary.')
+    append(f, selected)
+    relocate(f)
+    source_ref = hashlib.sha256(e['session_id'].encode()).hexdigest()
+    with pytest.raises(ValueError, match='select a retained baseline source'):
+        rebind(b, e, reason='Missing explicit baseline selection')
+    with pytest.raises(ValueError, match='match the retained attempt'):
+        rebind(b, e, reason='Mismatched attempt', baseline_source_ref='0' * 64)
+    with pytest.raises(RuntimeError, match='interrupted'):
+        def interrupt():
+            raise RuntimeError('interrupted')
+        rebind(b, e, reason='Verified migration', baseline_source_ref=source_ref, _fault=interrupt)
+    proof = rebind(b, e, reason='Verified migration', baseline_source_ref=source_ref)
+    assert proof['rebound'] and proof['source_offset'] == offset and proof['checked_ranges'] == 0
+    with inbox.connect() as con:
+        assert dict(con.execute('SELECT * FROM forward_baselines').fetchone()) == baseline
+        assert con.execute('SELECT count(*) FROM revisions').fetchone()[0] == 0
+        receipt = json.loads(con.execute('SELECT value FROM forward_rebindings').fetchone()[0])
+        assert receipt['activation_baseline'] == baseline
+    assert not rebind(b, e, reason='Read back', baseline_source_ref=source_ref)['rebound']
+    final = capture(b, e)
+    assert final['capture_complete']
+    assert inbox.restore(final['revisions'][0]).endswith(selected)
+    assert b'old trailing bytes' not in inbox.restore(final['revisions'][0])
+    assert b'old story' not in inbox.restore(final['revisions'][0])
+    assert capture(b, e)['revisions'] == []
+
+
+def test_rebind_migrated_baseline_refuses_changed_boundary(context):
+    b, f, e = context
+    relocate(f)
+    raw = f.read_bytes()
+    f.write_bytes(raw[:-2]+b'x\n')
+    with pytest.raises(ValueError, match='source boundary differs'):
+        rebind(b, e, reason='Different baseline guard',
+               baseline_source_ref=hashlib.sha256(e['session_id'].encode()).hexdigest())
+    with Inbox(b['inbox'], b).connect() as con:
+        assert con.execute('SELECT count(*) FROM forward_cursors').fetchone()[0] == 0
 
 
 @pytest.mark.parametrize('damage',['header','range','boundary','truncate','race'])

@@ -15,7 +15,7 @@ from capture_inbox import Inbox, sha, wire
 from forward_capture import guard
 
 
-def rebind(binding, payload, *, reason, _fault=None):
+def rebind(binding, payload, *, reason, baseline_source_ref=None, _fault=None):
     if not isinstance(reason, str) or not 1 <= len(reason.strip()) <= 500:
         raise ValueError('bounded explicit reason required')
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
@@ -23,6 +23,8 @@ def rebind(binding, payload, *, reason, _fault=None):
     sid = payload.get('session_id')
     if not isinstance(sid, str) or not sid or payload.get('cwd') not in binding['allowed_cwds']:
         raise ValueError('selected source required')
+    if baseline_source_ref is not None and baseline_source_ref != sha(sid.encode()):
+        raise ValueError('baseline source must match the retained attempt')
     root = Path(binding['source_root']).resolve(strict=True)
     path = Path(payload['transcript_path']).absolute()
     if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root):
@@ -39,17 +41,39 @@ def rebind(binding, payload, *, reason, _fault=None):
             selected = json.loads(con.execute('SELECT value FROM forward_policy').fetchone()[0])
             if selected['binding_sha256'] != sha(inbox.binding.encode()):
                 raise ValueError('forward policy binding differs')
+            with os.fdopen(os.dup(fd), 'rb') as source:
+                header = source.readline(binding['max_source_bytes'] + 1)
+            if len(header) > binding['max_source_bytes'] or not header.endswith(b'\n'):
+                raise ValueError('bounded complete source header required')
+            meta = json.loads(header)
+            if (not isinstance(meta, dict) or meta.get('type') != 'session_meta'
+                    or not isinstance(meta.get('payload'), dict) or meta['payload'].get('id') != sid):
+                raise ValueError('source header differs')
             row = con.execute('SELECT value FROM forward_cursors WHERE source=?', (sid,)).fetchone()
-            if not row:
-                raise ValueError('existing cursor required; baseline-only migration needs separate evidence')
-            original = row[0]; cursor = json.loads(original)
+            baseline = None
+            if row is None:
+                if baseline_source_ref is None:
+                    raise ValueError('existing cursor required; select a retained baseline source explicitly')
+                baseline = con.execute('SELECT * FROM forward_baselines WHERE path=?', (str(path),)).fetchone()
+                if baseline is None or baseline['offset'] < len(header):
+                    raise ValueError('existing activation baseline required')
+                if con.execute('SELECT 1 FROM heads WHERE source=?', (sid,)).fetchone() or con.execute(
+                        'SELECT 1 FROM forward_ranges WHERE source=? LIMIT 1', (sid,)).fetchone():
+                    raise ValueError('retained source history requires an existing cursor')
+                cursor = dict(path=str(path), device=baseline['device'], inode=baseline['inode'],
+                              offset=baseline['offset'], guard=baseline['guard'], aligned=bool(baseline['aligned']),
+                              header_sha256=sha(header), segment=None, segment_start=None,
+                              turn_id=None, admitted=None, awaiting_turn=True)
+            else:
+                cursor = json.loads(row[0])
             if cursor['path'] != str(path) or before.st_size < cursor['offset']:
                 raise ValueError('source path or length differs')
-            header = os.pread(fd, binding['max_source_bytes'] + 1, 0).split(b'\n', 1)[0] + b'\n'
-            if len(header) > binding['max_source_bytes'] or sha(header) != cursor['header_sha256'] or json.loads(header)['payload']['id'] != sid:
+            if sha(header) != cursor['header_sha256']:
                 raise ValueError('source header differs')
             if guard(fd, cursor['offset']) != cursor['guard']:
                 raise ValueError('source boundary differs')
+            if baseline is not None and (os.pread(fd, 1, cursor['offset'] - 1) == b'\n') != cursor['aligned']:
+                raise ValueError('activation baseline alignment differs')
             checked = 0; ranges = 0; proof = hashlib.sha256()
             legacy = con.execute('SELECT r.* FROM heads h JOIN revisions r ON r.id=h.revision WHERE h.source=?', (sid,)).fetchone()
             if legacy:
@@ -95,10 +119,16 @@ def rebind(binding, payload, *, reason, _fault=None):
             # One bounded receipt per source, preserving the immediate prior cursor.
             # Native originals, ranges and all source offsets remain untouched.
             cursor.update(device=before.st_dev, inode=before.st_ino)
-            con.execute('UPDATE forward_cursors SET value=? WHERE source=?', (wire(cursor), sid))
+            if baseline is not None:
+                receipt['activation_baseline'] = dict(baseline)
+                con.execute('INSERT INTO forward_cursors VALUES(?,?)', (sid, wire(cursor)))
+            else:
+                con.execute('UPDATE forward_cursors SET value=? WHERE source=?', (wire(cursor), sid))
             con.execute('INSERT INTO forward_rebindings VALUES(?,?) ON CONFLICT(source) DO UPDATE SET value=excluded.value', (sid, wire(receipt)))
             return dict(rebound=True, source_offset=cursor['offset'], checked_bytes=checked, checked_ranges=ranges,
-                        preservation_scope='retained ranges, header and cursor boundary; unavailable baseline prefix not attested')
+                        preservation_scope=('activation boundary guard and current source identity; prefix not attested'
+                                            if baseline is not None else
+                                            'retained ranges, header and cursor boundary; unavailable baseline prefix not attested'))
     finally:
         os.close(fd)
 
@@ -108,8 +138,10 @@ def main():
     p.add_argument('--binding', type=Path, required=True)
     p.add_argument('--payload', type=Path, required=True)
     p.add_argument('--reason', required=True)
+    p.add_argument('--baseline-source-ref', help='Source digest from the selected retained attempt, for a source with only an activation baseline')
     a = p.parse_args()
-    print(json.dumps(rebind(json.loads(a.binding.read_text()), json.loads(a.payload.read_text()), reason=a.reason)))
+    print(json.dumps(rebind(json.loads(a.binding.read_text()), json.loads(a.payload.read_text()),
+                            reason=a.reason, baseline_source_ref=a.baseline_source_ref)))
 
 
 if __name__ == '__main__':
