@@ -20,6 +20,15 @@ be selected. Changing the directory later does not import intervening unselected
 turns. A partial or unverified turn context stays pending. Previously captured
 legacy streams retain their admitted prefix and pending observations.
 
+A turn that ends with its matching native `task_complete` and has no
+`turn_context` cannot acquire scope from its neighbors. Capture keeps its
+turn identity, exact source range and byte hash as a private unresolved
+scope gap, then continues at a later independently scoped turn. Unverified
+bytes remain in the native original and do not enter the inbox revisions or
+worker. An open gap prevents a complete source receipt even at end of file.
+Rebinding verifies gap bytes alongside admitted ranges. Use a handler that
+recognizes these gaps when resuming capture after a rollback.
+
 Each receiving body activates against its own binding and inbox. This neither
 combines beings nor imports earlier sessions into canonical memory. Capturing a
 source remains separate from selecting lasting meaning, writing memory and indexing.

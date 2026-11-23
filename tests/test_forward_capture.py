@@ -1,4 +1,5 @@
 """Forward coverage across old/new sessions, bounded reads and recovery."""
+import hashlib
 import importlib.util
 import json
 from concurrent.futures import ThreadPoolExecutor
@@ -84,6 +85,45 @@ def test_old_session_keeps_new_turns_and_exact_provenance(context):
         r=con.execute('SELECT * FROM forward_ranges').fetchone();assert (r['file_start'],r['file_end'])==(start,f.stat().st_size)
     f.unlink();assert inbox.restore(result['revisions'][0])==snapshot
     assert boundary<start
+
+
+def test_closed_turn_without_scope_does_not_block_a_later_selected_turn(context):
+    b, f, e = context
+    start = f.stat().st_size
+    unverified = (
+        line('event_msg', dict(type='task_started', turn_id='unverified'))
+        + line('response_item', dict(type='message', role='user', content=[]))
+    )
+    append(f, unverified)
+    pending = capture(b, e)
+    assert pending['source_offset'] == start
+    assert not pending['capture_complete']
+    end = line('event_msg', dict(type='task_complete', turn_id='unverified'))
+    selected = turn('selected', 'Recall this later contribution.')
+    append(f, end + selected)
+
+    def crash(point):
+        if point == 'before_commit':
+            raise RuntimeError('interrupted')
+
+    with pytest.raises(RuntimeError):
+        capture(b, e, _fault=crash)
+    recovered = capture(b, e)
+    assert recovered['source_offset'] == f.stat().st_size
+    assert recovered['error'] == 'session_scope_unverified'
+    assert not recovered['capture_complete']
+    inbox = Inbox(b['inbox'], b)
+    assert inbox.restore(recovered['revisions'][0]).endswith(selected)
+    assert capture(b, e)['revisions'] == []
+    with inbox.connect() as con:
+        gaps = con.execute(
+            'SELECT turn_id,file_start,file_end,delta_sha256 FROM forward_scope_gaps'
+        ).fetchall()
+        assert [tuple(gap) for gap in gaps] == [
+            ('unverified', start, start + len(unverified + end),
+             hashlib.sha256(unverified + end).hexdigest())
+        ]
+        assert con.execute('SELECT count(*) FROM forward_ranges').fetchone()[0] == 1
 
 
 def test_large_old_source_reads_only_unread_suffix(context):
