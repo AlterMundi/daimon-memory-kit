@@ -165,3 +165,42 @@ def test_native_interruption_records_failed_attempt_and_closes_credential_fd(nat
     with pytest.raises(OSError):os.fstat(fds[0])
     with pytest.raises(ValueError,match='no implicit retry'):
         native.dispatch(path,tmp_path,catalog,lambda *_a,**_k:pytest.fail('Repeated interrupted dispatch'),credential)
+
+
+def test_bounded_dispatch_persists_terminal_code_without_replaying(native, tmp_path, monkeypatch):
+    import bounded_native_turn
+
+    _, request, catalog = inputs(native, tmp_path, "gpt-6.2-sol")
+    request.update(format="hmk-fictional-bounded-memory-operation/v1",
+                   phase="capture", output_token_limit=12000, fictional=True, source_scope="fictional")
+    path = tmp_path / (native.exchange.pilot.digest(request) + ".json")
+    native.exchange.pilot.save(path, request)
+    credential = tmp_path / "fixture-auth.json"
+    credential.write_text("{}")
+
+    def fail(*_args, **options):
+        options["retain"]("provider_reservation", {"ordinal": 1})
+        raise bounded_native_turn.BoundedTurnFailure(
+            "terminal_failure", "private error",
+            {"message": "PRIVATE_RESPONSE", "codexErrorInfo": "usageLimitExceeded"},
+        )
+
+    from contextlib import nullcontext
+
+    monkeypatch.setattr(bounded_native_turn, "run_turn", fail)
+    monkeypatch.setattr(bounded_native_turn, "Stdio", lambda *_args: None)
+    monkeypatch.setattr(bounded_native_turn, "subprocess", SimpleNamespace(
+        PIPE=object(), DEVNULL=object(),
+        Popen=lambda *_args, **_kwargs: nullcontext(SimpleNamespace(poll=lambda: 0)),
+    ))
+    with pytest.raises(bounded_native_turn.BoundedTurnFailure):
+        native.dispatch(path, tmp_path, catalog, credential_file=credential)
+    receipt = tmp_path / "dispatches" / path.name
+    raw = receipt.read_text()
+    data = json.loads(raw)
+    assert data["native_failure"] == {"code": "terminal_failure", "native_error": "usageLimitExceeded"}
+    assert data["state"] == "failed" and data["usage"] is None
+    assert "PRIVATE_RESPONSE" not in raw and "private error" not in raw
+    assert not (tmp_path / "responses" / path.name).exists()
+    with pytest.raises(ValueError, match="no implicit retry"):
+        native.dispatch(path, tmp_path, catalog, credential_file=credential)

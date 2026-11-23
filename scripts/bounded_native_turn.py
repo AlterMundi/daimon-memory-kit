@@ -13,6 +13,35 @@ MAX_FRAMES = 4096
 MAX_WIRE_BYTES = 16 * 1024 * 1024
 
 
+_NATIVE_ERROR_TYPES = frozenset({
+    "contextWindowExceeded", "sessionBudgetExceeded", "usageLimitExceeded",
+    "rateLimitExceeded", "flexUnavailable", "serverOverloaded", "modelNotFound",
+    "policyCapacityUnavailable", "httpConnectionFailed", "responseStreamConnectionFailed",
+    "internalServerError", "unauthorized", "badRequest", "sandboxError",
+    "responseStreamDisconnected", "responseTooManyFailedAttempts",
+})
+
+
+class BoundedTurnFailure(ValueError):
+    """A fixed protocol failure label, separate from private provider messages."""
+
+    def __init__(self, code, message, native_error=None):
+        super().__init__(message)
+        self.evidence = {"code": code}
+        if not isinstance(native_error, dict):
+            return
+        info = native_error.get("codexErrorInfo")
+        detail = None
+        if isinstance(info, dict) and len(info) == 1:
+            info, detail = next(iter(info.items()))
+        if not isinstance(info, str) or info not in _NATIVE_ERROR_TYPES:
+            return
+        self.evidence["native_error"] = info
+        status = detail.get("httpStatusCode") if isinstance(detail, dict) else None
+        if type(status) is int and 100 <= status <= 599:
+            self.evidence["http_status"] = status
+
+
 class Stdio:
     def __init__(self, process, deadline):
         self.process = process
@@ -33,7 +62,7 @@ class Stdio:
     def send(self, packet):
         data = (json.dumps(packet, ensure_ascii=False) + "\n").encode()
         if len(data) > MAX_REQUEST_BYTES:
-            raise ValueError("bounded native input exceeds its transport limit")
+            raise BoundedTurnFailure("request_frame_limit", "bounded native input exceeds its transport limit")
         while data:
             self.wait()
             try:
@@ -47,14 +76,14 @@ class Stdio:
             end = self.buffer.find(b"\n")
             if end >= 0:
                 if end > MAX_FRAME_BYTES:
-                    raise ValueError("oversize native response frame")
+                    raise BoundedTurnFailure("response_frame_limit", "oversize native response frame")
                 packet = json.loads(self.buffer[:end])
                 del self.buffer[:end + 1]
                 if not isinstance(packet, dict):
-                    raise ValueError("invalid native response frame")
+                    raise BoundedTurnFailure("invalid_response_frame", "invalid native response frame")
                 return packet
             if len(self.buffer) > MAX_FRAME_BYTES:
-                raise ValueError("oversize native response frame")
+                raise BoundedTurnFailure("response_frame_limit", "oversize native response frame")
             self.wait(reading=True)
             try:
                 chunk = os.read(self.process.stdout.fileno(), 65536)
@@ -64,7 +93,7 @@ class Stdio:
                 raise EOFError("native observer closed before the terminal receipt")
             self.read_bytes += len(chunk)
             if self.read_bytes > MAX_WIRE_BYTES:
-                raise ValueError("native response exceeds the observation limit")
+                raise BoundedTurnFailure("response_wire_limit", "native response exceeds the observation limit")
             self.buffer.extend(chunk)
 
 
@@ -82,9 +111,9 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
     A caller must persist its dispatch intent before entering this function.
     """
     if model != "gpt-6.2-sol" or type(output_limit) is not int or not 1 <= output_limit <= 32768:
-        raise ValueError("expected Sol 6.2 with an explicit bounded output budget")
+        raise BoundedTurnFailure("invalid_generation_selection", "expected Sol 6.2 with an explicit bounded output budget")
     if not 0 < deadline_ms - int(time.time() * 1000) <= 300000:
-        raise ValueError("invalid native generation deadline")
+        raise BoundedTurnFailure("invalid_deadline", "invalid native generation deadline")
 
     cycle = str(uuid4())
     allowance = {
@@ -111,7 +140,7 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
         params = packet.get("params", {})
         if method is None:
             if packet_id != step or "error" in packet or not isinstance(packet.get("result"), dict):
-                raise ValueError("native admission refused or unconfirmed")
+                raise BoundedTurnFailure("admission_refused", "native admission refused or unconfirmed")
             result = packet["result"]
             if step == 1:
                 wire.send({"method": "initialized"})
@@ -124,9 +153,9 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
             elif step == 2:
                 thread = result["thread"]["id"]
                 if not isinstance(thread, str) or not thread or len(thread) > 200:
-                    raise ValueError("invalid ephemeral thread identity")
+                    raise BoundedTurnFailure("invalid_thread_identity", "invalid ephemeral thread identity")
                 if result.get("model") != model or result.get("modelProvider") != "openai":
-                    raise ValueError("native model or provider differs from the selected route")
+                    raise BoundedTurnFailure("effective_model_or_route_changed", "native model or provider differs from the selected route")
                 step += 1
                 wire.send({"id": step, "method": "turn/startBoundedIfIdle", "params": {
                     "turn": {"threadId": thread, "input": [{"type": "text", "text": text}],
@@ -144,9 +173,9 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
             elif step == 3 and turn_id is None:
                 turn_id = result["turn"]["id"]
                 if not isinstance(turn_id, str) or not turn_id or len(turn_id) > 200:
-                    raise ValueError("invalid bounded turn identity")
+                    raise BoundedTurnFailure("invalid_turn_identity", "invalid bounded turn identity")
             else:
-                raise ValueError("unexpected native response")
+                raise BoundedTurnFailure("unexpected_native_response", "unexpected native response")
         elif packet_id is not None:
             common = {
                 "cycleId": params.get("cycleId", ""),
@@ -169,7 +198,7 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
                     })
                 wire.send({"id": packet_id, "result": {**common, "authorized": authorized}})
                 if not authorized:
-                    raise ValueError("unexpected or repeated provider reservation")
+                    raise BoundedTurnFailure("reservation_mismatch", "unexpected or repeated provider reservation")
             elif method == "turn/providerAttempt/usage":
                 observed = params.get("tokenUsage")
                 response_id = params.get("responseId")
@@ -194,37 +223,39 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
                                               "observed_model": observed_model})
                 wire.send({"id": packet_id, "result": {**common, "recorded": recorded}})
                 if not recorded:
-                    raise ValueError("provider usage absent or mismatched")
+                    raise BoundedTurnFailure("usage_mismatch", "provider usage absent or mismatched")
                 if observed_model not in (None, model) or usage["completion_tokens"] > output_limit:
-                    raise ValueError("provider response model or usage outside the ceiling")
+                    raise BoundedTurnFailure("model_or_usage_ceiling", "provider response model or usage outside the ceiling")
             else:
-                raise ValueError("unexpected native approval or tool request")
+                raise BoundedTurnFailure("unexpected_approval_or_tool_request", "unexpected native approval or tool request")
         elif thread is not None and params.get("threadId") == thread:
             if method in ("item/started", "item/completed"):
                 item = params["item"]
                 if item.get("type") not in ("userMessage", "agentMessage", "reasoning"):
-                    raise ValueError("isolated native turn attempted a tool or other operation")
+                    raise BoundedTurnFailure("unexpected_turn_item", "isolated native turn attempted a tool or other operation")
                 item_turn = params.get("turnId")
                 if not isinstance(item_turn, str) or (observed_turn and item_turn != observed_turn):
-                    raise ValueError("item belongs to another native turn")
+                    raise BoundedTurnFailure("turn_item_identity_mismatch", "item belongs to another native turn")
                 observed_turn = item_turn
                 if method == "item/completed" and item["type"] == "agentMessage":
                     if final is not None or not isinstance(item.get("text"), str) or not item["text"]:
-                        raise ValueError("expected exactly one final native message")
+                        raise BoundedTurnFailure("invalid_final_message", "expected exactly one final native message")
                     final = item["text"]
             elif method == "turn/completed":
                 ended = params["turn"]
                 if ended.get("status") != "completed" or ended.get("error") is not None:
-                    raise ValueError("bounded native turn did not complete successfully")
+                    raise BoundedTurnFailure(
+                        "terminal_failure", "bounded native turn did not complete successfully", ended.get("error")
+                    )
                 completed_turn = ended["id"]
                 if not isinstance(completed_turn, str) or not completed_turn:
-                    raise ValueError("invalid terminal native turn identity")
+                    raise BoundedTurnFailure("invalid_terminal_identity", "invalid terminal native turn identity")
         if turn_id and completed_turn:
             if turn_id != completed_turn or observed_turn != turn_id or not (attempt and usage and final):
-                raise ValueError("bounded native completion lacks a matched reservation, usage or message")
+                raise BoundedTurnFailure("missing_completion_evidence", "bounded native completion lacks a matched reservation, usage or message")
             json.loads(final)
             return final, usage
-    raise ValueError("too many native frames")
+    raise BoundedTurnFailure("response_frame_count_limit", "too many native frames")
 
 
 def execute(argv, *, credential_fd, timeout=300, **request):
@@ -235,6 +266,9 @@ def execute(argv, *, credential_fd, timeout=300, **request):
                           stderr=subprocess.DEVNULL, pass_fds=(credential_fd,)) as process:
         try:
             return run_turn(Stdio(process, deadline), deadline_ms=deadline_ms, **request)
+        except BoundedTurnFailure as error:
+            request["retain"]("native_failure", error.evidence)
+            raise
         finally:
             if process.poll() is None:
                 process.terminate()
