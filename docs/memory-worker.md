@@ -41,6 +41,14 @@ that unrelated external writes have been indexed. The installable finite entrypo
 below connects the providers; receiving supervision, credential routing and
 whole-flow qualification remain prerequisites to production adoption.
 
+An HTTP 410 from the configured embedding model leaves pending index work and
+one open incident for that provider/model in this inbox. Capture and organization
+index attempts reuse it. A successful index commit through that exact model can
+resolve the incident. A working alternate model alone cannot resolve it. Qualify
+an authorized replacement as a separate embedding space, preserve the prior
+vectors and bind the writer and reader to the same selected space. The worker
+does not probe idle endpoints or change its selected model on failure.
+
 `consolidationctl.py reconcile-plan --limit 32` discovers stale existing inferred
 native accounts directly from the canonical support graph. It returns separate
 ready and blocked hints/counts. Current child support must be reconciled before

@@ -32,7 +32,7 @@ ACTIONS = {
 def classify(error):
     status = error.code if isinstance(error,urllib.error.HTTPError) else None
     code = {400:'invalid_request',401:'authentication_failed',402:'payment_required',
-            403:'access_denied',429:'rate_limited'}.get(status,'provider_error')
+            403:'access_denied',410:'service_unavailable',429:'rate_limited'}.get(status,'provider_error')
     if status is not None and 500 <= status < 600:
         code='service_unavailable'
     if isinstance(error,TimeoutError):
@@ -50,7 +50,13 @@ def classify(error):
                 code='quota_exhausted'
         except (ValueError, OSError, AttributeError):
             pass
-    return dict(code=code,http_status=status,action=ACTIONS[code],remote_completion='unknown')
+    return dict(code=code,http_status=status,action=ACTIONS[code],
+                remote_completion='rejected' if status == 410 else 'unknown')
+
+
+def embedding_service_operation(provider, model):
+    """A model gone from its endpoint affects every index batch in this inbox."""
+    return 'embedding-service:' + digest([provider, model])
 
 
 class ProviderProblem(ValueError):
@@ -75,12 +81,15 @@ class Alerts:
                 delivery TEXT NOT NULL, receipt_json TEXT, created_ns INTEGER NOT NULL,
                 updated_ns INTEGER NOT NULL)''')
 
-    def report(self, operation_key, phase, failure):
+    def report(self, operation_key, phase, failure, *, reopen=False):
         key=digest([self.inbox.binding,operation_key,phase,failure.provider,failure.request_id,failure.problem['code']])
         now=time.time_ns()
         with self.inbox.connect() as con:
             con.execute('INSERT OR IGNORE INTO operational_alerts VALUES(?,?,?,?,?,?,?,?,?,?)',
                 (key,operation_key,phase,failure.provider,wire(failure.problem),'open','pending',None,now,now))
+            if reopen:
+                con.execute("UPDATE operational_alerts SET state='open',updated_ns=? "
+                            "WHERE id=? AND state='resolved'", (now,key))
         return key
 
     def resolve(self, operation_key):
