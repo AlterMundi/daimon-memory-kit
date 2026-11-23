@@ -7,8 +7,8 @@ import urllib.error
 import pytest
 
 from tests.test_portable_producer import setup  # noqa: F401
-from provider_status import Alerts, ProviderProblem, classify
-from portable_producer import process_once
+from provider_status import Alerts, ProviderProblem, classify, embedding_service_operation
+from portable_producer import maintain_index_once, process_once
 
 
 @pytest.mark.parametrize('status,expected',[(402,'payment_required'),(401,'authentication_failed'),
@@ -26,6 +26,36 @@ def test_quota_and_timeout_are_distinct_from_rate_limit():
     assert classify(error)['code']=='quota_exhausted'
     assert classify(TimeoutError())['code']=='timeout'
     assert classify(urllib.error.URLError(TimeoutError()))['code']=='timeout'
+
+
+def test_unavailable_embedding_model_reuses_one_producer_incident(setup, monkeypatch):
+    memory,inbox,state,propose,binding,_,_=setup
+    assert process_once(memory,inbox,state,propose,binding)['state']=='complete'
+    model='fixture/retired'
+    monkeypatch.setattr(memory,'embeddings_runtime_config',lambda **kwargs:dict(
+        provider='nvidia',model=model,output_dimensionality=None))
+
+    def unavailable(*args,**kwargs):
+        try:
+            raise urllib.error.HTTPError('https://example.invalid',410,'private detail',{},None)
+        except urllib.error.HTTPError as error:
+            raise memory.EmbeddingBackendError('private detail') from error
+
+    monkeypatch.setattr(memory,'embed_texts',unavailable)
+    alerts=Alerts(inbox)
+    operation=embedding_service_operation('nvidia',model)
+    prior=alerts.report(operation,'embedding',ProviderProblem('nvidia',operation,dict(
+        code='service_unavailable',http_status=410,remote_completion='rejected')))
+    for _ in range(2):
+        pending=maintain_index_once(memory,inbox,state)
+        assert pending['state']=='pending' and pending['alert_id']==prior
+        assert pending['provider_problem']['http_status']==410
+        assert pending['provider_problem']['remote_completion']=='rejected'
+    assert len(alerts.status()['alerts'])==1
+    assert 'private detail' not in json.dumps(alerts.status())
+    monkeypatch.setattr(memory,'embed_texts',lambda *args,**kwargs:[[1.0,0.5]])
+    assert maintain_index_once(memory,inbox,state)['state']=='complete'
+    assert alerts.status()['alerts'][0]['state']=='resolved'
 
 
 @pytest.mark.parametrize('body',[b'[]',b'{"error":{"code":[]}}',b'{"error":null}'])

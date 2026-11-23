@@ -18,7 +18,7 @@ import portable_capture as selection
 import selection_navigation
 import source_windows
 import source_pages
-from provider_status import Alerts, ProviderProblem, classify
+from provider_status import Alerts, ProviderProblem, classify, embedding_service_operation
 import snapshot_store
 
 SCHEMA = 'hmk.portable-producer/v1'
@@ -27,6 +27,8 @@ SCHEMA = 'hmk.portable-producer/v1'
 # changed. Preserve its fingerprint in jobs and their eventual artifacts.
 COMPATIBLE_WINDOW_PREDECESSOR = '56eb7b559a17f26943ad84074c4e28e984d96b72073e0d0212fb0e7e0c446922'
 COMPATIBLE_ELASTIC_PREDECESSOR = '1c25d55ba67012a1bf3059561521e96d25dc335d7bfc47ee5856defc9933a5fd'
+# This successor only changes indexing alerts, not preparation or admission.
+COMPATIBLE_INDEX_ALERT_PREDECESSOR = '531dcdaa9ad0a216af8fd57910fc3eef3631012bd9665f6b43142a20e166b59f'
 
 
 class CanonicalContextChanged(ValueError):
@@ -43,7 +45,7 @@ def _code_hash():
 
 def compatible_code_hash(fingerprint, *, current=None):
     return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR,
-                           COMPATIBLE_ELASTIC_PREDECESSOR}
+                           COMPATIBLE_ELASTIC_PREDECESSOR, COMPATIBLE_INDEX_ALERT_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -444,6 +446,7 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
             return dict(state='pending',reason='committed records missing',indexed_through=state['after'])
         operation = 'embedding:'+digest([owner,row['sequence'],cfg] if kind=='capture'
                                         else [owner,kind,row['sequence'],cfg])
+        service_operation = embedding_service_operation(cfg['provider'], cfg['model'])
         if not path.exists():
             checkpoint(path,state)  # Pin the space before any paid work, including failures.
         pending = memory.embedding_candidates(provider=cfg['provider'],model=cfg['model'],record_uids=uids,limit=limit)
@@ -458,7 +461,10 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
             except memory.EmbeddingBackendError as error:
                 problem = classify(error.__cause__ if error.__cause__ is not None else error)
                 alerts = Alerts(inbox)
-                alert_id = alerts.report(operation,'embedding',ProviderProblem(cfg['provider'],operation,problem))
+                gone = problem['http_status'] == 410
+                alert_operation = service_operation if gone else operation
+                alert_id = alerts.report(alert_operation,'embedding',
+                    ProviderProblem(cfg['provider'],alert_operation,problem),reopen=gone)
                 status = alerts.deliver(notice_sender) if notice_sender is not None else alerts.status()
                 return dict(state='pending',reason='embedding backend unavailable',provider_problem=problem,
                     alert_id=alert_id,notification_pending=bool(status['undelivered']),indexed_through=state['after'])
@@ -467,7 +473,10 @@ def maintain_index_once(memory, inbox, state_dir, *, limit=32, batch_size=8, not
         pending = memory.embedding_candidates(provider=cfg['provider'],model=cfg['model'],record_uids=uids,limit=1)
         if pending:
             return dict(state='pending',reason='index work remains',processed=processed,indexed_through=state['after'])
-        Alerts(inbox).resolve(operation)
+        alerts = Alerts(inbox)
+        alerts.resolve(operation)
+        if processed:
+            alerts.resolve(service_operation)
         state['after'] = row['sequence']
         checkpoint(path,state)
         return dict(state='complete',processed=processed,indexed_through=state['after'],space=cfg)
