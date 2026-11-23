@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from bounded_native_turn import run_turn
+from bounded_native_turn import BoundedTurnFailure, run_turn
 
 
 class Exchange:
@@ -55,6 +55,15 @@ class Exchange:
         if self.condition == "second-reservation":
             yield {"id": 71, "method": "turn/providerAttempt/reserve",
                    "params": dict(reservation, attemptId=str(uuid4()))}
+        if self.condition == "terminal-provider-error":
+            yield {"id": 3, "result": {"turn": {"id": "own-turn"}}}
+            yield {"method": "turn/completed", "params": {
+                "threadId": "own-ephemeral", "turn": {"id": "own-turn", "status": "failed",
+                    "error": {"message": "Private provider response",
+                              "additionalDetails": "Private request data",
+                              "codexErrorInfo": {"responseStreamConnectionFailed": {"httpStatusCode": 429}}}},
+            }}
+            return
         if self.condition != "no-usage":
             usage = {k: v for k, v in reservation.items() if k not in ("deadlineUnixMs", "maxRequestBytes")}
             usage.update(
@@ -113,3 +122,22 @@ def test_no_ack_if_reservation_was_not_retained():
     with pytest.raises(OSError, match="durable"):
         run_fixture(wire)
     assert not any(p.get("result", {}).get("authorized") for p in wire.sent)
+
+
+def test_terminal_failure_retains_category_without_provider_text():
+    wire = Exchange("terminal-provider-error")
+    with pytest.raises(BoundedTurnFailure) as error:
+        run_fixture(wire)
+    assert error.value.evidence == {
+        "code": "terminal_failure", "native_error": "responseStreamConnectionFailed", "http_status": 429,
+    }
+    assert [name for name, _ in wire.retained] == ["provider_reservation"]
+    assert "Private" not in str(error.value)
+
+
+def test_terminal_failure_omits_unknown_provider_data():
+    error = BoundedTurnFailure("terminal_failure", "bounded failure", {
+        "codexErrorInfo": {"PRIVATE_TYPE": {"httpStatusCode": 403}},
+        "message": "PRIVATE_RESPONSE",
+    })
+    assert error.evidence == {"code": "terminal_failure"}

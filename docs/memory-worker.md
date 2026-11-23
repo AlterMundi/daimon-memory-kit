@@ -150,7 +150,12 @@ the receiving tool-disabled catalog, the pinned Codex binary and the existing
 owner's auth file. Generation uses a separate tool-less ephemeral app server
 with the provider-side token ceiling. The worker records its single reservation
 before authorizing it and requires matching usage and terminal response evidence.
-An unsupported native protocol fails closed.
+An unsupported native protocol fails closed. A failed bounded attempt retains
+a fixed native failure code when available. Terminal failures can also retain
+a known native error category and an HTTP status. The receipt omits raw error
+messages. A reservation without matching usage or response remains unresolved,
+even if the worker recorded a terminal error. Preserve that attempt and inspect
+its existing evidence before any recovery.
 
 A generation policy change can read an exact retained DeepSeek receipt under
 its original budget. In-flight, failed and missing attempts remain owned by
