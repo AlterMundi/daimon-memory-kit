@@ -225,3 +225,11 @@ incident and cadence. The checker returns a nonzero status for a degraded index
 and zero after required vectors and the selected reader verify. No memory
 contents or model paths enter the notice. Critical maintenance and manual cloud
 operations retain their own recovery and accounting.
+
+For manual-only DMK instances, the existing Incus daily inventory can call
+`check_manual_embedding_receivers.py --inventory … --receipt …` as a final
+finite check. It uses each receiving account's selected wrapper, refuses
+non-local encoders, verifies the real reader, and repairs up to 16 local
+vectors per instance. It emits only per-instance health and repair counts.
+The existing scheduled-job Alerts route observes a nonzero result. A full
+DMK receiver should use its own tighter independent probe cadence.
