@@ -189,3 +189,39 @@ use the bounded [title recovery](capture-maintenance.md#halted-source-selection-
 It retains originals and permits only invalid-title changes, followed by normal
 admission. Recording an issue is a continuation pointer, not recovery: finish
 available authorized repairs and verify the real pending operation and its alert.
+
+## Semantic index recovery
+
+A provider or model change selects a different vector space even when it returns
+the same dimensions. Verify the proposed encoder with synthetic input. Keep
+the old vectors and populate the new space with `memoryctl.py embed-backfill`
+using the explicit provider and model, then verify representative retrieval.
+Keep a critical recovery snapshot and leave capture/selection holds untouched.
+
+For a bound worker, use `embedding_space.py --profile … --provider … --model …
+--dimensions … --receipt-dir …` to select the fully populated space. The
+command preserves index cursor positions, keeps the previous environment and
+cursor files in a private directory and issues an applied receipt. A prepared
+receipt without an applied receipt means the cutover may have been interrupted.
+Inspect the exact files and reconcile them under the same worker/producer
+maintenance locks before accepting another scheduled writer. For rollback,
+preserve newer cursor positions and switch to a populated old space using the
+same command. Use the preimages to diagnose a partial cutover. Never replace an
+advanced cursor or live canonical database with the saved copy.
+
+The selected offline Model2Vec binding can be checked with
+`embedding_health.py --profile … --receipt …` through an
+existing receiving maintenance/check cadence. The probe uses synthetic passage
+and query text, checks ranking, dimensions and the selected index, and repairs
+at most 16 missing/stale local vectors per pass using the normal revision-checked
+writer. It changes no canonical record or work cursor and makes no paid call.
+Use a dedicated bounded oneshot if the existing observer's memory limit cannot
+load the encoder. Keep one current safe receipt and make failed invocations
+visible in the existing service supervision. Disable its existing scheduler
+binding to stop checks; there is no internal scheduler.
+
+Use the existing DMK embedding probe in Daimon Alerts to own the monitoring
+incident and cadence. The checker returns a nonzero status for a degraded index
+and zero after required vectors and the selected reader verify. No memory
+contents or model paths enter the notice. Critical maintenance and manual cloud
+operations retain their own recovery and accounting.

@@ -8,6 +8,8 @@ import pytest
 
 SCRIPTS=Path(__file__).resolve().parents[1]/'scripts'
 sys.path.insert(0,str(SCRIPTS))
+import embedding_health
+import embedding_space
 from capture_inbox import Inbox
 from portable_producer import process_once
 
@@ -178,3 +180,58 @@ def test_out_of_order_source_cannot_hide_newer_pending_bytes(setup):
     assert len(calls)==1
     sources=json.loads(calls[0]['messages'][1]['content'])['sources']
     assert any('corrected' in s['content'] for s in sources)
+
+
+@pytest.fixture
+def selected(setup, tmp_path, monkeypatch):
+    run(setup)
+    memory, inbox, state, _, binding, *_ = setup
+    env = tmp_path / 'embedding.env'
+    env.write_text('HERMES_EMBED_PROVIDER=model2vec\nHERMES_EMBED_MODEL=fixture\nHERMES_EMBED_OUTPUT_DIMS=3\n')
+    monkeypatch.setattr(memory, 'HERMES_ENV_PATH', env)
+    binding_path = tmp_path / 'binding.json'
+    binding_path.write_text(json.dumps(binding))
+    config = dict(binding=str(binding_path), inbox=str(inbox.path), context=binding,
+                  embedding_env_file=str(env), state_dir=str(state))
+    monkeypatch.setattr(embedding_health, 'load_memory', lambda _: memory)
+    monkeypatch.setattr(embedding_space, 'load_memory', lambda _: memory)
+    real_embed = lambda provider, texts, **args: [[0., 1., 0.] if 'luna' in text else [1., 0., 0.] for text in texts]
+    monkeypatch.setattr(memory, 'embed_texts', real_embed)
+    return config, memory, inbox
+
+
+def test_offline_health_fails_then_repairs_exactly_once(selected, monkeypatch):
+    config, memory, _ = selected
+    embed = memory.embed_texts
+    def offline(**args):
+        raise memory.EmbeddingBackendError('secret diagnostic')
+    monkeypatch.setattr(memory, 'embed_texts', offline)
+    assert embedding_health.check(config) == {'state': 'unavailable'}
+    monkeypatch.setattr(memory, 'embed_texts', embed)
+    result = embedding_health.check(config)
+    assert result['state'] == 'healthy' and result['repaired'] == 1
+    assert embedding_health.check(config)['repaired'] == 0
+    with memory.connect() as con:
+        assert con.execute('SELECT count(*) FROM chapters').fetchone()[0] == 1
+
+
+def test_cutover_preserves_cursor_and_preimage(selected, tmp_path):
+    config, memory, inbox = selected
+    with inbox.connect() as con:
+        owner = json.loads(con.execute('SELECT value FROM producer_owner').fetchone()[0])
+    cursor = Path(config['state_dir']) / 'embedding-index.json'
+    old_space = memory.embeddings_runtime_config()
+    old_cursor = dict(owner=owner, space=old_space, after=31)
+    cursor.write_text(json.dumps(old_cursor))
+    target = dict(old_space, model='target-fixture')
+    receipts = tmp_path/'receipts'
+    with pytest.raises(ValueError, match='missing or outdated'):
+        embedding_space.select_space(config, target, receipts)
+    assert not receipts.exists()
+    env = Path(config['embedding_env_file']).read_bytes()
+    assert memory.backfill_embeddings(provider='model2vec', model='target-fixture')['processed'] == 1
+    output = embedding_space.select_space(config, target, receipts)
+    assert output['preserved_cursors'] == {'embedding-index.json': 31}
+    assert json.loads(cursor.read_bytes()) == dict(old_cursor, space=target)
+    assert json.loads((receipts/'embedding-index.json.before').read_bytes()) == old_cursor
+    assert (receipts/'embedding-environment.before').read_bytes() == env
