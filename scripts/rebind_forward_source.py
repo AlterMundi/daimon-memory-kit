@@ -23,6 +23,10 @@ def rebind(binding, payload, *, reason, baseline_source_ref=None, _fault=None):
     sid = payload.get('session_id')
     if not isinstance(sid, str) or not sid or payload.get('cwd') not in binding['allowed_cwds']:
         raise ValueError('selected source required')
+    from codex_hook_capture import selected_session
+    selected = selected_session(binding)
+    if selected is not None and sid != selected:
+        raise ValueError('session outside the explicit selection')
     if baseline_source_ref is not None and baseline_source_ref != sha(sid.encode()):
         raise ValueError('baseline source must match the retained attempt')
     root = Path(binding['source_root']).resolve(strict=True)

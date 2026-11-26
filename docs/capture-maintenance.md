@@ -227,3 +227,21 @@ A completed, retained deferral of that update can be assessed separately with
 decision to its exact new source blocks and requires an independent durable
 record with a literal title. It cannot change the old target, substitute
 evidence or add links. It keeps the earlier decision and review receipts.
+
+## Capture one explicitly selected native conversation
+
+A new scoped `hmk.codex-hook-binding/v2` may set `selected_session_id` to the
+exact native session UUID from the receiving Conversation binding. Both its
+session and workspace must match the native source. Other sessions in the same
+workspace are excluded before opening their rollouts. Forward activation
+inventories only the matching rollout and verifies the session header.
+Keep the owner's source selection and retention policy separate from the path
+or UUID readback. Adding the selector changes the immutable inbox binding.
+Do not rewrite an existing inbox or reset its cursor to install it.
+
+When the existing conversation is explicitly selected for historical intake,
+activate an unused exact-session inbox with `--include-selected-history`.
+This starts after the verified header, retains the configured per-turn scope,
+and reuses `drain --max-steps` to process bounded windows. Ordinary forward
+activation still begins at the end of its selected file. No inference occurs
+during capture or drain.

@@ -38,10 +38,14 @@ def guard(fd, offset):
     return sha(os.pread(fd, min(GUARD_BYTES, offset), max(0, offset-GUARD_BYTES)))
 
 
-def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
-    """Explicitly inventory current EOFs; do not ingest existing conversations."""
+def activate(binding, backup, *, read_budget_bytes=4*1024*1024, include_selected_history=False):
+    """Inventory current EOFs, or start at the explicitly selected historical source."""
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('scoped binding required')
+    from codex_hook_capture import selected_session, timestamp
+    selected = selected_session(binding)
+    if include_selected_history and not selected:
+        raise ValueError('historical activation requires one exact native session')
     if type(read_budget_bytes) is not int or read_budget_bytes < 1:
         raise ValueError('positive capture read budget required')
     if policy(binding['inbox']):
@@ -51,7 +55,11 @@ def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
     started = time.time_ns()
     root = Path(binding['source_root']).resolve(strict=True)
     baselines = []
-    for path in root.rglob('*.jsonl'):
+    pattern = f'*-{selected}.jsonl' if selected else '*.jsonl'
+    paths = list(root.rglob(pattern)) if selected else root.rglob(pattern)
+    if selected and len(paths) != 1:
+        raise ValueError('one existing rollout for the selected session required')
+    for path in paths:
         if path.is_symlink() or not path.resolve().is_relative_to(root):
             raise ValueError('source inventory contains an unsafe path')
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -59,7 +67,20 @@ def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
             info = os.fstat(fd)
             if not stat.S_ISREG(info.st_mode):
                 raise ValueError('regular source files required')
-            size = info.st_size
+            if selected:
+                with os.fdopen(os.dup(fd), 'rb') as source:
+                    header = source.readline(65537)
+                meta = json.loads(header) if len(header) <= 65536 else {}
+                if (meta.get('type') != 'session_meta'
+                        or meta.get('payload', {}).get('id') != selected):
+                    raise ValueError('selected rollout header differs')
+                if include_selected_history and (
+                        not header.endswith(b'\n')
+                        or meta['payload'].get('cwd') not in binding['allowed_cwds']
+                        or timestamp(meta['payload'].get('timestamp')) <
+                           timestamp(binding['sessions_started_at_or_after'])):
+                    raise ValueError('selected historical source is outside its binding')
+            size = len(header) if include_selected_history else info.st_size
             aligned = not size or os.pread(fd, 1, size-1) == b'\n'
             baselines.append((str(path.resolve()), info.st_dev, info.st_ino, size,
                               guard(fd,size), int(aligned)))
@@ -68,8 +89,12 @@ def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
     value = dict(schema=SCHEMA, enabled=True, activated_ns=started,
                  binding_sha256=sha(inbox.binding.encode()), baseline_files=len(baselines),
                  read_budget_bytes=min(read_budget_bytes,binding['max_source_bytes']))
+    if include_selected_history:
+        value['selected_history'] = True
     with inbox.connect() as con:
         con.execute('BEGIN IMMEDIATE')
+        if include_selected_history and con.execute('SELECT 1 FROM heads LIMIT 1').fetchone():
+            raise ValueError('historical activation requires an unused capture inbox')
         con.execute('CREATE TABLE forward_policy(value TEXT NOT NULL)')
         con.execute('CREATE TABLE forward_baselines(path TEXT PRIMARY KEY, device INTEGER, inode INTEGER, offset INTEGER, guard TEXT, aligned INTEGER)')
         con.execute('CREATE TABLE forward_cursors(source TEXT PRIMARY KEY, value TEXT NOT NULL)')
@@ -282,14 +307,18 @@ def main():
     parser.add_argument('command',choices=['activate','status','pause','resume','drain'])
     parser.add_argument('--binding',type=Path,required=True)
     parser.add_argument('--backup',type=Path)
+    parser.add_argument('--include-selected-history',action='store_true')
     parser.add_argument('--read-budget-bytes',type=int,default=4*1024*1024)
     parser.add_argument('--payload',type=Path)
     parser.add_argument('--max-steps',type=int,default=32)
     args = parser.parse_args(); binding = json.loads(args.binding.read_text())
+    if args.include_selected_history and args.command != 'activate':
+        parser.error('--include-selected-history is only valid at activation')
     if args.command == 'activate':
         if args.backup is None:
             parser.error('--backup is required for activation')
-        result = activate(binding,args.backup,read_budget_bytes=args.read_budget_bytes)
+        result = activate(binding,args.backup,read_budget_bytes=args.read_budget_bytes,
+                          include_selected_history=args.include_selected_history)
     elif args.command == 'drain':
         if args.payload is None or args.max_steps < 1:
             parser.error('--payload and a positive --max-steps are required')

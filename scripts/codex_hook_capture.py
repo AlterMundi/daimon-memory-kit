@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import sys
 import time
@@ -25,6 +26,17 @@ def timestamp(value):
     return result
 
 
+def selected_session(binding):
+    if 'selected_session_id' not in binding:
+        return None
+    selected = binding['selected_session_id']
+    if (binding.get('schema') != 'hmk.codex-hook-binding/v2'
+            or not isinstance(selected, str)
+            or not re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', selected)):
+        raise ValueError('exact native session UUID required')
+    return selected
+
+
 def capture(binding, payload, *, _fault=None):
     started = time.monotonic()
     scoped = binding.get('schema') == 'hmk.codex-hook-binding/v2'
@@ -34,6 +46,9 @@ def capture(binding, payload, *, _fault=None):
     if scoped:
         required.add('sessions_started_at_or_after')
         boundary=timestamp(binding.get('sessions_started_at_or_after'))
+    selected = selected_session(binding)
+    if selected is not None:
+        required.add('selected_session_id')
     if set(binding) != required or not all(isinstance(binding[k], str) and binding[k] for k in ('subject','source_instance','source_root','inbox')):
         raise ValueError('complete source and receiving binding required')
     limit = binding['max_source_bytes']
@@ -50,6 +65,8 @@ def capture(binding, payload, *, _fault=None):
     sid = payload.get('session_id')
     if not isinstance(sid, str) or not sid:
         raise ValueError('session ID required')
+    if selected is not None and sid != selected:
+        return dict(capture_complete=False, skipped=True, reason='unselected_session')
     source_root = Path(binding['source_root']).resolve(strict=True)
     transcript = payload.get('transcript_path')
     data, error = None, None
