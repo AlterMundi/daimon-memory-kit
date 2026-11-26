@@ -13,6 +13,7 @@ import urllib.request
 
 from capture_inbox import sha, wire
 from codex_coordinator import checkpoint
+from codex_hook_capture import MAX_SOURCE_BYTES
 from portable_capture import block_sources, codex_sources
 from provider_status import classify
 
@@ -26,17 +27,15 @@ ROUTES = {
 }
 MAX_PACKETS = 2048
 MAX_REJECTIONS = 256
-MAX_DELTA_BYTES = 4 * 1024 * 1024
 PAGE_BYTES = 12000
 PIECE_CHARS = 1800
 
 
 def dialogue(delta, source, body, role):
-    normalized = codex_sources(delta, source=source)
+    normalized = codex_sources(delta, source=source, dialogue_role=role)
     return block_sources(dict(sources=[
         item for item in normalized['sources']
-        if item['payload']['type'] == 'message' and item['payload']['role'] == role
-        and not item.get('instruction_context') and not item.get('retrieved_context')
+        if not item.get('instruction_context') and not item.get('retrieved_context')
     ]), body)
 
 
@@ -185,11 +184,13 @@ def next_observation(con, after, through):
     ''', (after, through)).fetchone()
 
 
-def delta_bytes(con, row):
+def delta_bytes(con, row, binding):
     capture = json.loads(row['payload'])['capture_range']
     start = capture['header_bytes'] if not row['offset'] else 0
     size = row['file_end'] - row['file_start']
-    if not 0 < size <= MAX_DELTA_BYTES or row['delta_size'] != start + size:
+    limit = binding['max_source_bytes']
+    if (type(limit) is not int or not 0 < size <= limit <= MAX_SOURCE_BYTES
+            or row['delta_size'] != start + size):
         raise ValueError('retained forward delta exceeds the supported size or differs')
     delta = con.execute('SELECT substr(delta, ?) FROM revisions WHERE id=?',
                         (start + 1, row['revision'])).fetchone()[0]
@@ -199,8 +200,13 @@ def delta_bytes(con, row):
 
 
 def source_pages(con, row, binding):
-    delta, section = delta_bytes(con, row)
+    delta, section = delta_bytes(con, row, binding)
     return list(pages_for(delta, section, binding['source_instance']))
+
+
+def context_targets(receipt, page):
+    return [i for i in range(len(page))
+            if receipt['scores'].get(f'needs_context_{i}', 0) >= 0.8] if receipt else []
 
 
 def assistant_context(con, row, binding, page):
@@ -216,7 +222,7 @@ def assistant_context(con, row, binding, page):
     for source, preceding in ((prior, True), (row, False)):
         if source is None:
             continue
-        delta, section = delta_bytes(con, source)
+        delta, section = delta_bytes(con, source, binding)
         blocks = dialogue(delta, section, binding['source_instance'], 'assistant')
         if not blocks:
             continue
@@ -345,7 +351,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
                 release_rejection(root, active, sha(wire(request).encode()), retry)
                 retry = None
             receipt = dispatch(request, active, api_key, opener=opener) if request else None
-            targets = [i for i in range(len(page)) if receipt['scores'].get(f'needs_context_{i}', 0) >= 0.8] if receipt else []
+            targets = context_targets(receipt, page)
             context = assistant_context(con, row, binding, [page[i] for i in targets]) if targets else []
             followup = None
             if context:

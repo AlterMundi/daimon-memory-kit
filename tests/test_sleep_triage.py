@@ -223,3 +223,38 @@ def test_daily_worker_surfaces_confirmed_provider_denial_without_sending(context
     memory_runtime.run_sleep_triage(config, inbox, binding, result)
     assert result['status']['sleep_triage']['classified_pages'] == 1
     assert Alerts(inbox).status()['alerts'][0]['state'] == 'resolved'
+
+
+def test_triage_accepts_oversize_tool_range_and_reviews_following_human_text(context, tmp_path):
+    from forward_capture import activate
+
+    binding, source, event = context
+    binding = {**binding, 'inbox': str(tmp_path / 'large-capture.sqlite'),
+               'max_source_bytes': 10 * 1024 * 1024}
+    activate(binding, tmp_path / 'large-before.sqlite')
+    opaque = line('response_item', dict(type='function_call_output', call_id='large-tool',
+                                      output='TOOL_PAYLOAD_NOT_FOR_TRIAGE' + 'a' * (7 * 1024 * 1024)))
+    human = 'Al final vino Ángel, y armamos el primer taller juntos.'
+    prior = source.stat().st_size
+    append(source, turn('first', 'An earlier human report.') + opaque + turn('next', human))
+    for _ in range(3):  # The capture window must extend for the one oversized line.
+        receipt = capture(binding, event)
+        assert receipt['source_offset'] > prior
+        prior = receipt['source_offset']
+    assert receipt['capture_complete']
+    source.unlink()
+
+    seen = []
+
+    def classify(request, timeout):
+        seen.append(request.data.decode())
+        return fake_decisions(request, timeout)
+
+    root = tmp_path / 'triage-large'
+    first = sleep_triage.run(binding, root, after=0, steps=2, api_key='fixture', opener=classify)
+    assert first['completed_pages'] == 2 and first['classified_pages'] == 1
+    assert first['state'] == 'pending'
+    second = sleep_triage.run(binding, root, steps=2, api_key='fixture', opener=classify)
+    assert second['state'] == 'caught_up' and second['classified_pages'] == 1
+    assert human in seen[1]
+    assert all('TOOL_PAYLOAD_NOT_FOR_TRIAGE' not in request for request in seen)

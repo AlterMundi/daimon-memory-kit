@@ -14,6 +14,7 @@ import time
 
 from capture_inbox import Inbox
 
+MAX_SOURCE_BYTES = 64 * 1024 * 1024
 EVENTS = {'SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop', 'PreCompact', 'PostCompact', 'Interrupt', 'SessionEnd'}
 
 
@@ -52,7 +53,7 @@ def capture(binding, payload, *, _fault=None):
     if set(binding) != required or not all(isinstance(binding[k], str) and binding[k] for k in ('subject','source_instance','source_root','inbox')):
         raise ValueError('complete source and receiving binding required')
     limit = binding['max_source_bytes']
-    if type(limit) is not int or not 1 <= limit <= 64 * 1024 * 1024:
+    if type(limit) is not int or not 1 <= limit <= MAX_SOURCE_BYTES:
         raise ValueError('bounded source byte limit required')
     if not isinstance(binding['allowed_cwds'], list) or not binding['allowed_cwds']:
         raise ValueError('explicit selected working directories required')

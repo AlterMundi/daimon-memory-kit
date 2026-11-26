@@ -3,6 +3,7 @@
 No rubric, outside context, automatic provider or model invocation is included.
 Harness normalization preserves selected original source items with stable IDs.
 """
+from io import BytesIO
 import json
 import re
 
@@ -42,11 +43,12 @@ def instruction_context(payload):
                             tail.strip().endswith('</environment_context>'))))
 
 
-def codex_sources(snapshot, *, source, previous=None):
+def codex_sources(snapshot, *, source, previous=None, dialogue_role=None):
     """Normalize original response items, never compacted replays or system prompts.
 
     A changed prefix marks a revision, not another occurrence. All original bytes
     remain in the capture inbox; unsupported response items are reported to caller.
+    A dialogue-only view preserves source IDs and omits tool/turn dependencies.
     """
     if not snapshot.endswith(b'\n'):
         raise ValueError('source ends with an incomplete JSONL item')
@@ -59,7 +61,7 @@ def codex_sources(snapshot, *, source, previous=None):
     openers = {}
     calls = {}
     recalled = {}
-    for line in snapshot.splitlines(keepends=True):
+    for line in BytesIO(snapshot):
         row = json.loads(line)
         start, offset = offset, offset + len(line)
         if not isinstance(row, dict):
@@ -74,6 +76,8 @@ def codex_sources(snapshot, *, source, previous=None):
         if not isinstance(payload, dict):
             raise ValueError('response item payload must be an object')
         kind = payload.get('type')
+        if dialogue_role is not None and (kind != 'message' or payload.get('role') != dialogue_role):
+            continue
         if kind == 'reasoning' or (kind == 'message' and payload.get('role') in {'system','developer'}):
             continue
         if kind not in {'message','agent_message','function_call','function_call_output','custom_tool_call','custom_tool_call_output'}:

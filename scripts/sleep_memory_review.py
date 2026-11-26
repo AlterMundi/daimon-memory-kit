@@ -56,7 +56,10 @@ def read_candidate(binding, root, packet_id, item):
             raise ValueError('source pointers differ from retained page')
         context = []
         if packet['assistant_context']:
-            context = sleep_triage.assistant_context(con, row, binding, page)
+            targets = sleep_triage.context_targets(packet['decision'], page)
+            if not targets:
+                raise ValueError('assistant context lacks a retained request')
+            context = sleep_triage.assistant_context(con, row, binding, [page[i] for i in targets])
             pointers = [{k: v for k, v in piece.items() if k != 'text'} for piece in context]
             if pointers != packet['assistant_context']:
                 raise ValueError('assistant context differs from retained evidence')
