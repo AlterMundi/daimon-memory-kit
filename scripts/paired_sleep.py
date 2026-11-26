@@ -200,6 +200,36 @@ def run(profile, root, *, worker_settings=None):
                 capture_complete=source['capture_complete'])
 
 
+def maintain_backup(profile, root):
+    """Refresh the selected canonical owner's existing periodic protection."""
+    from memory_runtime import backup_notice
+    from periodic_backups import Baselines
+    import snapshot_store
+
+    config = json.loads((root/'binding.json').read_bytes())
+    binding = verified_binding(profile, config)
+    inbox = Inbox(binding['inbox'], binding)
+    path = Path(profile['backup_profile'])
+    if (not path.is_absolute() or path.is_symlink() or path.stat().st_uid != os.getuid()
+            or path.stat().st_mode & 0o077):
+        raise ValueError('private backup profile required')
+    backup = json.loads(path.read_bytes())
+    policy = snapshot_store.policy(backup['snapshots'])
+    if policy['routine_backup']['subject'] != binding['subject']:
+        raise ValueError('backup and paired source owner differ')
+    try:
+        pool = Baselines(backup['database'], policy)
+        if not pool.manifest_path.is_file():
+            raise ValueError('existing paired baseline enrollment required')
+        result = pool.refresh()
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error):
+        result = dict(state='failed', reason_code='backup_state_unreadable')
+
+    return backup_notice(dict(database=backup['database'], snapshots=policy,
+                              context={k: binding[k] for k in ('subject', 'source_instance')}),
+                         inbox, result)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('action', choices=('enroll', 'run'))
@@ -217,15 +247,18 @@ def main():
             enroll(profile, root)
             print(json.dumps(dict(state='enrolled')))
             return
+        backup = maintain_backup(profile, root) if 'backup_profile' in profile else None
         credential = os.environ.get('CREDENTIALS_DIRECTORY')
         key = (Path(credential)/'dmk-decisions').read_text().strip() if credential else sys.stdin.read(1025).strip()
         if not 10 < len(key) <= 1024 or any(char.isspace() for char in key):
             raise ValueError('existing scoped Decisions credential required')
         os.environ['DMK_DECISIONS_API_KEY'] = key
         outcome = run(profile, root)
+        if backup is not None:
+            outcome['backup'] = backup
         checkpoint(root/'receiving.json', outcome)
         print(json.dumps(outcome))
-        if outcome['state'] == 'blocked':
+        if outcome['state'] == 'blocked' or (backup is not None and backup['state'] == 'failed'):
             raise SystemExit(2)
 
 

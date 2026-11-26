@@ -243,7 +243,13 @@ service once daily at 08:00 America/Argentina/Buenos_Aires. Use the existing
 systemd encrypted credential or its existing privileged delivery pipe into the
 unprivileged worker. The operation captures one bounded range and classifies at
 most four pages. It installs no Codex hook and sends no input to Codex. Its
-receipts and outbox are in the selected private state directory. A suspended
+receipts and outbox are in the selected private state directory. Set
+`backup_profile` to the private absolute profile of the canonical owner's
+existing periodic backup pool when this worker is the owner's daily service.
+The same cycle maintains the one selected pool through the periodic backup
+contract. A current unchanged database gets an audit when due, with no extra
+copy or provider call. The safe backup state is retained alongside review;
+a failed backup remains visible independently of Decisions. A suspended
 service preserves its journal and checkpoint for later recovery. This receiver
 performs source intake and classification. For canonical admission use the
 existing review command with `--profile "$canonical_profile"` and

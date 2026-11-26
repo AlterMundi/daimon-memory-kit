@@ -11,6 +11,7 @@ import sleep_triage
 from capture_inbox import Inbox
 from capturectl import CaptureLedger
 from sleep_memory_review import apply_review, read_candidate
+from tests.test_backupctl import config as backup_config
 from tests.test_durable_memory_foundation import mc
 from tests.test_forward_capture import append, context, line, turn
 from tests.test_sleep_triage import fake_decisions
@@ -179,3 +180,33 @@ def test_supervised_paired_slot_inherits_budget_and_projects_failure(context, tm
     with inbox.connect() as con:
         alert, = con.execute("select state from operational_alerts").fetchall()
         assert alert['state'] == 'resolved'
+
+def test_paired_cycle_reuses_owner_baseline_without_copy(backup_config, context, tmp_path, monkeypatch):
+    from periodic_backups import Baselines
+    import periodic_backups
+
+    binding, _, _ = context
+    root = tmp_path/'selected'
+    root.mkdir(mode=0o700)
+    (root/'binding.json').write_text(json.dumps(dict(binding=binding)))
+    monkeypatch.setattr(paired_sleep, 'verified_binding', lambda profile, config: config['binding'])
+    policy = backup_config['snapshots']
+    policy['routine_backup'] = dict(directory=str(tmp_path/'baselines'), subject=binding['subject'],
+                                    interval_seconds=86400)
+    pool = Baselines(backup_config['database'], policy)
+    assert pool.refresh()['created']
+
+    def no_copy(*args, **kwargs):
+        pytest.fail('unchanged canonical owner does not need a new snapshot')
+
+    monkeypatch.setattr(periodic_backups, 'verified_snapshot', no_copy)
+    backup = tmp_path/'backup-profile.json'
+    backup.write_text(json.dumps(backup_config))
+    backup.chmod(0o600)
+    info = paired_sleep.maintain_backup(dict(backup_profile=str(backup)), root)
+    assert info['state'] == 'current' and not info['created']
+    assert 'snapshot' not in info and 'sha256' not in info
+    policy['routine_backup']['subject'] = 'foreign'
+    backup.write_text(json.dumps(backup_config))
+    with pytest.raises(ValueError, match='owner differ'):
+        paired_sleep.maintain_backup(dict(backup_profile=str(backup)), root)
