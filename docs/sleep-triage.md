@@ -104,6 +104,16 @@ review or handoff has retained its receipt and source pointer. At capacity,
 preserve the cursor and reconcile the existing packets before continuing.
 The capture journal remains the owner of exact sources.
 
+## Omit one reviewed page without a provider call
+
+An operator who has inspected a complete pending page may pass its exact
+scoped Decisions request hash to `sleep_triage.py --steps 1 --omit-page HASH
+--reason "reason"`. The SHA-256 uses the normal serialized request including
+its window scope. The worker refuses a different page and preserves existing
+initial and follow-up dispatches. The private omitted packet keeps source
+pointers and the decision reason without a provider receipt. If the process
+stops after the packet is committed, the next run resumes from that receipt.
+
 ## Review a candidate for the canonical library
 
 Use the same owner-selected worker profile. Inspect one item from a retained

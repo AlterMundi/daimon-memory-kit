@@ -8,6 +8,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import sqlite3
 import time
 import urllib.request
@@ -280,7 +281,7 @@ def assistant_context(con, row, binding, page):
     return context
 
 
-def write_packet(path, row, page, receipt, context=(), followup=None, context_requested=False):
+def write_packet(path, row, page, receipt, context=(), followup=None, context_requested=False, *, omission=None):
     sources = [{k: v for k, v in piece.items() if k != 'text'} for piece in page]
     review = receipt and (receipt['refused'] or (context_requested and (not followup or followup['refused'])))
     status = 'needs_review' if review else 'classified' if receipt else 'no_dialogue'
@@ -291,6 +292,8 @@ def write_packet(path, row, page, receipt, context=(), followup=None, context_re
                   sources=sources, decision=receipt, model=MODEL if receipt else None,
                   assistant_context=[{k: v for k, v in item.items() if k != 'text'} for item in context],
                   context_decision=followup)
+    if omission is not None:
+        packet.update(state='omitted', omission=omission)
     if path.exists():
         if json.loads(path.read_text()) != packet:
             raise ValueError('retained triage packet differs')
@@ -321,7 +324,13 @@ def release_rejection(root, active, request_hash, retry):
     active.unlink()
 
 
-def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_id=None,
+def valid_omission(omit):
+    return (isinstance(omit, tuple) and len(omit) == 2
+            and isinstance(omit[0], str) and re.fullmatch(r'[0-9a-f]{64}', omit[0])
+            and isinstance(omit[1], str) and 1 <= len(omit[1].strip()) <= 500)
+
+
+def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=None, human_id=None,
         gateway_original=None, opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
@@ -329,6 +338,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
         raise ValueError('steps must be between 1 and 32')
     if after is not None and (type(after) is not int or after < 0):
         raise ValueError('invalid starting observation')
+    if omit is not None and (retry is not None or steps != 1 or not valid_omission(omit)):
+        raise ValueError('inspect one exact Decisions request and supply an omission reason')
     if human_id is not None and (type(human_id) is not int or human_id <= 0):
         raise ValueError('paired human ID must be positive')
     root = Path(root)
@@ -406,12 +417,27 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
                                 request = prior
                                 memory_priority = previous
                                 break
+            omission = None
+            if existed:
+                retained = json.loads(packet.read_text()).get('omission')
+                if retained:
+                    omission = (retained['request_sha256'], retained['reason'])
+            if omit is not None:
+                if omission is not None and omission != omit:
+                    raise ValueError('retained omission differs')
+                omission = omit
+            if omission is not None:
+                if (not request or not valid_omission(omission)
+                        or sha(wire(request).encode()) != omission[0]
+                        or active.exists() or second.exists() or retry is not None):
+                    raise ValueError('omission requires the exact undispatched page')
+                omit = None
             if retry and active.exists() and json.loads(active.read_text())['state'] != 'complete':
                 if request is None or not active.exists() or not api_key:
                     raise ValueError('current rejected request and credential required')
                 release_rejection(root, active, sha(wire(request).encode()), retry)
                 retry = None
-            receipt = dispatch(request, active, api_key, opener=opener) if request else None
+            receipt = dispatch(request, active, api_key, opener=opener) if request and omission is None else None
             targets = context_targets(receipt, page)
             context = assistant_context(con, row, binding, [page[i] for i in targets]) if targets else []
             followup = None
@@ -427,7 +453,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
                 followup = dispatch(contextual, second, api_key, opener=opener)
             if retry:
                 raise ValueError('no pending request matches the explicit retry')
-            write_packet(packet, row, page, receipt, context, followup, bool(targets))
+            recorded_omission = dict(request_sha256=omission[0], reason=omission[1]) if omission else None
+            write_packet(packet, row, page, receipt, context, followup, bool(targets), omission=recorded_omission)
             page_receipts = [r for r in (receipt, followup) if r]
             current['consumed_dispatches'] = [r['request_sha256'] for r in page_receipts]
             receipts.extend(page_receipts)
@@ -444,6 +471,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
             classified += int(receipt is not None)
         if retry:
             raise ValueError('no pending request matches the explicit retry')
+        if omit:
+            raise ValueError('no pending page matches the explicit omission')
         return dict(state='pending' if next_observation(con, current['after'], through) else 'caught_up',
                     after=current['after'], page=current['page'],
                     through=through, completed_pages=completed, classified_pages=classified,
@@ -456,15 +485,18 @@ def main():
     parser.add_argument('--state-dir', required=True, type=Path)
     parser.add_argument('--after', type=int, help='Starting observation, only on initialization')
     parser.add_argument('--steps', type=int, default=12)
-    parser.add_argument('--retry-request', help='Exact hash of a confirmed HTTP rejection')
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument('--retry-request', help='Exact hash of a confirmed HTTP rejection')
+    action.add_argument('--omit-page', help='Exact request hash of one reviewed, undispatched page')
     parser.add_argument('--reason', help='Why the confirmed HTTP rejection can be retried')
     args = parser.parse_args()
-    if bool(args.retry_request) != bool(args.reason):
-        parser.error('--retry-request and --reason must be used together')
+    if bool(args.retry_request or args.omit_page) != bool(args.reason):
+        parser.error('--reason is required for an explicit retry or omission')
     try:
         result = run(json.loads(args.binding.read_text()), args.state_dir, after=args.after,
                      steps=args.steps, api_key=os.environ.get('OPENAI_API_KEY'),
-                     retry=(args.retry_request, args.reason) if args.retry_request else None)
+                     retry=(args.retry_request, args.reason) if args.retry_request else None,
+                     omit=(args.omit_page, args.reason) if args.omit_page else None)
     except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
         parser.exit(2, f'Sleep triage pending: {error}\n')
     print(json.dumps(result))
