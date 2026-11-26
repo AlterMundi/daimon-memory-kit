@@ -371,3 +371,25 @@ def test_rereading_a_page_keeps_complete_evidence_for_the_same_revision():
     assert not state['canon']
     _lookup(reader, dict(request, offset=6, expected_revision=2), state)
     assert state == dict(canon=[dict(original, revision=2)], partial={})
+
+
+def test_repeated_completed_reads_lead_to_a_final_selection_contract():
+    import portable_capture
+    import selection_navigation
+
+    read = dict(action='read', record_uid='original', query='', offset=0, expected_revision=1)
+    step = dict(proposal=dict(selection=dict(outcome='lookup', requests=[read])),
+                results=[dict(status='ok')])
+    original = dict(record_uid='original', revision=1, raw='Original evidence.')
+    job = dict(inputs=dict(sources=[], context={}),
+               navigation=dict(canon=[original], steps=[step, step]))
+    assert selection_navigation.request_for(job)['response_schema'] == selection_navigation.response_schema()
+
+    job['navigation']['steps'].append(step)
+    request = selection_navigation.request_for(job)
+    assert request['response_schema'] == portable_capture.block_schema()
+    assert json.loads(request['messages'][1]['content'])['current_canon'] == [original]
+    assert len(request['messages']) == 2
+
+    job['navigation']['canon'] = [dict(original, revision=2)]
+    assert selection_navigation.request_for(job)['response_schema'] == selection_navigation.response_schema()

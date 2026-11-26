@@ -66,9 +66,46 @@ def effective_sources(job):
     return sorted(sources,key=lambda s:order.get(s['id'],len(order)))
 
 
+def _rereads_only(state):
+    """Detect consecutive lookups of pages already read at a complete revision."""
+    steps = state['steps']
+    if len(steps) < 3:
+        return False
+    canon = {(record['record_uid'], record['revision']) for record in state['canon']}
+    observed = set()
+    for step in steps[:-2]:
+        value = step.get('proposal', {}).get('selection', {})
+        for request, result in zip(value.get('requests', []), step.get('results', [])):
+            if result.get('status') == 'ok':
+                observed.add(wire(request))
+    for step in steps[-2:]:
+        value = step.get('proposal', {}).get('selection', {})
+        requests = value.get('requests', [])
+        results = step.get('results', [])
+        if not requests or len(requests) != len(results):
+            return False
+        if any(request.get('action') != 'read'
+               or (request['record_uid'], request['expected_revision']) not in canon
+               or wire(request) not in observed or result.get('status') != 'ok'
+               for request, result in zip(requests, results)):
+            return False
+    return True
+
+
 def request_for(job):
     state = job['navigation']
     messages = selection.block_messages(effective_sources(job), state['canon'], job['inputs']['context'])
+    final_schema = selection.block_schema()
+    last_step = state['steps'][-1] if state['steps'] else {}
+    if _rereads_only(state) or last_step.get('request', {}).get('response_schema') == final_schema:
+        messages[0]['content'] += (
+            '\nThe recent lookups repeated pages of originals already complete in current_canon. '
+            'Return a final selection using the supplied source and completely read originals. '
+            'If evidence required for a supported decision is still missing, defer and state what is missing. '
+            'Do not request another lookup.')
+        if 'feedback' in last_step:
+            messages.append({'role': 'user', 'content': wire(last_step['feedback'])})
+        return {'messages': messages, 'response_schema': final_schema}
     messages[0]['content'] += '\n' + POLICY
     if job['inputs'].get('source_window', {}).get('paging'):
         messages[0]['content'] += '\n' + source_pages.GUIDANCE
@@ -172,7 +209,8 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
             dispatched += 1
             checkpoint(job_path,job)
         value = step['proposal']['selection']
-        if not isinstance(value,dict) or value.get('outcome') != 'lookup':
+        if (not isinstance(value,dict) or value.get('outcome') != 'lookup'
+                or step['request']['response_schema'] == selection.block_schema()):
             try:
                 decision = selection.selected_decision(value,effective_sources(job),state['canon'])
                 source_pages.validate_citations(value, effective_sources(job))
