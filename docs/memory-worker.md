@@ -238,6 +238,9 @@ This delivery installs no service, timer, hook or source capture binding.
 Source-block capture may update original reported records, retaining earlier
 meaning and history. It cannot overwrite an inferred/generated account and erase
 its support metadata; such accounts belong to the reviewed reconciliation phase.
+New capture jobs carry forward already quoted source blocks verbatim on an
+update. The frozen job selects the rendering so retained decisions replay with
+their original bytes.
 Selector link prose remains in formation evidence. Canonical link notes identify
 navigation associations, not independent factual support.
 

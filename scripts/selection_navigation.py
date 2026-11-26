@@ -285,7 +285,8 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
         if (not isinstance(value,dict) or value.get('outcome') != 'lookup'
                 or step['request']['response_schema'] == selection.block_schema()):
             try:
-                decision = selection.selected_decision(value,effective_sources(job),state['canon'])
+                decision = selection.selected_decision(value,effective_sources(job),state['canon'],
+                    reuse_source_envelopes=job['inputs'].get('reuse_source_envelopes', False))
                 source_pages.validate_citations(value, effective_sources(job))
                 if backend is not None:
                     with backend.connect() as con:
