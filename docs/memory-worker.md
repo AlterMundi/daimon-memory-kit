@@ -245,6 +245,10 @@ Two successive lookup rounds with the same previously observed requests and
 results end navigation. The final request uses the retained source excerpts and
 complete originals. It may explicitly defer if the evidence is insufficient.
 A changed search result or a new source range can still advance navigation.
+If a paged lookup needs more source context and the final decision defers, the
+worker retains the required byte count. Set a sufficient receiving source limit
+to resume the exact blocked read. That preserves both previous responses and
+uses a fresh selection request only after the missing context is available.
 
 The runtime supplies its configured memory backend to navigation as well as
 indexing. A reader imported before the private profile was selected must not use

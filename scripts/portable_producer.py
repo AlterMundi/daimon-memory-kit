@@ -35,6 +35,7 @@ COMPATIBLE_COMPLETE_READ_PREDECESSOR = 'ea7ce31de16e14d01da1053c0165bcbaf4b26168
 COMPATIBLE_COMPACT_PACKET_PREDECESSOR = '6b10a5e8ccefe833c2805819c2ef0493ede3d46779f636849c0d534382c3664b'
 # The successor only changes when the next selection prompt ends navigation.
 COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR = '48be301c0d9f3389f6324d9d1e33dd1634a717d2725679c4b11f9c505b44d6fe'
+COMPATIBLE_SOURCE_LIMIT_PREDECESSOR = '608c197d046a078ee4367bacda2c92ca95225ccf3925a62eec007615a44fa486'
 COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR = 'd5fb7e45581ecc4e2aa9c0a53fe563024215050e544cb5ab11fb5739588bb498'
 COMPATIBLE_CONTEXT_BOUND_PREDECESSOR = '460e04fbd1a48982ecb4edb6df96d8b6648c41c33392254435a1481258ad207d'
 COMPATIBLE_PAGE_BUDGET_PREDECESSOR = 'b3b37f136837afd72ca7ded81a85c68a4db3d013ecd6014f250e80e27e3d9542'
@@ -58,7 +59,7 @@ def compatible_code_hash(fingerprint, *, current=None):
                            COMPATIBLE_NAVIGATION_PREDECESSOR, COMPATIBLE_COMPLETE_READ_PREDECESSOR,
                            COMPATIBLE_PAGE_BUDGET_PREDECESSOR, COMPATIBLE_CONTEXT_BOUND_PREDECESSOR,
                            COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR, COMPATIBLE_COMPACT_PACKET_PREDECESSOR,
-                           COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR}
+                           COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR, COMPATIBLE_SOURCE_LIMIT_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -290,6 +291,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         proposer_invoked = False
         if snapshot_policy is not None:
             snapshot_store.Store(memory,state_dir,snapshot_policy,owner).preflight(f'batch-{sequence}-before.sqlite')
+        if paging is not None:
+            selection_navigation.resume_deferred_source(job, job_path, source_max_bytes)
         if 'proposal' not in job:
             if any(s['status']=='new' for s in inputs['sources']):
                 work = state_dir/f"batch-{sequence}-dispatch-{job['created_ns']}"
@@ -328,8 +331,12 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
         canon = job.get('navigation',{}).get('canon',[])
         decision = selection.selected_decision(job['proposal']['selection'], selection_navigation.effective_sources(job), canon)
         if decision['outcome'] == 'deferred':
-            return {'state':'deferred','reason':decision['reason'],
-                    'processed_through':index['after'],'proposer_invoked':proposer_invoked}
+            result = {'state':'deferred','reason':decision['reason'],
+                      'processed_through':index['after'],'proposer_invoked':proposer_invoked}
+            needed = selection_navigation.deferred_source_limit(job)
+            if needed is not None:
+                result.update(minimum_required_bytes=needed, source_max_bytes=source_max_bytes)
+            return result
         if paging is not None:
             source_blocks = selection_navigation.effective_sources(job)
             source_pages.validate_citations(job['proposal']['selection'], source_blocks)

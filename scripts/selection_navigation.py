@@ -90,6 +90,37 @@ def _repeated_lookups(state):
     return repeated_rounds >= 2
 
 
+def deferred_source_limit(job):
+    """Find the exact lookup and decision that deferred on a source limit."""
+    steps = job.get('navigation', {}).get('steps', [])
+    proposal = job.get('proposal', {})
+    if (job.get('state') != 'proposed' or 'receipt' in job
+            or proposal.get('selection', {}).get('outcome') != 'deferred' or len(steps) < 2):
+        return None
+    lookup, final = steps[-2:]
+    waits = lookup.get('source_budget_limited')
+    if not waits or final.get('proposal') != proposal:
+        return None
+    return max(wait['minimum_required_bytes'] for wait in waits)
+
+
+def resume_deferred_source(job, job_path, budget):
+    required = deferred_source_limit(job)
+    if required is None or budget < required:
+        return
+    state = job['navigation']
+    lookup, final = state['steps'][-2:]
+    state.setdefault('source_limit_recoveries', []).append(dict(
+        minimum_required_bytes=required, resumed_budget_bytes=budget,
+        responses=[lookup, final],
+    ))
+    # The lookup proposal is already paid for. Only repeat its local reads.
+    state['steps'][-2:] = [{key: lookup[key] for key in ('request', 'proposal')}]
+    del job['proposal']
+    job['state'] = 'prepared'
+    checkpoint(job_path, job)
+
+
 MAX_SELECTION_CONTEXT_BYTES = 700_000
 
 
