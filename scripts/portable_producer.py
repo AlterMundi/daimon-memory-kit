@@ -32,6 +32,7 @@ COMPATIBLE_INDEX_ALERT_PREDECESSOR = '531dcdaa9ad0a216af8fd57910fc3eef3631012bd9
 # Rereading a page from a verified revision now preserves its complete evidence.
 COMPATIBLE_NAVIGATION_PREDECESSOR = '6daaf7c94e51e6a112ed0ea452b36a604e342602406d982a996abf3794969632'
 COMPATIBLE_COMPLETE_READ_PREDECESSOR = 'ea7ce31de16e14d01da1053c0165bcbaf4b261687a2576886ec1ed72ca5d9e19'
+COMPATIBLE_CONTEXT_BOUND_PREDECESSOR = '460e04fbd1a48982ecb4edb6df96d8b6648c41c33392254435a1481258ad207d'
 COMPATIBLE_PAGE_BUDGET_PREDECESSOR = 'b3b37f136837afd72ca7ded81a85c68a4db3d013ecd6014f250e80e27e3d9542'
 
 
@@ -51,7 +52,7 @@ def compatible_code_hash(fingerprint, *, current=None):
     return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR,
                            COMPATIBLE_ELASTIC_PREDECESSOR, COMPATIBLE_INDEX_ALERT_PREDECESSOR,
                            COMPATIBLE_NAVIGATION_PREDECESSOR, COMPATIBLE_COMPLETE_READ_PREDECESSOR,
-                           COMPATIBLE_PAGE_BUDGET_PREDECESSOR}
+                           COMPATIBLE_PAGE_BUDGET_PREDECESSOR, COMPATIBLE_CONTEXT_BOUND_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -542,7 +543,8 @@ def reconcile_failed_title(memory, inbox, state_dir):
             event_key=row['event_key'], cursor_advanced=False, model_calls=0)
 
 
-def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=False):
+def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=False,
+                      refused_navigation_request=None):
     """Explicitly supersede a pre-stage proposal without dropping its sources.
 
     This is for changed representation or an invalid pre-stage decision, not for
@@ -568,12 +570,44 @@ def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=F
                 if con.execute('SELECT 1 FROM capture_events WHERE stream_id=? AND sequence=?',
                     ('portable:'+digest(owner),sequence)).fetchone():
                     raise ValueError('staged work cannot be replaced; resume its original decision')
+        if refused_navigation_request is not None:
+            if not preserve_navigation or job.get('proposal') or digest(job['inputs']) != job['input_hash']:
+                raise ValueError('refused navigation repair requires an unchanged, uncommitted job')
+            steps = job['navigation']['steps']
+            step = steps[-1]
+            if set(step) != {'request'} or any('proposal' not in item for item in steps[:-1]):
+                raise ValueError('only the last refused navigation request may be replaced')
+            work = state_dir/f"batch-{sequence}-dispatch-{job['created_ns']}"
+            if job.get('context_attempt'):
+                work /= f"context-{job['context_attempt']}"
+            work /= f"navigation-{len(steps)}"
+            request_path = Path(refused_navigation_request)
+            if request_path.parent != work/'requests':
+                raise ValueError('request does not belong to the last navigation step')
+            request = json.loads(request_path.read_text())
+            key = digest(request)
+            if (request_path.name != key+'.json' or (work/'retries'/request_path.name).exists()
+                    or (work/'responses'/request_path.name).exists()
+                    or any(request.get(k) != v for k, v in step['request'].items())):
+                raise ValueError('retained navigation request differs or has a retry')
+            receipt = json.loads((work/'dispatches'/request_path.name).read_text())
+            failure = receipt.get('native_failure', {})
+            if (receipt.get('request_sha256') != key or receipt.get('state') != 'failed'
+                    or receipt.get('provider_reservation') or receipt.get('provider_usage')
+                    or receipt.get('usage') or receipt.get('content') or receipt.get('native_response_content')
+                    or failure != {'code': 'admission_refused', 'stage': 'bounded_turn_start', 'rpc_code': -32602}):
+                raise ValueError('native rejection before any provider reservation is required')
+            replacement = selection_navigation.request_for(job, final_only=True)
+            if replacement == step['request']:
+                raise ValueError('bounded replacement must change the rejected request')
         archive=state_dir/f"batch-{sequence}-superseded-{digest(job)}.json"
         checkpoint(archive.with_suffix('.reason.json'),dict(reason=reason,job_hash=digest(job)))
         if preserve_navigation:
             if 'navigation' not in job or digest(job['inputs']) != job['input_hash']:
                 raise ValueError('verified frozen navigation is required')
             checkpoint(archive,job)
+            if refused_navigation_request is not None:
+                step['request'] = replacement
             job.pop('proposal',None)
             job['code_hash'] = _code_hash()
             job['state'] = 'prepared'

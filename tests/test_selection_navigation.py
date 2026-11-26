@@ -248,3 +248,60 @@ def test_revision_conflict_reconciles_same_event_and_preserves_attempts(setup, c
     assert len(attempts)==1
     assert attempts[0]['proposal']['selection']['records'][0]['expected_revision']==1
     assert json.loads(current['source_metadata_json'])['evidence']==['artifact:sha256:'+final['artifact_id']]
+
+
+def test_large_lookup_journal_uses_complete_source_and_canonical_evidence(monkeypatch):
+    import portable_capture
+    import selection_navigation
+
+    monkeypatch.setattr(selection_navigation, 'MAX_SELECTION_CONTEXT_BYTES', 20_000)
+    step = dict(proposal=lookup(), results=[dict(status='ok', raw='x' * 30_000)])
+    original = dict(record_uid='read', revision=1, raw='Complete original.')
+    inputs = dict(sources=[dict(id='source', text='Selected source.')], context={})
+    job = dict(inputs=inputs, navigation=dict(canon=[original], steps=[step]))
+    request = selection_navigation.request_for(job)
+    assert request['response_schema'] == portable_capture.block_schema()
+    payload = json.loads(request['messages'][1]['content'])
+    assert payload['sources'] == inputs['sources']
+    assert payload['current_canon'] == [original]
+    assert step['results'][0]['raw'] == 'x' * 30_000
+
+
+def test_reprepare_only_rejected_step_and_keep_its_exact_request(setup):
+    from pathlib import Path
+    from capturectl import digest
+    from portable_producer import reprepare_pending
+
+    memory,inbox,state,valid,binding,_,_=setup
+
+    def refuse(request, work):
+        wire_request = dict(request, phase='capture')
+        key = digest(wire_request)
+        for dirname, payload in (
+            ('requests', wire_request),
+            ('dispatches', dict(request_sha256=key, state='failed', provider_reservation=True,
+                 native_failure=dict(code='admission_refused', stage='bounded_turn_start', rpc_code=-32602))),
+        ):
+            (work/dirname).mkdir(exist_ok=True)
+            (work/dirname/(key+'.json')).write_text(json.dumps(payload))
+        raise ValueError('simulated native refusal')
+
+    with pytest.raises(ValueError,match='simulated native refusal'):
+        process_once(memory,inbox,state,refuse,binding,retrieval='lexical')
+    path = state/'batch-1.json'
+    original = json.loads(path.read_text())
+    request_path, = state.glob('batch-1-dispatch-*/navigation-1/requests/*.json')
+    arguments = dict(preserve_navigation=True, refused_navigation_request=request_path)
+    with pytest.raises(ValueError,match='before any provider reservation'):
+        reprepare_pending(memory,inbox,state,'Shorten verified refusal',**arguments)
+    assert json.loads(path.read_text()) == original
+
+    receipt_path = request_path.parent.parent/'dispatches'/request_path.name
+    failed = json.loads(receipt_path.read_text())
+    failed.pop('provider_reservation')
+    receipt_path.write_text(json.dumps(failed))
+    result = reprepare_pending(memory,inbox,state,'Shorten verified refusal',**arguments)
+    assert json.loads(Path(result['preserved_job']).read_text()) == original
+    assert json.loads(receipt_path.read_text()) == failed
+    assert json.loads(path.read_text())['inputs'] == original['inputs']
+    assert process_once(memory,inbox,state,valid,binding,retrieval='lexical')['state']=='complete'

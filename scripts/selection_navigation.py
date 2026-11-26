@@ -92,21 +92,34 @@ def _rereads_only(state):
     return True
 
 
-def request_for(job):
+MAX_SELECTION_CONTEXT_BYTES = 700_000
+
+
+class SelectionContextTooLarge(ValueError):
+    def __init__(self, required_bytes):
+        self.required_bytes = required_bytes
+        super().__init__('Verified selection evidence exceeds the bounded request size')
+
+
+def request_for(job, *, final_only=False):
     state = job['navigation']
     messages = selection.block_messages(effective_sources(job), state['canon'], job['inputs']['context'])
     final_schema = selection.block_schema()
     last_step = state['steps'][-1] if state['steps'] else {}
-    if _rereads_only(state) or last_step.get('request', {}).get('response_schema') == final_schema:
-        messages[0]['content'] += (
-            '\nThe recent lookups repeated pages of originals already complete in current_canon. '
-            'Return a final selection using the supplied source and completely read originals. '
+
+    def final_request():
+        compact_messages[0]['content'] += (
+            '\nReturn a final selection using the supplied source and completely read originals. '
             'If evidence required for a supported decision is still missing, defer and state what is missing. '
             'Do not request another lookup.')
         if 'feedback' in last_step:
-            messages.append({'role': 'user', 'content': wire(last_step['feedback'])})
-        return {'messages': messages, 'response_schema': final_schema}
-    messages[0]['content'] += '\n' + POLICY
+            compact_messages.append({'role': 'user', 'content': wire(last_step['feedback'])})
+        packet = {'messages': compact_messages, 'response_schema': final_schema}
+        size = len(wire(packet).encode())
+        if size > MAX_SELECTION_CONTEXT_BYTES:
+            raise SelectionContextTooLarge(size)
+        return packet
+
     if job['inputs'].get('source_window', {}).get('paging'):
         messages[0]['content'] += '\n' + source_pages.GUIDANCE
     if job.get('context_attempt'):
@@ -120,6 +133,10 @@ def request_for(job):
             'not read evidence. Read the current original completely and reconcile with an explicit '
             'expected-revision update, or omit if nothing new. Do not rename to bypass duplication.')
         messages[1]['content']=wire(payload)
+    compact_messages = [message.copy() for message in messages]
+    if final_only or _rereads_only(state) or last_step.get('request', {}).get('response_schema') == final_schema:
+        return final_request()
+    messages[0]['content'] += '\n' + POLICY
     # Include exact observed results. A lookup is a host-performed read, never an
     # assistant narrative promoted into canonical evidence.
     for step in state['steps']:
@@ -140,7 +157,10 @@ def request_for(job):
             else:
                 reply = step['feedback']
             messages.append({'role':'user','content':wire(reply)})
-    return {'messages':messages,'response_schema':response_schema()}
+    packet = {'messages': messages, 'response_schema': response_schema()}
+    if state['steps'] and len(wire(packet).encode()) > MAX_SELECTION_CONTEXT_BYTES:
+        return final_request()
+    return packet
 
 
 def _lookup(reader, request, state):
@@ -197,7 +217,16 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
         if not state['steps'] or any(k in state['steps'][-1] for k in ('results','feedback')):
             if dispatched >= steps:
                 return None, dispatched
-            state['steps'].append({'request':request_for(job)})
+            try:
+                request = request_for(job)
+            except SelectionContextTooLarge as error:
+                state['source_budget_pending'] = {
+                    'reason': 'verified selection evidence exceeds the request limit',
+                    'minimum_required_bytes': error.required_bytes,
+                }
+                checkpoint(job_path, job)
+                return None, dispatched
+            state['steps'].append({'request': request})
             checkpoint(job_path,job)
         step = state['steps'][-1]
         if 'proposal' not in step:
