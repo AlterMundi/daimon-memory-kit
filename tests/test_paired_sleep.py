@@ -10,7 +10,8 @@ from tests.test_forward_capture import append, line, turn
 from tests.test_sleep_triage import fake_decisions
 
 
-def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeypatch):
+@pytest.mark.parametrize('configured_entry', [False, True])
+def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeypatch, configured_entry):
     journal = tmp_path/'sessions'
     journal.mkdir()
     native_id = '00839024-0abc-410c-8001-3eecbe2ab250'
@@ -24,11 +25,21 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
     with sqlite3.connect(gateway) as con:
         con.executescript('create table sessions(creator_user_id,chat_id,thread_id,force_fresh_thread,codex_thread_id);'
                           'create table users(tg_user_id,allowed); insert into users values(501,1)')
-        con.execute('insert into sessions values(501,501,1,0,?)',(native_id,))
+        chat, topic = (-100500, 73) if configured_entry else (501, 1)
+        con.execute('insert into sessions values(501,?,?,0,?)', (chat, topic, native_id))
+        if configured_entry:
+            con.execute("insert into sessions values(501,501,1,0,'unrelated-native-thread')")
     root = tmp_path/'sleep'
     root.mkdir(mode=0o700)
     profile = dict(source_root=str(journal), native_db=str(native), conversation_db=str(gateway),
                    being_ref='fictional-being', body_ref='fictional-body')
+    if configured_entry:
+        config = tmp_path/'conversation.toml'
+        config.write_text(f'db_path = {json.dumps(str(gateway))}\n[interaction]\n'
+                          f'human_id = 501\nchat_id = {chat}\ntopic_id = {topic}\n')
+        profile['conversation_config'] = str(config)
+        with pytest.raises(ValueError, match='configuration and registry differ'):
+            paired_sleep.enroll(dict(profile, conversation_db=str(native)), root)
     paired_sleep.enroll(profile, root)
     paired_sleep.enroll(profile, root)
 
