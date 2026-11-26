@@ -221,3 +221,14 @@ owner-local reviewer reads that full original and the frozen selected sources
 once and must support the exact unchanged decision. Missing, stale, unsupported
 or changed decisions stay pending. Recovery prepares the retained decision;
 ordinary producer admission and verified read-back are still required.
+
+## Capture one explicitly selected native conversation
+
+A new scoped `hmk.codex-hook-binding/v2` may set `selected_session_id` to the
+exact native session UUID from the receiving Conversation binding. Both its
+session and workspace must match the native source. Other sessions in the same
+workspace are excluded before opening their rollouts. Forward activation
+inventories only the matching rollout and verifies the session header.
+Keep the owner's source selection and retention policy separate from the path
+or UUID readback. Adding the selector changes the immutable inbox binding.
+Do not rewrite an existing inbox or reset its cursor to install it.

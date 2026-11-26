@@ -42,6 +42,8 @@ def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
     """Explicitly inventory current EOFs; do not ingest existing conversations."""
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('scoped binding required')
+    from codex_hook_capture import selected_session
+    selected = selected_session(binding)
     if type(read_budget_bytes) is not int or read_budget_bytes < 1:
         raise ValueError('positive capture read budget required')
     if policy(binding['inbox']):
@@ -51,7 +53,11 @@ def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
     started = time.time_ns()
     root = Path(binding['source_root']).resolve(strict=True)
     baselines = []
-    for path in root.rglob('*.jsonl'):
+    pattern = f'*-{selected}.jsonl' if selected else '*.jsonl'
+    paths = list(root.rglob(pattern)) if selected else root.rglob(pattern)
+    if selected and len(paths) != 1:
+        raise ValueError('one existing rollout for the selected session required')
+    for path in paths:
         if path.is_symlink() or not path.resolve().is_relative_to(root):
             raise ValueError('source inventory contains an unsafe path')
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -59,6 +65,13 @@ def activate(binding, backup, *, read_budget_bytes=4*1024*1024):
             info = os.fstat(fd)
             if not stat.S_ISREG(info.st_mode):
                 raise ValueError('regular source files required')
+            if selected:
+                with os.fdopen(os.dup(fd), 'rb') as source:
+                    header = source.readline(65537)
+                meta = json.loads(header) if len(header) <= 65536 else {}
+                if (meta.get('type') != 'session_meta'
+                        or meta.get('payload', {}).get('id') != selected):
+                    raise ValueError('selected rollout header differs')
             size = info.st_size
             aligned = not size or os.pread(fd, 1, size-1) == b'\n'
             baselines.append((str(path.resolve()), info.st_dev, info.st_ino, size,

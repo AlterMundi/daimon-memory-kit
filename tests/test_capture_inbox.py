@@ -196,3 +196,20 @@ def test_oversized_exclusion_does_not_accept_mismatched_or_unbounded_header(boun
     result=capture(binding,event)
     assert result['error']=='source_header_incomplete' and not result.get('skipped')
     assert not Path(binding['inbox']).exists()
+
+
+def test_exact_session_does_not_read_or_journal_another_session_in_same_cwd(bound):
+    binding, path, event = bound
+    selected = '01234567-89ab-cdef-0123-456789abcdef'
+    binding.update(schema='hmk.codex-hook-binding/v2', selected_session_id=selected,
+                   sessions_started_at_or_after='2026-01-01T00:00:00Z')
+    # The other event deliberately supplies an unusable transcript path.
+    denied = capture(binding, dict(event, transcript_path='/outside/the/source/root'))
+    assert denied == dict(capture_complete=False, skipped=True, reason='unselected_session')
+    assert not Path(binding['inbox']).exists()
+    header = dict(id=selected, cwd='/work', timestamp='2026-11-26T00:00:00Z')
+    path.write_text(json.dumps(dict(type='session_meta', payload=header))+'\n')
+    receipt = capture(binding, dict(event, session_id=selected))
+    inbox = Inbox(binding['inbox'], binding)
+    assert receipt['capture_complete'] and inbox.restore(receipt['revision']) == path.read_bytes()
+    assert len(inbox.observations()) == 1
