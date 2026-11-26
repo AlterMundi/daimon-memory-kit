@@ -223,7 +223,17 @@ retained in the private packet and canonical evidence and omitted from the
 classification request. An unresolved replacement stops intake until the
 source is explicitly reconciled.
 
-Run `paired_sleep.py run --profile "$profile"` from the selected receiving
+On a receiver that already has a daily worker, first reconcile the preceding
+Decisions backlog and retain its receipts. Then set `sleep_triage.paired_profile`
+to the private absolute paired profile in that worker's configuration. The paired
+source uses the same scheduled slot, page limit and Decisions credential.
+Existing operational capture, organization, indexing and backups keep their
+configured budgets. A retained initial or follow-up dispatch in the prior
+Decisions directory blocks this switch until reconciled. Paired failures are
+published through the supervised worker's existing Alerts outbox.
+
+For a receiver without a daily worker, run
+`paired_sleep.py run --profile "$profile"` from the selected receiving
 service once daily at 08:00 America/Argentina/Buenos_Aires. Use the existing
 systemd encrypted credential or its existing privileged delivery pipe into the
 unprivileged worker. The operation captures one bounded range and classifies at

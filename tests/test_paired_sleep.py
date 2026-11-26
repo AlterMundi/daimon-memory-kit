@@ -5,12 +5,14 @@ import sqlite3
 
 import pytest
 
+import memory_runtime
 import paired_sleep
 import sleep_triage
+from capture_inbox import Inbox
 from capturectl import CaptureLedger
 from sleep_memory_review import apply_review, read_candidate
 from tests.test_durable_memory_foundation import mc
-from tests.test_forward_capture import append, line, turn
+from tests.test_forward_capture import append, context, line, turn
 from tests.test_sleep_triage import fake_decisions
 
 
@@ -125,3 +127,45 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
         con.execute('update sessions set force_fresh_thread=1')
     assert paired_sleep.run(profile, root)['state'] == 'blocked'
     assert len(observed) == (2 if configured_entry else 1)
+
+def test_supervised_paired_slot_inherits_budget_and_projects_failure(context, tmp_path, monkeypatch):
+    binding, _, _ = context
+    inbox = Inbox(binding['inbox'], binding)
+    paired = tmp_path/'paired'
+    paired.mkdir(mode=0o700)
+    profile = tmp_path/'paired.json'
+    profile.write_text(json.dumps(dict(state_dir=str(paired), being_ref=binding['subject'],
+                                      body_ref=binding['source_instance'])))
+    profile.chmod(0o600)
+    legacy = tmp_path/'old-triage'
+    legacy.mkdir()
+    value = dict(state_dir=str(tmp_path), context=binding, sleep_triage=dict(
+        state_dir=str(legacy), paired_profile=str(profile), steps=1,
+        credential_env='EXISTING_DECISIONS', max_age_seconds=93600, source_review_report=None))
+    status = tmp_path/'worker-status.json'
+    calls = []
+    result = dict(status=dict(state='idle'))
+
+    def supervisor():
+        status.write_text(json.dumps(result['status']))
+        memory_runtime.run_paired_sleep(value, inbox, result)
+        return json.loads(status.read_text())['sleep_triage']
+
+    def one_slot(profile_value, root, *, worker_settings):
+        calls.append((worker_settings['steps'], worker_settings['credential_env']))
+        if len(calls) == 1:
+            return dict(state='blocked', reason_code='observation_unreadable')
+        return dict(state='caught_up', capture_complete=True, triage=dict(classified_pages=0))
+
+    monkeypatch.setattr(paired_sleep, 'run', one_slot)
+    attempted = legacy/'dispatch.json'
+    attempted.write_bytes(b'retained')
+    assert supervisor()['state'] == 'blocked'
+    assert not calls and attempted.read_bytes() == b'retained'
+    attempted.unlink()
+    assert supervisor()['state'] == 'blocked'
+    assert supervisor()['capture_complete']
+    assert calls == [(1, 'EXISTING_DECISIONS')]*2
+    with inbox.connect() as con:
+        alert, = con.execute("select state from operational_alerts").fetchall()
+        assert alert['state'] == 'resolved'

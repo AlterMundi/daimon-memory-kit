@@ -146,13 +146,16 @@ def enroll(profile, root):
 
 def verified_binding(profile, config):
     binding = config['binding']
+    if (binding['subject'] != profile['being_ref'] or binding['source_instance'] != profile['body_ref']
+            or Path(binding['source_root']).resolve() != Path(profile['source_root']).resolve()):
+        raise ValueError('the authorized paired source owner has changed')
     actual = enrolled_thread(profile)
     if actual != (config['human_id'], binding['selected_session_id'], config['transcript'], config['cwd']):
         raise ValueError('the authorized native entry has changed')
     return binding
 
 
-def run(profile, root):
+def run(profile, root, *, worker_settings=None):
     config = json.loads((root/'binding.json').read_bytes())
     if config['schema'] != SCHEMA:
         raise ValueError('unsupported paired binding')
@@ -184,6 +187,11 @@ def run(profile, root):
     settings = dict(state_dir=str(triage), initial_after=initial, steps=4,
                     human_id=config['human_id'], credential_env='DMK_DECISIONS_API_KEY',
                     max_age_seconds=93600, source_review_report=profile.get('source_review_report'))
+    if worker_settings is not None:
+        settings.update({key: worker_settings[key] for key in
+                         ('steps', 'credential_env', 'max_age_seconds')})
+        if 'provider_blocked' in worker_settings:
+            settings['provider_blocked'] = worker_settings['provider_blocked']
     value = dict(state_dir=str(root), sleep_triage=settings)
     with original_resolver(profile, binding) as resolver:
         run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver)
