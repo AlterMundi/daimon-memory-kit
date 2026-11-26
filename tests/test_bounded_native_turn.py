@@ -141,3 +141,34 @@ def test_terminal_failure_omits_unknown_provider_data():
         "message": "PRIVATE_RESPONSE",
     })
     assert error.evidence == {"code": "terminal_failure"}
+
+
+def test_admission_evidence_identifies_routing_failure_before_reservation():
+    wire = Exchange("ordinary")
+    wire.frames = iter([
+        {"id": 1, "result": {}},
+        {"id": 2, "result": {"thread": {"id": "ephemeral"}, "model": "gpt-6.2-sol",
+                             "modelProvider": "openai"}},
+        {"id": 3, "error": {"code": -32600, "message": "Private request detail"}},
+    ])
+    with pytest.raises(BoundedTurnFailure) as error:
+        run_fixture(wire)
+    assert error.value.evidence == {
+        "code": "admission_refused", "stage": "bounded_turn_start", "rpc_code": -32600,
+    }
+    assert wire.retained == []
+
+
+def test_preflight_ceases_before_acknowledging_any_reservation():
+    from native_generation_preflight import ReservationReached
+
+    wire = Exchange("ordinary")
+
+    def stop(key, value):
+        assert key == "provider_reservation"
+        raise ReservationReached()
+
+    wire.retain = stop
+    with pytest.raises(ReservationReached):
+        run_fixture(wire)
+    assert not any(packet.get("result", {}).get("authorized") for packet in wire.sent)

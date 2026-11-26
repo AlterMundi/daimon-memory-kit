@@ -140,7 +140,13 @@ def run_turn(wire, *, model, cwd, text, schema, output_limit, deadline_ms, retai
         params = packet.get("params", {})
         if method is None:
             if packet_id != step or "error" in packet or not isinstance(packet.get("result"), dict):
-                raise BoundedTurnFailure("admission_refused", "native admission refused or unconfirmed")
+                error = BoundedTurnFailure("admission_refused", "native admission refused or unconfirmed")
+                error.evidence["stage"] = ("initialize", "thread_start", "bounded_turn_start")[step-1]
+                details = packet.get("error")
+                rpc_code = details.get("code") if isinstance(details, dict) else None
+                if packet_id == step and type(rpc_code) is int and -32768 <= rpc_code <= 0:
+                    error.evidence["rpc_code"] = rpc_code
+                raise error
             result = packet["result"]
             if step == 1:
                 wire.send({"method": "initialized"})

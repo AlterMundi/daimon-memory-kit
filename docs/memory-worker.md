@@ -286,3 +286,11 @@ capture and does not journal potentially unauthorized prompt/answer payloads.
 That report is a capture gap, not successful preservation. v1 retains its original
 explicit selected-source behavior. Never silently change an existing inbox's
 immutable binding; activate a newly selected binding separately.
+
+Before selecting a replacement native executable, run
+`native_generation_preflight.py --profile <profile> --binary <candidate>`
+with the actual worker owner and its existing selected account. The synthetic
+isolated request stops before acknowledging a provider reservation. It
+qualifies the native admission protocol only. A real provider outcome still
+needs its own receipt. The failure report includes a closed admission stage
+and bounded RPC code without provider text or source content.
