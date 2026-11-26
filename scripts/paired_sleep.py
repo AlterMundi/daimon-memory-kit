@@ -4,8 +4,8 @@ from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 import fcntl
 from functools import partial
-import json
 import hashlib
+import json
 import os
 from pathlib import Path
 import sqlite3
@@ -14,13 +14,14 @@ import time
 import tomllib
 import uuid
 
-from capture_inbox import Inbox
+from capture_inbox import Inbox, sha, wire
 from codex_coordinator import checkpoint
 from codex_hook_capture import capture
 import forward_capture
 from provider_status import Alerts, ProviderProblem
 
 SCHEMA = 'dmk.paired-sleep/v1'
+FOREGROUND_SCHEMA = 'dmk.paired-foreground-inputs/v1'
 
 
 def readonly(path):
@@ -70,7 +71,8 @@ def enrolled_thread(profile):
 
 
 def gateway_original(con, coordinates, native, block, *, not_before=None,
-                     voice_transcripts=False, foreground_voice_transcripts=False):
+                     voice_transcripts=False, foreground_voice_transcripts=False,
+                     foreground_direct_inputs=False):
     """Accept a native reference only when its text and receiving journal agree."""
     header, separator, text = block.partition('\n\n')
     if header.startswith('[Device-reported playback context]\n'):
@@ -110,6 +112,8 @@ def gateway_original(con, coordinates, native, block, *, not_before=None,
     live = foreground and text.startswith('[Live input transcript window]\n')
     voice = text.startswith('[Committed voice input]\n')
     if voice:
+        if foreground and foreground_direct_inputs and direct_voice_input(value, ref):
+            return None  # The Gateway feed owns this original before and after native delegation.
         if not voice_transcripts or not committed_voice_matches(text, ref, value):
             return None
     elif live:
@@ -134,6 +138,17 @@ def gateway_original(con, coordinates, native, block, *, not_before=None,
     if live:
         accepted['channel'] = 'live_input_transcription'
     return accepted
+
+
+def direct_voice_input(doc, ref):
+    voice = doc.get('voice')
+    proof = voice.get('transcription') if isinstance(voice, dict) else None
+    if not isinstance(proof, dict):
+        return False
+    audio = proof.get('audio_sha256')
+    return (isinstance(audio, str) and len(audio) == 64 and audio == voice.get('audio_sha256')
+            and proof.get('capture_id') == ref and bool(doc.get('foreground_dialogue'))
+            and not doc.get('tribu_source'))
 
 
 VOICE_WARNINGS = {
@@ -233,7 +248,8 @@ def original_resolver(profile, binding, human_id):
         native = binding['selected_session_id']
         original = partial(gateway_original, con, coordinates, native, not_before=boundary,
                            voice_transcripts=profile.get('voice_transcripts') is True,
-                           foreground_voice_transcripts=profile.get('foreground_voice_transcripts') is True)
+                           foreground_voice_transcripts=profile.get('foreground_voice_transcripts') is True,
+                           foreground_direct_inputs=profile.get('foreground_direct_inputs') is True)
 
         def resolve(text, *, turn=None):
             found = original(text)
@@ -242,6 +258,66 @@ def original_resolver(profile, binding, human_id):
             return found
 
         yield resolve
+
+
+def capture_foreground(profile, binding, human_id, inbox, *, after):
+    """Seal one page of owner-bound Gateway originals inside the existing inbox."""
+    registry, coordinates = conversation_registry(profile)
+    if coordinates is None:
+        coordinates = (human_id, human_id, 1)
+    if coordinates[0] != human_id:
+        raise ValueError('Gateway actor differs from paired enrollment')
+    cutoff = datetime.fromisoformat(binding['sessions_started_at_or_after'])
+    with readonly(registry) as conn:
+        conn.execute('ATTACH DATABASE ? AS review', (inbox.path.resolve().as_uri() + '?mode=ro',))
+        if conn.execute('''
+            SELECT 1 FROM review.observations
+            WHERE id > ? AND json_extract(payload,'$.schema')=? LIMIT 1
+        ''', (after, FOREGROUND_SCHEMA)).fetchone():
+            return True
+        rows = conn.execute('''
+            WITH captured AS MATERIALIZED (
+                SELECT value AS ref FROM review.observations a, json_each(a.payload,'$.originals')
+                WHERE json_extract(a.payload,'$.schema')=?
+            )
+            SELECT c.id,c.created_at,c.doc,c.session_id
+            FROM conversation_inputs c JOIN sessions s ON s.id=c.session_id
+            JOIN original_ingress_order g ON g.channel='conversation' AND g.event_id=c.id
+            LEFT JOIN turns t ON t.id=c.local_turn AND t.session_id=c.session_id
+                            AND t.from_user_id=c.human_id AND t.native_thread_id=c.native_thread
+            WHERE c.human_id=? AND s.chat_id=? AND s.thread_id=? AND c.native_thread=?
+              AND c.retired=0 AND c.created_at>=?
+              AND ((c.phase='foreground' AND c.local_turn IS NULL) OR
+                   (c.phase='accepted' AND t.status IN ('completed','failed','cancelled')))
+              AND json_type(c.doc,'$.foreground_dialogue')='text'
+              AND json_extract(c.doc,'$.tribu_source') IS NULL
+              AND json_extract(c.doc,'$.voice.transcription.capture_id')=c.id
+              AND json_extract(c.doc,'$.voice.transcription.audio_sha256')=json_extract(c.doc,'$.voice.audio_sha256')
+              AND length(json_extract(c.doc,'$.text'))>0
+              AND c.id NOT IN (SELECT ref FROM captured)
+            ORDER BY g.id LIMIT 9
+        ''', (FOREGROUND_SCHEMA, *coordinates, binding['selected_session_id'],
+              cutoff.replace(microsecond=0).isoformat())).fetchall()
+    items = []
+    for ref, when, encoded, session in rows:
+        received = datetime.fromisoformat(when)
+        if received < cutoff:
+            continue
+        doc = json.loads(encoded)
+        if (str(uuid.UUID(ref)) != ref or not direct_voice_input(doc, ref)
+                or (doc['id'], doc['session'], doc['human'], doc['native'])
+                   != (ref, session, human_id, binding['selected_session_id'])
+                or not isinstance(doc['text'], str) or len(doc['text'].encode()) > 65536):
+            raise ValueError('retained Avatar original differs from its Gateway capture binding')
+        items.append(dict(ref=ref, received_at=when, text=doc['text']))
+    if not items:
+        return False
+    batch = items[:8]
+    raw = wire(batch).encode()
+    payload = dict(schema=FOREGROUND_SCHEMA, originals=[item['ref'] for item in batch],
+                   capture_range=dict(header_bytes=0))
+    inbox.observe('gateway-foreground:' + sha(raw), payload, raw)
+    return len(items) > len(batch)
 
 
 def enroll(profile, root):
@@ -286,6 +362,10 @@ def run(profile, root, *, worker_settings=None):
     inbox = Inbox(binding['inbox'], binding)
     alerts = Alerts(inbox)
     operation = 'paired-sleep-input'
+    triage = root/'triage'
+    cursor = triage/'cursor.json'
+    initial = None if cursor.exists() else 0
+    foreground_direct_inputs = profile.get('foreground_direct_inputs') is True
     try:
         verified_binding(profile, config)
         payload = dict(hook_event_name='Stop', session_id=binding['selected_session_id'],
@@ -293,14 +373,25 @@ def run(profile, root, *, worker_settings=None):
         source = capture(binding, payload)
         if source['error'] not in (None, 'capture_deferred'):
             raise ValueError('captured source is unavailable')
+        foreground_remaining = False
+        if foreground_direct_inputs:
+            if profile.get('foreground_voice_transcripts') is not True:
+                raise ValueError('Avatar source requires the selected foreground voice policy')
+            current = json.loads(cursor.read_text()) if cursor.exists() else dict(after=0,page=0)
+            if (not current.get('foreground_direct_inputs')
+                    and (current['after'] or current['page'] or current.get('consumed_dispatches')
+                         or any((triage / name).exists()
+                                for name in ('dispatch.json','context-dispatch.json','rejections'))
+                         or any((triage / 'packets').glob('*.json')))):
+                raise ValueError('Avatar source selection requires an unadvanced triage cursor')
+            foreground_remaining = capture_foreground(profile, binding, config['human_id'], inbox,
+                                                       after=current['after'])
     except (ValueError, KeyError, OSError, sqlite3.Error):
         error = ProviderProblem('dmk', operation, dict(code='observation_unreadable'))
         alert = alerts.report(operation, 'selection', error, reopen=True)
         return dict(state='blocked', reason_code='observation_unreadable', alert_id=alert)
     if source['capture_complete']:
         alerts.resolve(operation)
-    triage = root/'triage'
-    initial = None if (triage/'cursor.json').exists() else 0
     status = dict(schema='hmk.worker-status/v1', state='complete', observed=True,
                   owner='paired-sleep', updated_ns=time.time_ns(), phases={})
     # Reuse the owning DMK outbox and exact received-result reconciliation.
@@ -320,10 +411,12 @@ def run(profile, root, *, worker_settings=None):
         run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver,
                          telegram_text=profile.get('telegram_text') is True,
                          voice_transcripts=profile.get('voice_transcripts') is True,
-                         foreground_voice_transcripts=profile.get('foreground_voice_transcripts') is True)
+                         foreground_voice_transcripts=profile.get('foreground_voice_transcripts') is True,
+                         foreground_direct_inputs=foreground_direct_inputs)
     out = saved['status']['sleep_triage']
-    return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),
-                capture_complete=source['capture_complete'])
+    capture_complete = source['capture_complete'] and not foreground_remaining
+    return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not capture_complete else out['state']),
+                capture_complete=capture_complete)
 
 
 def owner_backup_profile(profile, binding):

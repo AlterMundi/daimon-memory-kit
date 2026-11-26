@@ -18,6 +18,56 @@ from tests.test_forward_capture import append, context, line, turn
 from tests.test_sleep_triage import fake_decisions
 
 
+def test_foreground_capture_batches_late_finalization_without_replaying_delegation(tmp_path):
+    registry = tmp_path/'gateway.sqlite'
+    audio = 'd' * 64
+    originals = [f'c095b1da-26d2-4d2c-8eff-{item:012d}' for item in range(10)]
+    spoken = 'I moved the fig tree into the garden.'
+    with sqlite3.connect(registry) as conn:
+        conn.executescript('''
+        CREATE TABLE sessions (id, chat_id, thread_id);
+        INSERT INTO sessions VALUES (1,501,1),(2,501,71);
+        CREATE TABLE turns (id, session_id, from_user_id, native_thread_id, status);
+        INSERT INTO turns VALUES (1,1,501,'native','completed');
+        CREATE TABLE original_ingress_order (id INTEGER PRIMARY KEY, channel, event_id);
+        CREATE TABLE conversation_inputs (id, human_id, session_id, native_thread, phase,
+                                          local_turn, retired, doc, created_at);
+        ''')
+        for index, ref in enumerate(originals):
+            doc = dict(id=ref, session=1, human=501, native='native', foreground_dialogue='dialogue',
+                       text=spoken, voice=dict(audio_sha256=audio,
+                                               transcription=dict(capture_id=ref, audio_sha256=audio)))
+            when = f'2026-11-{26 if index else 25}T12:00:00.100000000+00:00'
+            conn.execute('INSERT INTO original_ingress_order VALUES (?,\'conversation\',?)', (index + 1, ref))
+            conn.execute("INSERT INTO conversation_inputs VALUES (?,501,1,'native',?,NULL,0,?,?)",
+                         (ref, 'foreground_captured' if index == 1 else 'foreground', json.dumps(doc), when))
+    binding = dict(selected_session_id='native', sessions_started_at_or_after='2026-11-26T00:00:00+00:00',
+                   max_source_bytes=32*1024**2)
+    inbox = Inbox(tmp_path/'capture.sqlite', binding)
+    with inbox.connect() as conn:
+        conn.execute('CREATE TABLE forward_ranges (revision, source, segment, file_start, file_end, delta_sha256)')
+    profile = dict(conversation_db=str(registry))
+    assert not paired_sleep.capture_foreground(profile,binding,501,inbox,after=0)
+    first, = inbox.observations()
+    assert json.loads(first['payload'])['originals'] == originals[2:]
+    with sqlite3.connect(registry) as conn:
+        conn.execute("UPDATE conversation_inputs SET phase='accepted',local_turn=1 WHERE id=?", (originals[2],))
+        conn.execute("UPDATE conversation_inputs SET phase='foreground' WHERE id=?", (originals[1],))
+    assert paired_sleep.capture_foreground(profile,binding,501,inbox,after=0)
+    assert inbox.observations() == [first]
+    assert not paired_sleep.capture_foreground(profile,binding,501,inbox,after=first['id'])
+    _, late = inbox.observations()
+    assert json.loads(late['payload'])['originals'] == originals[1:2]
+    with inbox.connect() as conn:
+        row = sleep_triage.next_observation(conn,late['id'] - 1,late['id'])
+        page, = sleep_triage.source_pages(conn,row,binding)
+        item, = page
+        assert (item['channel'],item['original_input_ref'],item['text']) == (
+            'human_voice_transcription',originals[1],spoken)
+    assert not paired_sleep.capture_foreground(profile,binding,501,inbox,after=late['id'])
+    assert len(inbox.observations()) == 2
+
+
 def test_live_delegation_contributes_only_the_exact_provider_input(tmp_path):
     ref = 'c095b1da-26d2-4d2c-8eff-7c1ddaf5fa70'
     heard = 'I planted a fig tree beside the old workshop.'

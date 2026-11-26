@@ -240,9 +240,15 @@ into the private decision and canonical evidence. Select
 Avatar to the same paired Conversation. Review the exact retained input text
 and distinguish grouped Live provider fragments from committed clip
 transcripts. The assistant's formulation and other members' dialogue remain
-outside this memory input. Ordinary Avatar dialogue without a settled paired
-turn requires separate source attribution. DMK sends no audio and performs no
-second transcription.
+outside this memory input. Select `foreground_direct_inputs: true` on an
+unadvanced paired cursor to also capture the Gateway's committed single-clip
+transcripts from ordinary Avatar dialogue. The receiving original and its
+capture proof must match the paired entrant, session, and native entry. At
+most one batch of eight originals is staged ahead of the same review cursor.
+The Gateway feed continues to own these same originals after any later native
+delegation. Audio-only captures and provider fragments lacking a committed
+single-clip or grouped proof remain outside this route. DMK sends no audio
+and performs no second transcription.
 
 On a receiver that already has a daily worker, first reconcile the preceding
 Decisions backlog and retain its receipts. Then set `sleep_triage.paired_profile`

@@ -273,7 +273,8 @@ def run_paired_sleep(value, inbox, result):
 
 
 def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None,
-                     telegram_text=False, voice_transcripts=False, foreground_voice_transcripts=False):
+                     telegram_text=False, voice_transcripts=False, foreground_voice_transcripts=False,
+                     foreground_direct_inputs=False):
     from codex_coordinator import checkpoint
     from provider_status import ACTIONS, Alerts, ProviderProblem
     import sleep_health
@@ -301,7 +302,8 @@ def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None,
                                            api_key=os.environ.get(settings["credential_env"]),
                                            human_id=settings.get("human_id"), gateway_original=gateway_original,
                                            telegram_text=telegram_text, voice_transcripts=voice_transcripts,
-                                           foreground_voice_transcripts=foreground_voice_transcripts)
+                                           foreground_voice_transcripts=foreground_voice_transcripts,
+                                           foreground_direct_inputs=foreground_direct_inputs)
             except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
                 attempt = None
                 for name in ("context-dispatch.json", "dispatch.json"):
