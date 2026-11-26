@@ -10,7 +10,7 @@ import paired_sleep
 import sleep_triage
 from capture_inbox import Inbox
 from capturectl import CaptureLedger
-from sleep_memory_review import apply_review, read_candidate
+from sleep_memory_review import apply_review, read_candidate, standalone_library
 from tests.test_backupctl import config as backup_config
 from tests.test_durable_memory_foundation import mc
 from tests.test_forward_capture import append, context, line, turn
@@ -206,6 +206,13 @@ def test_paired_cycle_reuses_owner_baseline_without_copy(backup_config, context,
     info = paired_sleep.maintain_backup(dict(backup_profile=str(backup)), root)
     assert info['state'] == 'current' and not info['created']
     assert 'snapshot' not in info and 'sha256' not in info
+    monkeypatch.delenv('HMK_DB_PATH', raising=False)
+    monkeypatch.delenv('HMK_AGENT_MEMORY_BASE', raising=False)
+    assert standalone_library(dict(backup_profile=str(backup)), binding) == dict(
+        database=str(pool.database), memory_base=str(pool.database.parent))
+    monkeypatch.setenv('HMK_DB_PATH', str(tmp_path/'another-library.db'))
+    with pytest.raises(ValueError, match='database binding differs'):
+        standalone_library(dict(backup_profile=str(backup)), binding)
     policy['routine_backup']['subject'] = 'foreign'
     backup.write_text(json.dumps(backup_config))
     with pytest.raises(ValueError, match='owner differ'):
