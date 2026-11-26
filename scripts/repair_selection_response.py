@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Explicit, once-only native review of a completed malformed selection response.
+"""Explicit reconciliation of one retained selection response.
 
 No transport retry, provider substitution in normal selection, or canonical write.
 The installed review adapter receives only the original selected request and the
@@ -39,7 +39,68 @@ def remove_early_close(content):
     return corrected
 
 
-def repair(value, request_path, reason, *, models=None, framing_only=False):
+def stage_local_decision(value, job, job_path, step, work, request_path, request,
+                         receipt, decision, reason):
+    """Preserve the original reservation and stage an independent local decision."""
+    from capturectl import title_conflicts
+    from memory_runtime import load_memory
+    from portable_capture import selected_decision
+    from selection_navigation import effective_sources
+    from source_pages import validate_citations
+
+    key = request_path.stem
+    if (request.get('format') not in {'hmk-selected-bounded-memory-operation/v1',
+                                     'hmk-fictional-bounded-memory-operation/v1'}
+            or receipt.get('request_sha256') != key or receipt.get('state') != 'failed'
+            or receipt.get('native_failure', {}).get('code') != 'terminal_failure'
+            or not receipt.get('provider_reservation')
+            or any(receipt.get(field) for field in ('content', 'native_response_content',
+                'tool_calls_observed', 'usage', 'provider_usage'))
+            or any((work / folder / request_path.name).exists()
+                   for folder in ('responses', 'retries'))):
+        raise ValueError('exact terminal dispatch with unconfirmed result required')
+
+    sources = effective_sources(job)
+    assessed = selected_decision(decision, sources, job['navigation']['canon'])
+    if assessed['outcome'] not in {'applied', 'omitted'}:
+        raise ValueError('an explicit local decision must apply or omit')
+    if job['inputs'].get('source_window', {}).get('paging'):
+        validate_citations(decision, sources)
+    memory = load_memory(value)
+    identity = dict(kind='owner_local_review', request_sha256=key,
+                    receipt_sha256=digest(receipt), decision_sha256=digest(decision),
+                    original_dispatch_outcome='unconfirmed')
+    with memory.connect() as connection:
+        if connection.execute("SELECT 1 FROM sqlite_master WHERE name='capture_events'").fetchone():
+            if connection.execute('SELECT 1 FROM capture_events WHERE stream_id=? AND sequence=?',
+                    ('portable:'+digest(job['owner']), job['sequence'])).fetchone():
+                raise ValueError('already staged source event must use its original writer')
+        if title_conflicts(connection, assessed):
+            raise ValueError('local reconciliation cannot admit a duplicate title')
+
+    result = dict(selection=decision, dispatch=dict(model_calls=0, recovery=identity))
+    if 'proposal' in step and (step.get('semantic_repair') != identity or step['proposal'] != result):
+        raise ValueError('navigation step already has a different decision')
+    directory = work / 'owner-local-review'
+    approval = directory / 'authorization.json'
+    authorization = dict(identity, reason=reason)
+    if approval.exists():
+        if json.loads(approval.read_text()) != authorization:
+            raise ValueError('retained local decision differs')
+    else:
+        directory.mkdir(mode=0o700, exist_ok=True)
+        checkpoint(directory/'job-before.json', job)
+        checkpoint(approval, authorization)
+    if 'proposal' in step:
+        return dict(state='replayed', model_invoked=False, cursor_advanced=False)
+    step.update(proposal=result, semantic_repair=identity)
+    checkpoint(directory/'result.json', result)
+    checkpoint(job_path, job)
+    return dict(state='local_decision_staged', model_invoked=False, cursor_advanced=False,
+                original_dispatch_outcome='unconfirmed')
+
+
+def repair(value, request_path, reason, *, models=None, framing_only=False, local_decision=None):
     if not isinstance(reason, str) or not reason.strip():
         raise ValueError('explicit semantic reconciliation reason required')
     state = Path(value['state_dir']).resolve()
@@ -80,6 +141,11 @@ def repair(value, request_path, reason, *, models=None, framing_only=False):
         if request_path.stem != key or any(request.get(k) != step['request'][k] for k in ('messages','response_schema')):
             raise ValueError('request differs from frozen navigation evidence')
         receipt = json.loads((work/'dispatches'/request_path.name).read_text())
+        if local_decision is not None:
+            if framing_only or 'results' in step or owner.get('context') != value['context']:
+                raise ValueError('matching current owner context and unresolved step required')
+            return stage_local_decision(value, job, job_path, step, work, request_path,
+                                        request, receipt, local_decision, reason)
         if (receipt.get('request_sha256') != key or receipt.get('state') != 'completed'
                 or receipt.get('finish_reason') != 'stop' or receipt.get('tool_calls_observed')
                 or not isinstance(receipt.get('content'),str)):
@@ -151,9 +217,21 @@ def main():
     parser.add_argument('--profile',type=Path,required=True)
     parser.add_argument('--request',type=Path,required=True)
     parser.add_argument('--reason',required=True)
-    parser.add_argument('--framing-only',action='store_true')
-    args=parser.parse_args()
-    print(json.dumps(repair(profile(args.profile),args.request,args.reason,framing_only=args.framing_only)))
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--framing-only', action='store_true')
+    mode.add_argument('--local-decision', type=Path, help='Explicit decision already reviewed by the receiving owner')
+    args = parser.parse_args()
+    decision = None
+    if args.local_decision:
+        with args.local_decision.open('rb') as stream:
+            raw = stream.read(700_001)
+        if len(raw) > 700_000:
+            parser.error('local decision exceeds the input limit')
+        decision = json.loads(raw)
+        if not isinstance(decision, dict):
+            parser.error('local decision must be an object')
+    print(json.dumps(repair(profile(args.profile), args.request, args.reason,
+                            framing_only=args.framing_only, local_decision=decision)))
 
 
 if __name__=='__main__':

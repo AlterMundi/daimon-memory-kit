@@ -66,6 +66,20 @@ invocation reuses the retained repair. Valid JSON, uncertain/unfinished dispatch
 observed tool execution and foreign requests are refused. Failure stays pending;
 no unbounded prompt/provider retries or silent provider substitution is authorized.
 
+## Owner-local decision after an unconfirmed dispatch
+
+A terminal bounded native call can have a provider reservation without a usable
+response or observed usage. If the receiving owner has independently reviewed
+the exact source, supply the resulting selection JSON to the existing repair
+command with `--local-decision <private-json>` and the retained request path.
+This stages that explicit decision for the ordinary producer. It never retries
+the dispatch or claims that the original provider call was billed or completed.
+
+The operation validates the original source binding, complete evidence,
+decision, and uncommitted navigation step. It retains the original request,
+reservation and reported failure alongside the separate local decision.
+Normal producer admission and index verification are still required.
+
 ## Interrupted pre-write snapshots
 
 A subsequent live batch completed model selection but timed out during its SQLite

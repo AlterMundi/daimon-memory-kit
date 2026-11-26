@@ -78,3 +78,43 @@ def test_completed_framing_repair_removes_only_the_premature_close():
         remove_early_close('{"outcome":"applied","reason":"a"}, "records": [],"links":[],"reason":"changed"}')
     with pytest.raises(ValueError):
         remove_early_close('{"outcome":"applied","reason":"a"}, "records": []')
+
+def test_local_decision_resolves_source_work_without_resending_the_reserved_attempt(setup, tmp_path):
+    memory, inbox, state, _, binding, _, _ = setup
+    value = configuration(tmp_path, memory, inbox, state, binding)
+    paths = []
+
+    def uncertain(request, directory):
+        stored = dict(request, format='hmk-fictional-bounded-memory-operation/v1')
+        key = digest(stored)
+        request_path = directory/'requests'/f'{key}.json'
+        receipt_path = directory/'dispatches'/request_path.name
+        checkpoint(request_path, stored)
+        checkpoint(receipt_path, dict(request_sha256=key, state='failed',
+            native_failure=dict(code='terminal_failure'), provider_reservation=dict(ordinal=1)))
+        paths.extend([request_path, receipt_path])
+        raise ProviderProblem('openai-codex-native', key, {'code': 'dispatch_unresolved'})
+
+    assert process_once(memory, inbox, state, uncertain, binding, retrieval='lexical')['state'] == 'pending'
+    path, receipt = paths
+    before = receipt.read_bytes()
+
+    def forbidden(*_args):
+        pytest.fail('An owner-local decision has no model effect')
+
+    local = dict(outcome='omitted', reason='The fixture source has no durable change.', records=[], links=[])
+    with pytest.raises(ValueError):
+        repair(value, path, 'Still deferred.', local_decision=dict(local, outcome='deferred'), models=forbidden)
+    staged = repair(value, path, 'Review recorded separately.', local_decision=local, models=forbidden)
+    assert staged == dict(state='local_decision_staged', model_invoked=False, cursor_advanced=False,
+                          original_dispatch_outcome='unconfirmed')
+    assert repair(value, path, 'Review recorded separately.', local_decision=local, models=forbidden)['state'] == 'replayed'
+    with pytest.raises(ValueError, match='different decision'):
+        repair(value, path, 'Review recorded separately.',
+               local_decision=dict(local, reason='A different decision.'), models=forbidden)
+
+    completed = process_once(memory, inbox, state, forbidden, binding, retrieval='lexical')
+    assert completed['state'] == 'complete' and completed['receipt']['state'] == 'omitted'
+    assert receipt.read_bytes() == before
+    assert json.loads((path.parent.parent/'owner-local-review/result.json').read_text())[
+        'dispatch']['recovery']['original_dispatch_outcome'] == 'unconfirmed'
