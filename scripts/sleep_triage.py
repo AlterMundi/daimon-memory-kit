@@ -14,6 +14,7 @@ import time
 import urllib.request
 
 from capture_inbox import sha, wire
+from paired_sleep import FOREGROUND_SCHEMA
 from codex_coordinator import checkpoint
 from codex_hook_capture import MAX_SOURCE_BYTES
 from portable_capture import block_sources, codex_sources
@@ -76,28 +77,33 @@ def dialogue(delta, source, body, role):
 
 
 def pages_for(delta, source, body, *, human_id=None, gateway_original=None):
-    page = []
+    items = []
     for block in dialogue(delta, source, body, 'user'):
         content = human_text(block['content'], human_id=human_id)
         original = None if content or gateway_original is None else gateway_original(block['content'], turn=block.get('native_turn'))
         if original is not None:
             content = original['text']
+        item = dict(source_id=block['id'], channel=block['channel'],
+                    received_at=block['received_at'], text=content)
+        if original is not None:
+            item.update(original_input_ref=original['original_input_ref'], received_at=original['received_at'])
+            item.update({key: original[key] for key in ('channel','original_channel') if key in original})
+        items.append(item)
+    yield from split_pages(items)
+
+
+def split_pages(items):
+    page = []
+    for item in items:
+        content = item['text']
         for start in range(0, len(content), PIECE_CHARS):
-            item = dict(source_id=block['id'], start_char=start,
-                        channel=block['channel'], received_at=block['received_at'],
-                        text=content[start:start + PIECE_CHARS])
-            if original is not None:
-                item.update(original_input_ref=original['original_input_ref'], received_at=original['received_at'])
-                if 'channel' in original:
-                    item['channel'] = original['channel']
-                if 'original_channel' in original:
-                    item['original_channel'] = original['original_channel']
-            if page and (len(page) == 8 or len(wire([*page, item]).encode()) > PAGE_BYTES):
+            piece = dict(item, start_char=start, text=content[start:start + PIECE_CHARS])
+            if page and (len(page) == 8 or len(wire([*page, piece]).encode()) > PAGE_BYTES):
                 yield page
                 page = []
-            if len(wire([item]).encode()) > PAGE_BYTES:
+            if len(wire([piece]).encode()) > PAGE_BYTES:
                 raise ValueError('one dialogue piece exceeds the configured limit')
-            page.append(item)
+            page.append(piece)
     if page:
         yield page
 
@@ -235,13 +241,19 @@ def dispatch(request, path, api_key, *, opener=urllib.request.urlopen):
 
 def next_observation(con, after, through):
     return con.execute('''
-        SELECT o.id, o.event_key, o.revision, o.payload, f.source AS conversation,
-               f.segment, f.file_start, f.file_end, f.delta_sha256,
+        SELECT o.id, o.event_key, o.revision, o.payload, coalesce(f.source,o.source) AS conversation,
+               f.segment, coalesce(f.file_start,0) AS file_start,
+               coalesce(f.file_end,r.size) AS file_end,
+               coalesce(f.delta_sha256,r.sha256) AS delta_sha256,
+               f.source IS NULL AS foreground,
                r.offset, length(r.delta) AS delta_size
-        FROM observations o JOIN forward_ranges f ON f.revision=o.revision
+        FROM observations o LEFT JOIN forward_ranges f ON f.revision=o.revision
         JOIN revisions r ON r.id=o.revision
-        WHERE o.id>? AND o.id<=? ORDER BY o.id LIMIT 1
-    ''', (after, through)).fetchone()
+        WHERE o.id>? AND o.id<=?
+          AND (f.revision IS NOT NULL OR (o.source GLOB 'gateway-foreground:*'
+               AND json_extract(o.payload,'$.schema')=?))
+        ORDER BY o.id LIMIT 1
+    ''', (after, through, FOREGROUND_SCHEMA)).fetchone()
 
 
 def delta_bytes(con, row, binding):
@@ -261,6 +273,17 @@ def delta_bytes(con, row, binding):
 
 def source_pages(con, row, binding, *, human_id=None, gateway_original=None):
     delta, section = delta_bytes(con, row, binding)
+    if row['foreground']:
+        batch = json.loads(delta)
+        refs = [item['ref'] for item in batch]
+        if (not 0 < len(batch) <= 8 or len(set(refs)) != len(refs)
+                or refs != json.loads(row['payload'])['originals']
+                or row['conversation'] != 'gateway-foreground:' + sha(delta)):
+            raise ValueError('retained Avatar source differs from its exact capture')
+        return list(split_pages([dict(source_id='gateway-foreground:' + item['ref'],
+                                      original_input_ref=item['ref'], text=item['text'],
+                                      received_at=item['received_at'], channel='human_voice_transcription')
+                                 for item in batch]))
     return list(pages_for(delta, section, binding['source_instance'], human_id=human_id,
                           gateway_original=gateway_original))
 
@@ -272,6 +295,8 @@ def context_targets(receipt, page):
 
 def assistant_context(con, row, binding, page):
     """Read only bounded assistant excerpts in this authorized conversation."""
+    if row['foreground']:
+        return []
     prior = con.execute('''
         SELECT o.payload, o.revision, f.segment, f.file_start, f.file_end,
                f.delta_sha256, r.offset, length(r.delta) AS delta_size
@@ -351,7 +376,7 @@ def valid_omission(omit):
 
 def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=None, human_id=None,
         gateway_original=None, telegram_text=False, voice_transcripts=False,
-        foreground_voice_transcripts=False,
+        foreground_voice_transcripts=False, foreground_direct_inputs=False,
         opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
@@ -362,7 +387,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
     if omit is not None and (retry is not None or steps != 1 or not valid_omission(omit)):
         raise ValueError('inspect one exact Decisions request and supply an omission reason')
     channels = dict(telegram_text=telegram_text, voice_transcripts=voice_transcripts,
-                    foreground_voice_transcripts=foreground_voice_transcripts)
+                    foreground_voice_transcripts=foreground_voice_transcripts,
+                    foreground_direct_inputs=foreground_direct_inputs)
     if any(channels.values()) and gateway_original is None:
         raise ValueError('paired input channels require an enrolled original resolver')
     if human_id is not None and (type(human_id) is not int or human_id <= 0):
@@ -426,6 +452,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
             row = next_observation(con, current['after'], through)
             if row is None:
                 break
+            if row['foreground'] and not foreground_direct_inputs:
+                raise ValueError('retained Avatar source requires its paired intake policy')
             packet_id = sha(wire([POLICY, row['event_key'], current['page']]).encode())
             packet = root / 'packets' / (packet_id + '.json')
             existed = packet.exists()
