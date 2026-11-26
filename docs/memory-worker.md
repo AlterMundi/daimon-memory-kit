@@ -235,11 +235,13 @@ This delivery installs no service, timer, hook or source capture binding.
 
 ## Source ownership and configured retrieval
 
-Capture and nightly triage prioritize memorable interactions and lived
-experience. A lasting decision or lesson can qualify when it adds value beyond
-the owning project or incident record. Status, metrics and retry receipts stay
-in the source history and operational records. Retained nightly requests keep
-the matching prior prompt during recovery.
+Capture and nightly triage prioritize lived experiences, people, relationships,
+places and events that help tell the paired biographies. A concise project
+reference establishes that an effort exists or existed, and major milestones
+record what the team achieved and why it mattered. Lasting decisions and
+transferable lessons can qualify. Status, metrics and retry receipts stay in
+operational records. Retained nightly requests keep the exact prior prompt
+during recovery.
 
 Source-block capture may update original reported records, retaining earlier
 meaning and history. It cannot overwrite an inferred/generated account and erase
