@@ -32,6 +32,7 @@ COMPATIBLE_INDEX_ALERT_PREDECESSOR = '531dcdaa9ad0a216af8fd57910fc3eef3631012bd9
 # Rereading a page from a verified revision now preserves its complete evidence.
 COMPATIBLE_NAVIGATION_PREDECESSOR = '6daaf7c94e51e6a112ed0ea452b36a604e342602406d982a996abf3794969632'
 COMPATIBLE_COMPLETE_READ_PREDECESSOR = 'ea7ce31de16e14d01da1053c0165bcbaf4b261687a2576886ec1ed72ca5d9e19'
+COMPATIBLE_PAGE_BUDGET_PREDECESSOR = 'b3b37f136837afd72ca7ded81a85c68a4db3d013ecd6014f250e80e27e3d9542'
 
 
 class CanonicalContextChanged(ValueError):
@@ -49,7 +50,8 @@ def _code_hash():
 def compatible_code_hash(fingerprint, *, current=None):
     return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR,
                            COMPATIBLE_ELASTIC_PREDECESSOR, COMPATIBLE_INDEX_ALERT_PREDECESSOR,
-                           COMPATIBLE_NAVIGATION_PREDECESSOR, COMPATIBLE_COMPLETE_READ_PREDECESSOR}
+                           COMPATIBLE_NAVIGATION_PREDECESSOR, COMPATIBLE_COMPLETE_READ_PREDECESSOR,
+                           COMPATIBLE_PAGE_BUDGET_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
