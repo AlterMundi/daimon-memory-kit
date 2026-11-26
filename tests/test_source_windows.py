@@ -448,3 +448,29 @@ def test_paged_navigation_reports_unread_context_without_repeating_the_lookup(se
     result, used = selection_navigation.advance(job, state/'pending.json', state/'dispatch', choose,
         database=memory.DB_PATH, backend=memory, source_reader=EarlierPage(), steps=1)
     assert result['selection']['outcome'] == 'deferred' and used == 1 and len(calls) == 2
+
+    job.update(proposal=result, state='proposed')
+    retained = list(job['navigation']['steps'])
+    required = selection_navigation.deferred_source_limit(job)
+    selection_navigation.resume_deferred_source(job, state/'pending.json', required-1)
+    assert job['proposal'] == result
+    selection_navigation.resume_deferred_source(job, state/'pending.json', required)
+    assert job['state'] == 'prepared' and 'proposal' not in job
+    assert job['navigation']['source_limit_recoveries'][0]['responses'] == retained
+    assert job['navigation']['steps'][0]['proposal'] == retained[0]['proposal']
+    assert 'results' not in job['navigation']['steps'][0]
+
+    page = EarlierPage()
+    page.budget_bytes = required
+    page.order = lambda sources: [item['id'] for item in sources]
+    monkeypatch.setattr(selection_navigation, '_lookup', lambda *_args: {'status': 'ok'})
+
+    def finish(request, _directory):
+        evidence = json.loads(request['messages'][1]['content'])
+        assert {item['id'] for item in evidence['sources']} == {'anchor', 'earlier'}
+        assert 'unread_source_requests' not in evidence
+        return dict(selection=dict(outcome='omitted', reason='Review complete.', records=[], links=[]))
+
+    after, used = selection_navigation.advance(job, state/'pending.json', state/'dispatch', finish,
+        database=memory.DB_PATH, backend=memory, source_reader=page, steps=1)
+    assert after['selection']['outcome'] == 'omitted' and used == 1
