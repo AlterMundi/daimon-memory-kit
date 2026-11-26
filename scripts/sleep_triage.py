@@ -59,14 +59,19 @@ def dialogue(delta, source, body, role):
     return block_sources(dict(sources=selected), body)
 
 
-def pages_for(delta, source, body, *, human_id=None):
+def pages_for(delta, source, body, *, human_id=None, gateway_original=None):
     page = []
     for block in dialogue(delta, source, body, 'user'):
         content = human_text(block['content'], human_id=human_id)
+        original = None if content or gateway_original is None else gateway_original(block['content'])
+        if original is not None:
+            content = original['text']
         for start in range(0, len(content), PIECE_CHARS):
             item = dict(source_id=block['id'], start_char=start,
                         channel=block['channel'], received_at=block['received_at'],
                         text=content[start:start + PIECE_CHARS])
+            if original is not None:
+                item.update(original_input_ref=original['original_input_ref'], received_at=original['received_at'])
             if page and (len(page) == 8 or len(wire([*page, item]).encode()) > PAGE_BYTES):
                 yield page
                 page = []
@@ -234,9 +239,10 @@ def delta_bytes(con, row, binding):
     return delta, f"{row['segment']}:file:{row['file_start']}"
 
 
-def source_pages(con, row, binding, *, human_id=None):
+def source_pages(con, row, binding, *, human_id=None, gateway_original=None):
     delta, section = delta_bytes(con, row, binding)
-    return list(pages_for(delta, section, binding['source_instance'], human_id=human_id))
+    return list(pages_for(delta, section, binding['source_instance'], human_id=human_id,
+                          gateway_original=gateway_original))
 
 
 def context_targets(receipt, page):
@@ -316,7 +322,7 @@ def release_rejection(root, active, request_hash, retry):
 
 
 def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_id=None,
-        opener=urllib.request.urlopen):
+        gateway_original=None, opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
     if type(steps) is not int or not 1 <= steps <= 32:
@@ -350,7 +356,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
                 raise ValueError('existing cursor must be resumed without --after')
             current = json.loads(cursor.read_text())
             if (current['binding_sha256'] != owner or current['schema'] != POLICY
-                    or current.get('human_id') != human_id):
+                    or current.get('human_id') != human_id
+                    or current.get('gateway_originals', False) != (gateway_original is not None)):
                 raise ValueError('triage cursor binding or policy differs')
         else:
             if after is None or after > through:
@@ -358,6 +365,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
             current = dict(schema=POLICY, binding_sha256=owner, after=after, page=0)
             if human_id is not None:
                 current['human_id'] = human_id
+            if gateway_original is not None:
+                current['gateway_originals'] = True
             checkpoint(cursor, current)
         active = root / 'dispatch.json'
         second = root / 'context-dispatch.json'
@@ -373,7 +382,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
             existed = packet.exists()
             if packet_count >= MAX_PACKETS and not existed:
                 raise ValueError('triage packet retention limit; reconcile packets before continuing')
-            pages = source_pages(con, row, binding, human_id=human_id) or [[]]
+            pages = source_pages(con, row, binding, human_id=human_id, gateway_original=gateway_original) or [[]]
             page = pages[current['page']]
             # On a crash after commit, remove only the receipt that that checkpoint consumed.
             for attempt in (active, second):
