@@ -49,10 +49,13 @@ def stage_local_decision(value, job, job_path, step, work, request_path, request
     from source_pages import validate_citations
 
     key = request_path.stem
+    failure = receipt.get('native_failure', {})
+    ended = (failure.get('code') == 'terminal_failure'
+             or (not failure and receipt.get('error_type') == 'TimeoutError'))
     if (request.get('format') not in {'hmk-selected-bounded-memory-operation/v1',
                                      'hmk-fictional-bounded-memory-operation/v1'}
             or receipt.get('request_sha256') != key or receipt.get('state') != 'failed'
-            or receipt.get('native_failure', {}).get('code') != 'terminal_failure'
+            or not ended
             or not receipt.get('provider_reservation')
             or any(receipt.get(field) for field in ('content', 'native_response_content',
                 'tool_calls_observed', 'usage', 'provider_usage'))

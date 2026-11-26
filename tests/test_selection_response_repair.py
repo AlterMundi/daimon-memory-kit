@@ -79,7 +79,11 @@ def test_completed_framing_repair_removes_only_the_premature_close():
     with pytest.raises(ValueError):
         remove_early_close('{"outcome":"applied","reason":"a"}, "records": []')
 
-def test_local_decision_resolves_source_work_without_resending_the_reserved_attempt(setup, tmp_path):
+@pytest.mark.parametrize('failure', [
+    {'native_failure': {'code': 'terminal_failure'}},
+    {'error_type': 'TimeoutError'},
+])
+def test_local_decision_resolves_source_work_without_resending_the_reserved_attempt(setup, tmp_path, failure):
     memory, inbox, state, _, binding, _, _ = setup
     value = configuration(tmp_path, memory, inbox, state, binding)
     paths = []
@@ -91,7 +95,7 @@ def test_local_decision_resolves_source_work_without_resending_the_reserved_atte
         receipt_path = directory/'dispatches'/request_path.name
         checkpoint(request_path, stored)
         checkpoint(receipt_path, dict(request_sha256=key, state='failed',
-            native_failure=dict(code='terminal_failure'), provider_reservation=dict(ordinal=1)))
+            provider_reservation=dict(ordinal=1), **failure))
         paths.extend([request_path, receipt_path])
         raise ProviderProblem('openai-codex-native', key, {'code': 'dispatch_unresolved'})
 
