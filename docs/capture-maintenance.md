@@ -213,3 +213,11 @@ complete attempt with the same event and source. Confirm higher-revision Alerts
 resolution. Stop and SessionEnd need separate matching receipts. Installing this
 control does not authorize automatic inode rebinding, intake of other sessions,
 new hooks, source discovery or replay of human inputs.
+
+When a completed selection stopped because its update target was never fully
+read, use the same recovery command with `--mode missing-original`. It admits
+only an existing exact target and revision already cited by the proposal. The
+owner-local reviewer reads that full original and the frozen selected sources
+once and must support the exact unchanged decision. Missing, stale, unsupported
+or changed decisions stay pending. Recovery prepares the retained decision;
+ordinary producer admission and verified read-back are still required.
