@@ -110,6 +110,40 @@ def gateway_original(con, coordinates, native, block, *, not_before=None):
     return dict(text=original, original_input_ref=ref, received_at=received_at)
 
 
+def telegram_original(con, coordinates, native, turn, text, *, not_before):
+    """Accept a text update only through its exact retained native turn."""
+    if not turn or text.startswith('/') or not text.strip():
+        return None
+    actor, chat, topic = coordinates
+    matches = con.execute("""
+        SELECT i.update_id, o.captured_at, t.status,
+               EXISTS (SELECT 1 FROM interaction_native_messages m
+                        WHERE m.local_turn=t.id AND m.native_thread=? AND m.native_turn=?) AS linked
+          FROM incoming_updates i JOIN turns t ON t.id=i.turn_id
+          JOIN sessions s ON s.id=t.session_id
+          JOIN original_ingress_order o ON o.channel='telegram' AND o.event_id=CAST(i.update_id AS text)
+         WHERE s.creator_user_id=? AND s.chat_id=? AND s.thread_id=?
+           AND t.from_user_id=? AND t.native_thread_id=?
+           AND i.status IN ('started','settled','steering')
+           AND json_extract(i.payload_json,'$.message.from.id')=?
+           AND json_extract(i.payload_json,'$.message.chat.id')=?
+           AND json_extract(i.payload_json,'$.message.message_thread_id')=?
+           AND json_extract(i.payload_json,'$.message.text')=?
+           AND (linked OR t.status='running')
+         ORDER BY linked DESC LIMIT 2
+    """, (native, turn, *coordinates, actor, native, actor, chat, topic, text)).fetchall()
+    if not matches or sum(row[3] for row in matches) > 1:
+        return None
+    update, received_at, status, linked = matches[0]
+    received = datetime.fromisoformat(received_at)
+    if received.tzinfo is None or received < not_before:
+        return None
+    if not linked or status not in {'completed', 'failed', 'cancelled'}:
+        raise ValueError('Telegram original native turn is not settled')
+    return dict(text=text, original_input_ref=str(update), original_channel='telegram',
+                received_at=received_at)
+
+
 @contextmanager
 def original_resolver(profile, binding, human_id):
     registry, coordinates = conversation_registry(profile)
@@ -118,7 +152,16 @@ def original_resolver(profile, binding, human_id):
         raise ValueError('Gateway actor differs from paired enrollment')
     boundary = datetime.fromisoformat(binding['sessions_started_at_or_after'])
     with readonly(registry) as con:
-        yield partial(gateway_original, con, coordinates, binding['selected_session_id'], not_before=boundary)
+        native = binding['selected_session_id']
+        original = partial(gateway_original, con, coordinates, native, not_before=boundary)
+
+        def resolve(text, *, turn=None):
+            found = original(text)
+            if found is None and profile.get('telegram_text') is True:
+                found = telegram_original(con, coordinates, native, turn, text, not_before=boundary)
+            return found
+
+        yield resolve
 
 
 def enroll(profile, root):
@@ -194,7 +237,8 @@ def run(profile, root, *, worker_settings=None):
             settings['provider_blocked'] = worker_settings['provider_blocked']
     value = dict(state_dir=str(root), sleep_triage=settings)
     with original_resolver(profile, binding, config['human_id']) as resolver:
-        run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver)
+        run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver,
+                         telegram_text=profile.get('telegram_text') is True)
     out = saved['status']['sleep_triage']
     return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),
                 capture_complete=source['capture_complete'])

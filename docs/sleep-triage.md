@@ -226,7 +226,12 @@ blocks review of that range until it settles. Free-form native prompts and
 peer inputs cannot supply this attribution. The original input reference is
 retained in the private packet and canonical evidence and omitted from the
 classification request. An unresolved replacement stops intake until the
-source is explicitly reconciled.
+source is explicitly reconciled. A profile may explicitly select
+`telegram_text: true` for its enrolled Telegram entry. This requires exact
+journal text, author, topic, and confirmed native turn linkage. An in-flight
+match stays pending. Text from other turns and administrative commands remain
+outside that intake; audio uses its own authenticated route. The receipt keeps
+the Telegram original reference privately.
 
 On a receiver that already has a daily worker, first reconcile the preceding
 Decisions backlog and retain its receipts. Then set `sleep_triage.paired_profile`

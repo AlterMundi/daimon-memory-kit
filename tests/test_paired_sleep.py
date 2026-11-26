@@ -217,3 +217,37 @@ def test_paired_cycle_reuses_owner_baseline_without_copy(backup_config, context,
     backup.write_text(json.dumps(backup_config))
     with pytest.raises(ValueError, match='owner differ'):
         paired_sleep.maintain_backup(dict(backup_profile=str(backup)), root)
+
+def test_telegram_text_requires_exact_owner_turn_and_text(tmp_path):
+    registry = tmp_path/'gateway.sqlite'
+    native = 'fixture-thread'
+    selected_text = 'We watched the sunrise from the pier.'
+    with sqlite3.connect(registry) as con:
+        con.executescript("create table incoming_updates(update_id, turn_id, payload_json, status);"
+                          "create table turns(id, session_id, from_user_id, native_thread_id, status);"
+                          "create table sessions(id, creator_user_id, chat_id, thread_id);"
+                          "create table original_ingress_order(channel, event_id, captured_at);"
+                          "create table interaction_native_messages(local_turn, native_thread, native_turn);"
+                          "insert into sessions values(1,501,-501,7);")
+        payload = dict(message=dict(chat=dict(id=-501), message_thread_id=7, text=selected_text,
+                                    **{'from':dict(id=501)}))
+        con.execute("insert into turns values(1,1,501,?,'running')", (native,))
+        con.execute("insert into incoming_updates values(111,1,?,'settled')", (json.dumps(payload),))
+        con.execute("insert into original_ingress_order values('telegram','111','2026-11-26T03:00:00+00:00')")
+        border = datetime.fromisoformat('2026-11-26T02:00:00+00:00')
+
+        def resolve(text, *, turn=None):
+            return paired_sleep.telegram_original(con, (501,-501,7), native, turn, text, not_before=border)
+
+        with pytest.raises(ValueError, match='native turn is not settled'):
+            list(sleep_triage.pages_for(turn('selected', selected_text), 'fixture', 'body',
+                                       human_id=501, gateway_original=resolve))
+        con.execute("insert into interaction_native_messages values(1,?,'selected')", (native,))
+        con.execute("update turns set status='completed'")
+        delta = turn('neighbor', selected_text) + turn('selected', selected_text) + turn('changed', 'Edited text.')
+        page, = sleep_triage.pages_for(delta, 'fixture', 'body', human_id=501, gateway_original=resolve)
+        item, = page
+        assert item['text'] == selected_text and item['original_channel'] == 'telegram'
+        assert item['original_input_ref'] == '111'
+        assert not paired_sleep.telegram_original(con, (501,-501,7), native, 'selected', selected_text,
+                                                  not_before=datetime.fromisoformat('2026-11-26T04:00:00+00:00'))
