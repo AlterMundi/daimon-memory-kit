@@ -28,7 +28,7 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
     root = tmp_path/'sleep'
     root.mkdir(mode=0o700)
     profile = dict(source_root=str(journal), native_db=str(native), conversation_db=str(gateway),
-                   source_review_report=str(root/'missing'), being_ref='fictional-being', body_ref='fictional-body')
+                   being_ref='fictional-being', body_ref='fictional-body')
     paired_sleep.enroll(profile, root)
     paired_sleep.enroll(profile, root)
 
@@ -51,6 +51,8 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
     monkeypatch.setattr(sleep_triage,'run',lambda *a, **kw: real_run(*a, **kw, opener=decide))
     result = paired_sleep.run(profile, root)
     assert result['triage']['classified_pages'] == 1 and result['state'] == 'caught_up'
+    health = json.loads((root/'worker-status.json').read_text())['sleep_health']
+    assert health['matrix']['source_review']['status'] == 'unobserved'
     assert b'Renata came' in b''.join(observed)
     for forbidden in (b'Pre-authorization', b'operator prompt', b'Another conversation'):
         assert forbidden not in b''.join(observed)
