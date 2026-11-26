@@ -68,8 +68,8 @@ no unbounded prompt/provider retries or silent provider substitution is authoriz
 
 ## Owner-local decision after an unconfirmed dispatch
 
-A terminal bounded native call can have a provider reservation without a usable
-response or observed usage. If the receiving owner has independently reviewed
+A bounded native call that failed or reached its deadline can have a provider
+reservation without a usable response or observed usage. If the receiving owner has independently reviewed
 the exact source, supply the resulting selection JSON to the existing repair
 command with `--local-decision <private-json>` and the retained request path.
 This stages that explicit decision for the ordinary producer. It never retries
