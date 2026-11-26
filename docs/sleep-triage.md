@@ -38,8 +38,11 @@ high-water mark per invocation, and never reopens the original native logs. Long
 dialogue is paged without dropping text. Pending pages retain their place. Scope
 excludes back-catalog records outside the chosen boundary, legacy snapshots, raw
 tool payloads, harness instructions, and non-text media semantics. Source-family
-and exact offsets/checksums stay local. Model input consists of selected dialogue
-and its limited attribution/date context, which may still be private. Qualify
+and exact offsets/checksums stay local. The local scanner honors the forward
+binding's capture bound for a retained range, including a large indivisible
+record. It filters out tool payloads before forming the dialogue pages. Model
+input consists of selected dialogue and its limited attribution/date context,
+which may still be private. Qualify
 with fictional dialogue before choosing the authorized source scope.
 
 Private proposals retain predicate results and source pointers. Existing
