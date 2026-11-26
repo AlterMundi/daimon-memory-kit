@@ -16,7 +16,8 @@ import paired_sleep
 import sleep_triage
 
 
-def read_candidate(binding, root, packet_id, item, *, gateway_original=None, telegram_text=False, voice_transcripts=False):
+def read_candidate(binding, root, packet_id, item, *, gateway_original=None, telegram_text=False,
+                   voice_transcripts=False, foreground_voice_transcripts=False):
     """Reconstruct one exact authorized human excerpt without reopening its session."""
     if not re.fullmatch(r'[0-9a-f]{64}', packet_id) or type(item) is not int or not 0 <= item < 8:
         raise ValueError('select a packet hash and a human item index')
@@ -36,7 +37,8 @@ def read_candidate(binding, root, packet_id, item, *, gateway_original=None, tel
     if (cursor['binding_sha256'] != owner or cursor['schema'] != sleep_triage.POLICY
                 or cursor.get('gateway_originals', False) != (gateway_original is not None)
                 or cursor.get('telegram_text', False) != telegram_text
-                or cursor.get('voice_transcripts', False) != voice_transcripts):
+                or cursor.get('voice_transcripts', False) != voice_transcripts
+                or cursor.get('foreground_voice_transcripts', False) != foreground_voice_transcripts):
         raise ValueError('triage state belongs to another capture binding')
     observation = packet['observation']
     with closing(sqlite3.connect(Path(binding['inbox']).resolve().as_uri() + '?mode=ro', uri=True)) as con:
@@ -114,6 +116,8 @@ def apply_review(ledger, binding, candidate, fingerprint, decision):
         references.append(source.get('original_channel', 'conversation') + ':' + ref)
         if source['channel'] == 'human_voice_transcription':
             references.append('automatic-transcript:' + ref)
+        if source['channel'] == 'live_input_transcription':
+            references.append('live-input-transcript:' + ref)
     meta = dict(mode='reported', subject=binding['subject'],
                 source_instance=binding['source_instance'], source_uri=evidence,
                 evidence=references)
@@ -167,7 +171,7 @@ def main():
             root = profile['sleep_triage']['state_dir']
     with ExitStack() as stack:
         resolver = None
-        telegram_text = voice_transcripts = False
+        telegram_text = voice_transcripts = foreground_voice_transcripts = False
         if args.paired_profile:
             paired = json.loads(Path(args.paired_profile).read_text())
             paired_state = Path(paired['state_dir'])
@@ -184,12 +188,15 @@ def main():
                 profile = standalone_library(paired, binding)
             telegram_text = paired.get('telegram_text') is True
             voice_transcripts = paired.get('voice_transcripts') is True
+            foreground_voice_transcripts = paired.get('foreground_voice_transcripts') is True
             resolver = stack.enter_context(paired_sleep.original_resolver(paired, source, config['human_id']))
         if args.decision:
             work = stack.enter_context(open(str(Path(binding['inbox']).resolve()) + '.worker.lock', 'a+b'))
             fcntl.flock(work, fcntl.LOCK_EX | fcntl.LOCK_NB)
         result = read_candidate(binding, root, args.packet, args.item,
-                                gateway_original=resolver, telegram_text=telegram_text, voice_transcripts=voice_transcripts)
+                                gateway_original=resolver, telegram_text=telegram_text,
+                                voice_transcripts=voice_transcripts,
+                                foreground_voice_transcripts=foreground_voice_transcripts)
         if args.decision:
             selected = json.loads(Path(args.decision).read_text())
             ledger = CaptureLedger(memory_runtime.load_memory(profile))

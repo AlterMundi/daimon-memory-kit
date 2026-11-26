@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import fcntl
 from functools import partial
 import json
+import hashlib
 import os
 from pathlib import Path
 import sqlite3
@@ -68,7 +69,8 @@ def enrolled_thread(profile):
     return (*rows[0], *row)
 
 
-def gateway_original(con, coordinates, native, block, *, not_before=None, voice_transcripts=False):
+def gateway_original(con, coordinates, native, block, *, not_before=None,
+                     voice_transcripts=False, foreground_voice_transcripts=False):
     """Accept a native reference only when its text and receiving journal agree."""
     header, separator, text = block.partition('\n\n')
     if header.startswith('[Device-reported playback context]\n'):
@@ -98,10 +100,23 @@ def gateway_original(con, coordinates, native, block, *, not_before=None, voice_
     original = value.get('text')
     if not isinstance(original, str) or value.get('tribu_source'):
         return None
+    foreground = text.startswith('[Voice foreground formulation]\n')
+    if foreground:
+        if not foreground_voice_transcripts:
+            return None
+        text = foreground_original(text, value)
+        if text is None:
+            return None
+    live = foreground and text.startswith('[Live input transcript window]\n')
     voice = text.startswith('[Committed voice input]\n')
     if voice:
         if not voice_transcripts or not committed_voice_matches(text, ref, value):
             return None
+    elif live:
+        if not live_window_matches(text, value):
+            return None
+    elif foreground:
+        return None
     elif text != original:
         return None
     if not_before is not None:
@@ -116,6 +131,8 @@ def gateway_original(con, coordinates, native, block, *, not_before=None, voice_
     accepted = dict(text=original, original_input_ref=ref, received_at=received_at)
     if voice:
         accepted['channel'] = 'human_voice_transcription'
+    if live:
+        accepted['channel'] = 'live_input_transcription'
     return accepted
 
 
@@ -133,10 +150,42 @@ def committed_voice_matches(rendered, ref, original):
         proof = json.loads(parsed[3].removeprefix('Provenance: '))
     except ValueError:
         return False
-    if not isinstance(proof, dict) or not proof or proof != (original.get('voice') or {}).get('transcription'):
+    voice = original.get('voice')
+    if not isinstance(voice, dict) or not isinstance(proof, dict) or not proof or proof != voice.get('transcription'):
         return False
     warning = VOICE_WARNINGS.get(proof.get('capture_stop'), '')
     return parsed[4] == warning + '\n' + original['text']
+
+
+def foreground_original(rendered, original):
+    header, separator, content = rendered.partition('\n\n')
+    fields = header.split('\n', 2)
+    retained = original.get('foreground_delegation')
+    if not separator or len(fields) != 3 or not isinstance(retained, dict):
+        return None
+    try:
+        metadata = json.loads(fields[1])
+    except ValueError:
+        return None
+    if (metadata != retained or not original.get('foreground_dialogue')
+            or retained.get('dialogue_id') != original['foreground_dialogue']):
+        return None
+    return content
+
+
+def live_window_matches(rendered, original):
+    fields = rendered.split('\n', 3)
+    if len(fields) != 4 or not fields[2].startswith('Source: '):
+        return False
+    try:
+        proof = json.loads(fields[2].removeprefix('Source: '))
+    except ValueError:
+        return False
+    return (isinstance(proof, dict)
+            and proof == original['foreground_delegation'].get('live_window')
+            and proof.get('dialogue') == original.get('foreground_dialogue')
+            and fields[3] == original['text']
+            and proof.get('text_sha256') == hashlib.sha256(fields[3].encode()).hexdigest())
 
 
 def telegram_original(con, coordinates, native, turn, text, *, not_before):
@@ -183,7 +232,8 @@ def original_resolver(profile, binding, human_id):
     with readonly(registry) as con:
         native = binding['selected_session_id']
         original = partial(gateway_original, con, coordinates, native, not_before=boundary,
-                           voice_transcripts=profile.get('voice_transcripts') is True)
+                           voice_transcripts=profile.get('voice_transcripts') is True,
+                           foreground_voice_transcripts=profile.get('foreground_voice_transcripts') is True)
 
         def resolve(text, *, turn=None):
             found = original(text)
@@ -269,7 +319,8 @@ def run(profile, root, *, worker_settings=None):
     with original_resolver(profile, binding, config['human_id']) as resolver:
         run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver,
                          telegram_text=profile.get('telegram_text') is True,
-                         voice_transcripts=profile.get('voice_transcripts') is True)
+                         voice_transcripts=profile.get('voice_transcripts') is True,
+                         foreground_voice_transcripts=profile.get('foreground_voice_transcripts') is True)
     out = saved['status']['sleep_triage']
     return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),
                 capture_complete=source['capture_complete'])
