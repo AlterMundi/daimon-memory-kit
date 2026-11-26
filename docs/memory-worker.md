@@ -242,9 +242,10 @@ Selector link prose remains in formation evidence. Canonical link notes identify
 navigation associations, not independent factual support.
 
 Two successive lookup rounds with the same previously observed requests and
-results end navigation. The final request uses the retained source excerpts and
+results end navigation. Distinct requests can advance the review for up to 32
+completed lookup rounds per selection attempt, counting retained rounds across
+worker invocations. The final request uses the retained source excerpts and
 complete originals. It may explicitly defer if the evidence is insufficient.
-A changed search result or a new source range can still advance navigation.
 If a paged lookup needs more source context and the final decision defers, the
 worker retains the required byte count. Set a sufficient receiving source limit
 to resume the exact blocked read. That preserves both previous responses and

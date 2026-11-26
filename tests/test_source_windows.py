@@ -395,6 +395,30 @@ def test_repeated_completed_reads_lead_to_a_final_selection_contract():
     assert selection_navigation.request_for(job)['response_schema'] == selection_navigation.response_schema()
 
 
+def test_distinct_lookup_rounds_reach_a_final_selection_across_resumes():
+    import portable_capture
+    import selection_navigation
+
+    source = dict(id='source', content='New source evidence.', status='new')
+    original = dict(record_uid='original', revision=1, raw='Verified original.')
+    steps = [
+        dict(proposal=dict(selection=dict(outcome='lookup', requests=[dict(action='search', query=f'query {i}')])),
+             results=[dict(status='ok', results=[])])
+        for i in range(32)
+    ]
+    job = dict(inputs=dict(sources=[source], context={}),
+               navigation=dict(canon=[original], steps=steps[:-1]))
+    assert selection_navigation.request_for(job)['response_schema'] == selection_navigation.response_schema()
+
+    job['navigation']['steps'].append(steps[-1])
+    packet = selection_navigation.request_for(job)
+    assert packet['response_schema'] == portable_capture.block_schema()
+    evidence = json.loads(packet['messages'][1]['content'])
+    assert evidence['current_canon'] == [original]
+    assert evidence['sources'] == [source]
+    assert 'defer and state what is missing' in packet['messages'][0]['content']
+
+
 def test_paged_navigation_reports_unread_context_without_repeating_the_lookup(setup, monkeypatch):
     import portable_capture
     import selection_navigation

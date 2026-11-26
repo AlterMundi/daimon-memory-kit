@@ -122,6 +122,7 @@ def resume_deferred_source(job, job_path, budget):
 
 
 MAX_SELECTION_CONTEXT_BYTES = 700_000
+MAX_COMPLETED_LOOKUP_ROUNDS = 32
 
 
 class SelectionContextTooLarge(ValueError):
@@ -174,7 +175,9 @@ def request_for(job, *, final_only=False):
             'expected-revision update, or omit if nothing new. Do not rename to bypass duplication.')
         messages[1]['content']=wire(payload)
     compact_messages = [message.copy() for message in messages]
-    if (final_only or source_limit or _repeated_lookups(state)
+    completed_lookups = sum('results' in step for step in state['steps'])
+    if (final_only or source_limit or completed_lookups >= MAX_COMPLETED_LOOKUP_ROUNDS
+            or _repeated_lookups(state)
             or last_step.get('request', {}).get('response_schema') == final_schema):
         return final_request()
     messages[0]['content'] += '\n' + POLICY
