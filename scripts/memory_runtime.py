@@ -129,8 +129,10 @@ def profile(path):
     if "sleep_triage" in value:
         settings = value["sleep_triage"]
         if (not isinstance(settings, dict)
-                or set(settings) != {"state_dir", "initial_after", "steps",
-                                     "credential_env", "source_review_report", "max_age_seconds"}
+                or set(settings) - {"provider_blocked"} != {
+                    "state_dir", "initial_after", "steps", "credential_env",
+                    "source_review_report", "max_age_seconds"}
+                or ("provider_blocked" in settings and settings["provider_blocked"] != "access_denied")
                 or any(not isinstance(settings[k], str) or not Path(settings[k]).is_absolute()
                        for k in ("state_dir", "source_review_report"))
                 or not Path(settings["state_dir"]).resolve().is_relative_to(Path(value["state_dir"]).resolve())
@@ -224,35 +226,42 @@ def run_sleep_triage(value, inbox, binding, result):
         operation = "sleep-triage:" + result["status"]["owner"]
         alerts = Alerts(inbox)
         after = None if (root / "cursor.json").exists() else settings["initial_after"]
-        try:
-            receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
-                                       api_key=os.environ.get(settings["credential_env"]))
-        except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
-            attempt = {}
-            for name in ("context-dispatch.json", "dispatch.json"):
-                active = root / name
-                if active.is_file():
-                    retained = json.loads(active.read_text())
-                    if retained.get("state") != "complete":
-                        attempt = retained
-                        break
-            receipt = dict(state="blocked", reason_code="inspect_sleep_triage", error_type=type(error).__name__)
-            if attempt and attempt.get("state") != "complete":
-                problem = attempt.get("problem", {"code": "dispatch_unresolved"})
-                failure = ProviderProblem("openai-decisions", attempt["request_sha256"], problem)
-                receipt.update(alert_id=alerts.report(operation, "selection", failure),
-                               reason_code=failure.problem["code"])
-            result["status"]["state"] = "pending"
+        blocked = settings.get("provider_blocked")
+        if blocked:
+            failure = ProviderProblem("openai-decisions", operation, {"code": blocked})
+            receipt = dict(state="blocked", reason_code=blocked,
+                           alert_id=alerts.report(operation, "selection", failure))
         else:
-            alerts.resolve(operation)
+            try:
+                receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
+                                           api_key=os.environ.get(settings["credential_env"]))
+            except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
+                attempt = {}
+                for name in ("context-dispatch.json", "dispatch.json"):
+                    active = root / name
+                    if active.is_file():
+                        retained = json.loads(active.read_text())
+                        if retained.get("state") != "complete":
+                            attempt = retained
+                            break
+                receipt = dict(state="blocked", reason_code="inspect_sleep_triage", error_type=type(error).__name__)
+                if attempt:
+                    problem = attempt.get("problem", {"code": "dispatch_unresolved"})
+                    failure = ProviderProblem("openai-decisions", attempt["request_sha256"], problem)
+                    receipt.update(alert_id=alerts.report(operation, "selection", failure),
+                                   reason_code=failure.problem["code"])
+            else:
+                if receipt["classified_pages"]:
+                    alerts.resolve(operation)
+        if receipt["state"] == "blocked":
+            result["status"]["state"] = "pending"
         result["status"]["sleep_triage"] = receipt
+        result["status"]["updated_ns"] = time.time_ns()
         result["status"]["sleep_health"] = sleep_health.health(
             value["state_dir"], settings["source_review_report"],
-            max_age_seconds=settings["max_age_seconds"],
+            max_age_seconds=settings["max_age_seconds"], worker=result["status"],
         )
-        result["status"]["updated_ns"] = time.time_ns()
         checkpoint(path, result["status"])
-
 
 def refresh_backup(value,inbox,result):
     """One model-free backup maintenance step after the finite worker phases."""

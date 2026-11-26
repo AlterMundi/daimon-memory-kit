@@ -316,7 +316,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
         active = root / 'dispatch.json'
         second = root / 'context-dispatch.json'
         packet_count = sum(1 for _ in (root / 'packets').glob('*.json'))
-        completed = 0
+        completed = classified = 0
         while completed < steps:
             row = next_observation(con, current['after'], through)
             if row is None:
@@ -371,11 +371,13 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
                 second.unlink()
             packet_count += int(not existed)
             completed += 1
+            classified += int(receipt is not None)
         if retry:
             raise ValueError('no pending request matches the explicit retry')
         return dict(state='pending' if next_observation(con, current['after'], through) else 'caught_up',
                     after=current['after'], page=current['page'],
-                    through=through, completed_pages=completed, retained_packets=packet_count)
+                    through=through, completed_pages=completed, classified_pages=classified,
+                    retained_packets=packet_count)
 
 
 def main():
