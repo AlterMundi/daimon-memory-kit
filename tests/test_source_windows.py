@@ -393,3 +393,50 @@ def test_repeated_completed_reads_lead_to_a_final_selection_contract():
 
     job['navigation']['canon'] = [dict(original, revision=2)]
     assert selection_navigation.request_for(job)['response_schema'] == selection_navigation.response_schema()
+
+
+def test_paged_navigation_reports_unread_context_without_repeating_the_lookup(setup, monkeypatch):
+    import portable_capture
+    import selection_navigation
+
+    memory, _, state, _, binding, _, _ = setup
+    source = dict(id='anchor', content='Later source page', status='new')
+    job = dict(inputs=dict(sources=[source], context=binding, source_window=dict(paging=True)))
+    calls = []
+
+    class EarlierPage:
+        budget_bytes = 100
+
+        def before(self, anchor, known):
+            assert anchor == 'anchor' and known == {'anchor'}
+            return dict(status='ok', sources=[dict(id='earlier', content='x' * 500)])
+
+    def choose(request, dirname):
+        calls.append(request)
+        if len(calls) == 1:
+            return dict(selection=dict(outcome='lookup', requests=[
+                dict(action='source_before', query='', record_uid='anchor',
+                     offset=0, expected_revision=0),
+                dict(action='search', query='example', record_uid='',
+                     offset=0, expected_revision=0),
+            ]))
+        assert request['response_schema'] == portable_capture.block_schema()
+        notice = json.loads(request['messages'][-1]['content'])
+        assert notice['unread_source_requests'][0]['anchor'] == 'anchor'
+        assert 'not read' in notice['instruction']
+        return dict(selection=dict(outcome='deferred', reason='A required range is unread.',
+                                   records=[], links=[]))
+
+    def unexpected_search(*args):
+        pytest.fail('a sibling search must not run when required source was refused')
+
+    monkeypatch.setattr(selection_navigation, '_lookup', unexpected_search)
+    result, used = selection_navigation.advance(job, state/'pending.json', state/'dispatch', choose,
+        database=memory.DB_PATH, backend=memory, source_reader=EarlierPage(), steps=1)
+    assert result is None and used == 1
+    assert job['navigation']['steps'][0]['results'][0]['status'] == 'source_context_budget_exceeded'
+    assert selection_navigation.effective_sources(job) == [source]
+
+    result, used = selection_navigation.advance(job, state/'pending.json', state/'dispatch', choose,
+        database=memory.DB_PATH, backend=memory, source_reader=EarlierPage(), steps=1)
+    assert result['selection']['outcome'] == 'deferred' and used == 1 and len(calls) == 2

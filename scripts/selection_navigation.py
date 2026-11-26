@@ -106,12 +106,20 @@ def request_for(job, *, final_only=False):
     messages = selection.block_messages(effective_sources(job), state['canon'], job['inputs']['context'])
     final_schema = selection.block_schema()
     last_step = state['steps'][-1] if state['steps'] else {}
+    source_limit = next((item['source_budget_limited'] for item in reversed(state['steps'])
+                         if 'source_budget_limited' in item), None)
 
     def final_request():
         compact_messages[0]['content'] += (
             '\nReturn a final selection using the supplied source and completely read originals. '
             'If evidence required for a supported decision is still missing, defer and state what is missing. '
             'Do not request another lookup.')
+        if source_limit:
+            compact_messages.append({'role': 'user', 'content': wire({
+                'unread_source_requests': source_limit,
+                'instruction': 'Those ranges were not read. Defer if evidence required to finish the '
+                               'current window depends on them. Do not treat unread ranges as absent.',
+            })})
         if 'feedback' in last_step:
             compact_messages.append({'role': 'user', 'content': wire(last_step['feedback'])})
         packet = {'messages': compact_messages, 'response_schema': final_schema}
@@ -134,7 +142,8 @@ def request_for(job, *, final_only=False):
             'expected-revision update, or omit if nothing new. Do not rename to bypass duplication.')
         messages[1]['content']=wire(payload)
     compact_messages = [message.copy() for message in messages]
-    if final_only or _rereads_only(state) or last_step.get('request', {}).get('response_schema') == final_schema:
+    if (final_only or source_limit or _rereads_only(state)
+            or last_step.get('request', {}).get('response_schema') == final_schema):
         return final_request()
     messages[0]['content'] += '\n' + POLICY
     # Include exact observed results. A lookup is a host-performed read, never an
@@ -294,14 +303,17 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
             state['source_budget_pending'] = pending
             if pending not in step.setdefault('source_budget_waits',[]):
                 step['source_budget_waits'].append(pending)
-            checkpoint(job_path,job)
-            return None, dispatched
+            if not job['inputs'].get('source_window', {}).get('paging'):
+                checkpoint(job_path,job)
+                return None, dispatched
+            step['source_budget_limited'] = waits
         if added:
             state.setdefault('source_context',[]).extend(added)
             state['source_order'] = source_reader.order(effective_sources(job))
         for i, request in enumerate(value['requests']):
             if results[i] is None:
-                results[i] = _lookup(reader,request,state)
+                results[i] = (dict(status='lookup_deferred_due_to_source_limit')
+                              if waits else _lookup(reader,request,state))
         state.pop('source_budget_pending',None)
         step['results'] = results
         checkpoint(job_path,job)
