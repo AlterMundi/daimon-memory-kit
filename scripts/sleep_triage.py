@@ -17,6 +17,7 @@ from codex_coordinator import checkpoint
 from codex_hook_capture import MAX_SOURCE_BYTES
 from portable_capture import block_sources, codex_sources
 from provider_status import classify
+from sleep_usage import summarize
 
 MODEL = 'gpt-6-luna'
 ENDPOINT = 'https://api.openai.com/v1/decisions'
@@ -180,12 +181,19 @@ def dispatch(request, path, api_key, *, opener=urllib.request.urlopen):
                               seconds=time.monotonic() - started))
         raise ValueError(problem['code'] + ': inspect retained Decisions attempt') from None
     usage = result.get('usage')
-    usage = {k: v for k, v in usage.items() if type(v) is int and v >= 0} if isinstance(usage, dict) else None
+    if isinstance(usage, dict):
+        details = usage.get('input_tokens_details')
+        cached = details.get('cached_tokens') if isinstance(details, dict) else None
+        usage = {k: v for k, v in usage.items() if type(v) is int and v >= 0}
+        if type(cached) is int and 0 <= cached <= usage.get('input_tokens', -1):
+            usage['cached_input_tokens'] = cached
+    else:
+        usage = None
     response_id = result.get('id')
     response_id = response_id if isinstance(response_id, str) and len(response_id) <= 256 else None
     receipt = dict(state='complete', request_sha256=request_hash, scores=scores,
                    refused=refused, usage=usage, response_id=response_id,
-                   seconds=time.monotonic() - started)
+                   seconds=time.monotonic() - started, completed_at_ns=time.time_ns())
     checkpoint(path, receipt)
     return receipt
 
@@ -340,6 +348,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
         second = root / 'context-dispatch.json'
         packet_count = sum(1 for _ in (root / 'packets').glob('*.json'))
         completed = classified = 0
+        receipts = []
         while completed < steps:
             row = next_observation(con, current['after'], through)
             if row is None:
@@ -383,7 +392,9 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
             if retry:
                 raise ValueError('no pending request matches the explicit retry')
             write_packet(packet, row, page, receipt, context, followup, bool(targets))
-            current['consumed_dispatches'] = [r['request_sha256'] for r in (receipt, followup) if r]
+            page_receipts = [r for r in (receipt, followup) if r]
+            current['consumed_dispatches'] = [r['request_sha256'] for r in page_receipts]
+            receipts.extend(page_receipts)
             current['page'] += 1
             if current['page'] == len(pages):
                 current.update(after=row['id'], page=0)
@@ -400,7 +411,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
         return dict(state='pending' if next_observation(con, current['after'], through) else 'caught_up',
                     after=current['after'], page=current['page'],
                     through=through, completed_pages=completed, classified_pages=classified,
-                    retained_packets=packet_count)
+                    retained_packets=packet_count, completed_page_usage=summarize(receipts))
 
 
 def main():
