@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from capturectl import wire, title_conflicts
+from capturectl import digest, wire, title_conflicts
 from codex_coordinator import checkpoint
 from deep_recall import Reader, tool_spec
 import portable_capture as selection
@@ -66,30 +66,28 @@ def effective_sources(job):
     return sorted(sources,key=lambda s:order.get(s['id'],len(order)))
 
 
-def _rereads_only(state):
-    """Detect consecutive lookups of pages already read at a complete revision."""
-    steps = state['steps']
-    if len(steps) < 3:
-        return False
-    canon = {(record['record_uid'], record['revision']) for record in state['canon']}
+def _repeated_lookups(state):
+    """Stop after two consecutive rounds that add no lookup evidence."""
     observed = set()
-    for step in steps[:-2]:
-        value = step.get('proposal', {}).get('selection', {})
-        for request, result in zip(value.get('requests', []), step.get('results', [])):
-            if result.get('status') == 'ok':
-                observed.add(wire(request))
-    for step in steps[-2:]:
-        value = step.get('proposal', {}).get('selection', {})
-        requests = value.get('requests', [])
+    repeated_rounds = 0
+    canon = {(record['record_uid'], record['revision']) for record in state['canon']}
+    for step in state['steps']:
+        selection = step.get('proposal', {}).get('selection', {})
+        requests = selection.get('requests', [])
         results = step.get('results', [])
-        if not requests or len(requests) != len(results):
-            return False
-        if any(request.get('action') != 'read'
-               or (request['record_uid'], request['expected_revision']) not in canon
-               or wire(request) not in observed or result.get('status') != 'ok'
-               for request, result in zip(requests, results)):
-            return False
-    return True
+        if selection.get('outcome') != 'lookup' or not requests or len(requests) != len(results):
+            repeated_rounds = 0
+            continue
+
+        fingerprints = {digest([request, result]) for request, result in zip(requests, results)}
+        # A page from a superseded revision cannot decide that the current
+        # original has been read. Leave navigation available for the new one.
+        obsolete_read = any(request.get('action') == 'read' and result.get('status') == 'ok'
+                            and (request['record_uid'], request['expected_revision']) not in canon
+                            for request, result in zip(requests, results))
+        repeated_rounds = repeated_rounds + 1 if not obsolete_read and fingerprints <= observed else 0
+        observed.update(fingerprints)
+    return repeated_rounds >= 2
 
 
 MAX_SELECTION_CONTEXT_BYTES = 700_000
@@ -145,7 +143,7 @@ def request_for(job, *, final_only=False):
             'expected-revision update, or omit if nothing new. Do not rename to bypass duplication.')
         messages[1]['content']=wire(payload)
     compact_messages = [message.copy() for message in messages]
-    if (final_only or source_limit or _rereads_only(state)
+    if (final_only or source_limit or _repeated_lookups(state)
             or last_step.get('request', {}).get('response_schema') == final_schema):
         return final_request()
     messages[0]['content'] += '\n' + POLICY

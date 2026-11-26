@@ -347,3 +347,31 @@ def test_reprepare_local_native_renderer_refusal_with_no_attempt(setup):
     new = json.loads(path.read_text())['navigation']['steps'][0]['request']
     assert [message['role'] for message in new['messages']] == ['system', 'user']
     assert process_once(memory, inbox, state, valid, binding, retrieval='lexical')['state'] == 'complete'
+
+
+def test_alternating_previously_seen_lookups_finish_with_existing_source_evidence():
+    import portable_capture
+    import selection_navigation
+
+    search = lookup()['selection']['requests'][0]
+    source = lookup('source_before', query='', uid='anchor')['selection']['requests'][0]
+    earlier = dict(id='earlier', content='Earlier original', status='earlier_context')
+    anchor = dict(id='anchor', content='New original', status='new')
+
+    def step(request, result):
+        return dict(proposal=dict(selection=dict(outcome='lookup', requests=[request])),
+                    results=[result])
+
+    first = step(search, dict(status='ok', items=[]))
+    second = step(source, dict(status='ok', sources=[earlier]))
+    job = dict(inputs=dict(sources=[anchor], context={}),
+               navigation=dict(canon=[], source_context=[earlier],
+                               steps=[first, second, first, second]))
+    request = selection_navigation.request_for(job)
+    assert request['response_schema'] == portable_capture.block_schema()
+    assert {item['id'] for item in json.loads(request['messages'][1]['content'])['sources']} == {
+        'anchor', 'earlier'}
+
+    updated = step(search, dict(status='ok', items=[dict(record_uid='new-match')]))
+    job['navigation']['steps'][-2] = updated
+    assert selection_navigation.request_for(job)['response_schema'] == selection_navigation.response_schema()
