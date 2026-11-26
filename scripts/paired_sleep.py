@@ -135,6 +135,8 @@ def gateway_original(con, coordinates, native, block, *, not_before=None,
     accepted = dict(text=original, original_input_ref=ref, received_at=received_at)
     if voice:
         accepted['channel'] = 'human_voice_transcription'
+        if foreground and direct_voice_input(value, ref):
+            accepted['foreground_direct'] = True
     if live:
         accepted['channel'] = 'live_input_transcription'
     return accepted
@@ -318,6 +320,35 @@ def capture_foreground(profile, binding, human_id, inbox, *, after):
                    capture_range=dict(header_bytes=0))
     inbox.observe('gateway-foreground:' + sha(raw), payload, raw)
     return len(items) > len(batch)
+
+
+@contextmanager
+def supervised_foreground(path, binding):
+    """Resolve an Avatar feed for an existing broad native capture inbox."""
+    path = Path(path)
+    if not path.is_absolute() or path.is_symlink() or path.stat().st_uid != os.getuid() or path.stat().st_mode & 0o077:
+        raise ValueError('private Avatar source profile required')
+    profile = json.loads(path.read_text())
+    if any(profile[k] != binding[v] for k,v in (('being_ref','subject'),('body_ref','source_instance'))):
+        raise ValueError('Avatar source owner differs from the worker')
+    human, thread, rollout, _ = enrolled_thread(profile)
+    if not Path(rollout).resolve().is_relative_to(Path(binding['source_root']).resolve()):
+        raise ValueError('Avatar source is outside the worker journal')
+    cutoff = datetime.fromisoformat(profile['starts_at_or_after'])
+    if cutoff.tzinfo is None or type(profile['native_observation_after']) is not int or profile['native_observation_after'] < 0:
+        raise ValueError('Avatar source requires a fixed observation and time boundary')
+    selected = dict(binding, selected_session_id=thread, sessions_started_at_or_after=cutoff.isoformat())
+    registry, coordinates = conversation_registry(profile)
+    if coordinates is None:
+        coordinates = (human, human, 1)
+    with readonly(registry) as conn:
+        def exclude(block):
+            if '[Voice foreground formulation]\n' not in block:
+                return False
+            original = gateway_original(conn, coordinates, thread, block, not_before=cutoff,
+                                        voice_transcripts=True, foreground_voice_transcripts=True)
+            return original is not None and original.get('foreground_direct') is True
+        yield profile, selected, human, exclude
 
 
 def enroll(profile, root):

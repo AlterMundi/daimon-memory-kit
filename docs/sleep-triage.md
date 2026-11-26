@@ -259,6 +259,18 @@ configured budgets. A retained initial or follow-up dispatch in the prior
 Decisions directory blocks this switch until reconciled. Paired failures are
 published through the supervised worker's existing Alerts outbox.
 
+To retain a worker's existing broad native review, use
+`sleep_triage.foreground_profile` instead of `sleep_triage.paired_profile`.
+Point it at a private, owner-local profile that identifies the actual paired
+Gateway configuration and native index. Freeze its `starts_at_or_after` and
+`native_observation_after` at the chosen prospective cutover and settled
+Decisions cursor. The Avatar feed joins the same inbox and page allowance.
+Before the cutover, the existing packets use their original inputs unchanged.
+After the cutover, a validated copy of a committed Avatar clip delegated into
+the native conversation is excluded from native review because the Gateway feed
+owns the original. Use the existing `sleep_memory_review.py --profile` command
+to review packets from either source.
+
 For a receiver without a daily worker, run
 `paired_sleep.py run --profile "$profile"` from the selected receiving
 service once daily at 08:00 America/Argentina/Buenos_Aires. Use the existing

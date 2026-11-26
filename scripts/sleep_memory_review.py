@@ -18,7 +18,7 @@ import sleep_triage
 
 def read_candidate(binding, root, packet_id, item, *, gateway_original=None, telegram_text=False,
                    voice_transcripts=False, foreground_voice_transcripts=False,
-                   foreground_direct_inputs=False):
+                   foreground_direct_inputs=False, foreground_after=None, foreground_filter=None):
     """Reconstruct one exact authorized human excerpt without reopening its session."""
     if not re.fullmatch(r'[0-9a-f]{64}', packet_id) or type(item) is not int or not 0 <= item < 8:
         raise ValueError('select a packet hash and a human item index')
@@ -43,6 +43,10 @@ def read_candidate(binding, root, packet_id, item, *, gateway_original=None, tel
                 or cursor.get('foreground_direct_inputs', False) != foreground_direct_inputs):
         raise ValueError('triage state belongs to another capture binding')
     observation = packet['observation']
+    saved_boundary = cursor.get('foreground_after')
+    if saved_boundary is not None and observation > saved_boundary and (
+            saved_boundary != foreground_after or foreground_filter is None):
+        raise ValueError('packet requires the selected Avatar source')
     with closing(sqlite3.connect(Path(binding['inbox']).resolve().as_uri() + '?mode=ro', uri=True)) as con:
         con.row_factory = sqlite3.Row
         con.execute('BEGIN')
@@ -54,7 +58,8 @@ def read_candidate(binding, root, packet_id, item, *, gateway_original=None, tel
         if row is None or any(row[k] != packet[k] for k in fields):
             raise ValueError('retained capture range differs or was lost')
         pages = sleep_triage.source_pages(con, row, binding, human_id=cursor.get('human_id'),
-                                         gateway_original=gateway_original)
+                                         gateway_original=gateway_original, foreground_after=foreground_after,
+                                         foreground_filter=foreground_filter)
         for offset, page in enumerate(pages):
             key = sha(wire([sleep_triage.POLICY, row['event_key'], offset]).encode())
             if key == packet_id:
@@ -173,6 +178,7 @@ def main():
             root = profile['sleep_triage']['state_dir']
     with ExitStack() as stack:
         resolver = None
+        foreground = {}
         telegram_text = voice_transcripts = foreground_voice_transcripts = foreground_direct_inputs = False
         if args.paired_profile:
             paired = json.loads(Path(args.paired_profile).read_text())
@@ -193,6 +199,22 @@ def main():
             foreground_voice_transcripts = paired.get('foreground_voice_transcripts') is True
             foreground_direct_inputs = paired.get('foreground_direct_inputs') is True
             resolver = stack.enter_context(paired_sleep.original_resolver(paired, source, config['human_id']))
+        elif profile and (foreground_path := profile['sleep_triage'].get('foreground_profile')):
+            cursor = json.loads((Path(root) / 'cursor.json').read_text())
+            boundary = cursor.get('foreground_after')
+            check = None
+
+            def exclude(projection):
+                nonlocal check
+                if check is None:
+                    source, _, _, check = stack.enter_context(
+                        paired_sleep.supervised_foreground(foreground_path, binding))
+                    if source['native_observation_after'] != boundary:
+                        raise ValueError('Avatar source boundary differs from the retained review')
+                return check(projection)
+
+            if boundary is not None:
+                foreground.update(foreground_after=boundary, foreground_filter=exclude)
         if args.decision:
             work = stack.enter_context(open(str(Path(binding['inbox']).resolve()) + '.worker.lock', 'a+b'))
             fcntl.flock(work, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -200,7 +222,7 @@ def main():
                                 gateway_original=resolver, telegram_text=telegram_text,
                                 voice_transcripts=voice_transcripts,
                                 foreground_voice_transcripts=foreground_voice_transcripts,
-                                foreground_direct_inputs=foreground_direct_inputs)
+                                foreground_direct_inputs=foreground_direct_inputs, **foreground)
         if args.decision:
             selected = json.loads(Path(args.decision).read_text())
             ledger = CaptureLedger(memory_runtime.load_memory(profile))

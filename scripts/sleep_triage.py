@@ -76,9 +76,11 @@ def dialogue(delta, source, body, role):
     return blocks
 
 
-def pages_for(delta, source, body, *, human_id=None, gateway_original=None):
+def pages_for(delta, source, body, *, human_id=None, gateway_original=None, foreground_filter=None):
     items = []
     for block in dialogue(delta, source, body, 'user'):
+        if foreground_filter is not None and foreground_filter(block['content']):
+            continue
         content = human_text(block['content'], human_id=human_id)
         original = None if content or gateway_original is None else gateway_original(block['content'], turn=block.get('native_turn'))
         if original is not None:
@@ -271,7 +273,8 @@ def delta_bytes(con, row, binding):
     return delta, f"{row['segment']}:file:{row['file_start']}"
 
 
-def source_pages(con, row, binding, *, human_id=None, gateway_original=None):
+def source_pages(con, row, binding, *, human_id=None, gateway_original=None,
+                 foreground_after=None, foreground_filter=None):
     delta, section = delta_bytes(con, row, binding)
     if row['foreground']:
         batch = json.loads(delta)
@@ -285,7 +288,9 @@ def source_pages(con, row, binding, *, human_id=None, gateway_original=None):
                                       received_at=item['received_at'], channel='human_voice_transcription')
                                  for item in batch]))
     return list(pages_for(delta, section, binding['source_instance'], human_id=human_id,
-                          gateway_original=gateway_original))
+                          gateway_original=gateway_original,
+                          foreground_filter=foreground_filter if foreground_after is not None
+                          and row['id'] > foreground_after else None))
 
 
 def context_targets(receipt, page):
@@ -377,6 +382,7 @@ def valid_omission(omit):
 def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=None, human_id=None,
         gateway_original=None, telegram_text=False, voice_transcripts=False,
         foreground_voice_transcripts=False, foreground_direct_inputs=False,
+        foreground_after=None, foreground_filter=None,
         opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
@@ -391,6 +397,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                     foreground_direct_inputs=foreground_direct_inputs)
     if any(channels.values()) and gateway_original is None:
         raise ValueError('paired input channels require an enrolled original resolver')
+    if (foreground_after is None) != (foreground_filter is None):
+        raise ValueError('the Avatar feed and its preceding observation must be selected together')
     if human_id is not None and (type(human_id) is not int or human_id <= 0):
         raise ValueError('paired human ID must be positive')
     root = Path(root)
@@ -433,6 +441,13 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                 current['gateway_originals'] = True
                 current.update({key: True for key, enabled in channels.items() if enabled})
                 checkpoint(cursor, current)
+            if current.get('foreground_after') != foreground_after:
+                if (current.get('foreground_after') is not None or foreground_after != current['after']
+                        or current['page'] or any((root / name).exists()
+                                                   for name in ('dispatch.json','context-dispatch.json'))):
+                    raise ValueError('Avatar intake must start after the settled existing observation')
+                current['foreground_after'] = foreground_after
+                checkpoint(cursor, current)
         else:
             if after is None or after > through:
                 raise ValueError('explicit starting observation within the inbox required')
@@ -441,6 +456,10 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                 current['human_id'] = human_id
             if gateway_original is not None:
                 current['gateway_originals'] = True
+            if foreground_after is not None:
+                if foreground_after != after:
+                    raise ValueError('Avatar intake and new cursor have different observations')
+                current['foreground_after'] = foreground_after
             current.update({key: True for key, enabled in channels.items() if enabled})
             checkpoint(cursor, current)
         active = root / 'dispatch.json'
@@ -452,14 +471,16 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
             row = next_observation(con, current['after'], through)
             if row is None:
                 break
-            if row['foreground'] and not foreground_direct_inputs:
+            if row['foreground'] and not (foreground_direct_inputs or (
+                    foreground_after is not None and row['id'] > foreground_after)):
                 raise ValueError('retained Avatar source requires its paired intake policy')
             packet_id = sha(wire([POLICY, row['event_key'], current['page']]).encode())
             packet = root / 'packets' / (packet_id + '.json')
             existed = packet.exists()
             if packet_count >= MAX_PACKETS and not existed:
                 raise ValueError('triage packet retention limit; reconcile packets before continuing')
-            pages = source_pages(con, row, binding, human_id=human_id, gateway_original=gateway_original) or [[]]
+            pages = source_pages(con, row, binding, human_id=human_id, gateway_original=gateway_original,
+                                 foreground_after=foreground_after, foreground_filter=foreground_filter) or [[]]
             page = pages[current['page']]
             # On a crash after commit, remove only the receipt that that checkpoint consumed.
             for attempt in (active, second):
