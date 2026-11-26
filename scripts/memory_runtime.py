@@ -235,7 +235,8 @@ def run_sleep_triage(value, inbox, binding, result):
         else:
             try:
                 receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
-                                           api_key=os.environ.get(settings["credential_env"]))
+                                           api_key=os.environ.get(settings["credential_env"]),
+                                           human_id=settings.get("human_id"))
             except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
                 attempt = None
                 for name in ("context-dispatch.json", "dispatch.json"):

@@ -57,10 +57,10 @@ def dialogue(delta, source, body, role):
     return block_sources(dict(sources=selected), body)
 
 
-def pages_for(delta, source, body):
+def pages_for(delta, source, body, *, human_id=None):
     page = []
     for block in dialogue(delta, source, body, 'user'):
-        content = human_text(block['content'])
+        content = human_text(block['content'], human_id=human_id)
         for start in range(0, len(content), PIECE_CHARS):
             item = dict(source_id=block['id'], start_char=start,
                         channel=block['channel'], received_at=block['received_at'],
@@ -75,16 +75,18 @@ def pages_for(delta, source, body):
         yield page
 
 
-def human_text(text):
+def human_text(text, *, human_id=None):
     """Isolate human speech from the retained Telecodex controller frame."""
     if not text.startswith('[Interaction controller]\n'):
-        return text
+        return text if human_id is None else ''
     try:
         head, body = text.split('\nCurrent attributed input:\n', 1)
         provenance = next(line.removeprefix('Transport provenance: ') for line in head.splitlines()
                           if line.startswith('Transport provenance: '))
         info = json.loads(provenance)
         if info.get('author') is not None or type(info.get('original_human_author')) is not int:
+            return ''
+        if human_id is not None and info['original_human_author'] != human_id:
             return ''
         if info.get('original_human_author') != info.get('authorized_human'):
             return ''
@@ -228,9 +230,9 @@ def delta_bytes(con, row, binding):
     return delta, f"{row['segment']}:file:{row['file_start']}"
 
 
-def source_pages(con, row, binding):
+def source_pages(con, row, binding, *, human_id=None):
     delta, section = delta_bytes(con, row, binding)
-    return list(pages_for(delta, section, binding['source_instance']))
+    return list(pages_for(delta, section, binding['source_instance'], human_id=human_id))
 
 
 def context_targets(receipt, page):
@@ -309,7 +311,7 @@ def release_rejection(root, active, request_hash, retry):
     active.unlink()
 
 
-def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
+def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_id=None,
         opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
@@ -317,6 +319,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
         raise ValueError('steps must be between 1 and 32')
     if after is not None and (type(after) is not int or after < 0):
         raise ValueError('invalid starting observation')
+    if human_id is not None and (type(human_id) is not int or human_id <= 0):
+        raise ValueError('paired human ID must be positive')
     root = Path(root)
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     if root.is_symlink() or root.stat().st_mode & 0o077:
@@ -341,12 +345,15 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
             if after is not None:
                 raise ValueError('existing cursor must be resumed without --after')
             current = json.loads(cursor.read_text())
-            if current['binding_sha256'] != owner or current['schema'] != POLICY:
+            if (current['binding_sha256'] != owner or current['schema'] != POLICY
+                    or current.get('human_id') != human_id):
                 raise ValueError('triage cursor binding or policy differs')
         else:
             if after is None or after > through:
                 raise ValueError('explicit starting observation within the inbox required')
             current = dict(schema=POLICY, binding_sha256=owner, after=after, page=0)
+            if human_id is not None:
+                current['human_id'] = human_id
             checkpoint(cursor, current)
         active = root / 'dispatch.json'
         second = root / 'context-dispatch.json'
@@ -362,7 +369,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None,
             existed = packet.exists()
             if packet_count >= MAX_PACKETS and not existed:
                 raise ValueError('triage packet retention limit; reconcile packets before continuing')
-            pages = source_pages(con, row, binding) or [[]]
+            pages = source_pages(con, row, binding, human_id=human_id) or [[]]
             page = pages[current['page']]
             # On a crash after commit, remove only the receipt that that checkpoint consumed.
             for attempt in (active, second):
