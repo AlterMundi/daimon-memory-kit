@@ -98,10 +98,7 @@ def run(memory, inbox, state_dir, proposer, context, *, organize=None, max_steps
         held=set()
         outcomes=[]
         cursor=0
-        while len(outcomes)<max_steps:
-            available=[p for p in PHASES if p not in held]
-            if not available:
-                break
+        while len(outcomes)<max_steps and len(held)<len(PHASES):
             phase=PHASES[cursor%len(PHASES)]
             cursor+=1
             if phase in held:

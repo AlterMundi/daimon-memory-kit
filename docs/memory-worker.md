@@ -246,6 +246,10 @@ results end navigation. Distinct requests can advance the review for up to 32
 completed lookup rounds per selection attempt, counting retained rounds across
 worker invocations. The final request uses the retained source excerpts and
 complete originals. It may explicitly defer if the evidence is insufficient.
+For a low-cost daily run, use `max_steps: 3` to visit capture, organization
+and indexing once, and `navigation_steps: 1` to limit capture selection to one
+round. Retained lookups carry over to the next run. Sleep triage has its own
+step budget and runs after the core phases.
 If a paged lookup needs more source context and the final decision defers, the
 worker retains the required byte count. Set a sufficient receiving source limit
 to resume the exact blocked read. That preserves both previous responses and

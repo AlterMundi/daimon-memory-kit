@@ -34,6 +34,21 @@ def test_finite_budget_retains_progress_and_idle_reentry_uses_no_inference(setup
     assert observe(state/'missing')['state']=='unobserved'
 
 
+@pytest.mark.parametrize("capture_state,organization_state",
+                         [("complete","idle"),("complete","pending"),("pending","idle")])
+def test_one_cycle_budget_visits_each_phase_once(setup,monkeypatch,capture_state,organization_state):
+    import memory_worker
+    memory,inbox,state,propose,binding,_,_=setup
+    indexing(monkeypatch)
+    monkeypatch.setattr(memory_worker,'process_once',lambda *a,**kw: dict(state=capture_state))
+
+    result=run(memory,inbox,state,propose,binding,max_steps=3,navigation_steps=1,
+               organize=lambda:dict(state=organization_state))
+
+    assert [outcome['phase'] for outcome in result['outcomes']]==['capture','organization','index']
+    assert set(result['status']['phases'])=={'capture','organization','index'}
+
+
 def test_unconfigured_organization_is_not_healthy_or_a_repeated_model_loop(setup,monkeypatch):
     indexing(monkeypatch)
     memory,inbox,state,propose,binding,calls,_=setup
