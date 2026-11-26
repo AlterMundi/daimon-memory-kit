@@ -129,10 +129,12 @@ def profile(path):
     if "sleep_triage" in value:
         settings = value["sleep_triage"]
         if (not isinstance(settings, dict)
-                or set(settings) - {"provider_blocked"} != {
+                or set(settings) - {"provider_blocked", "paired_profile"} != {
                     "state_dir", "initial_after", "steps", "credential_env",
                     "source_review_report", "max_age_seconds"}
                 or ("provider_blocked" in settings and settings["provider_blocked"] != "access_denied")
+                or ("paired_profile" in settings and (not isinstance(settings["paired_profile"], str)
+                                                      or not Path(settings["paired_profile"]).is_absolute()))
                 or any(not isinstance(settings[k], str) or not Path(settings[k]).is_absolute()
                        for k in ("state_dir", "source_review_report"))
                 or not Path(settings["state_dir"]).resolve().is_relative_to(Path(value["state_dir"]).resolve())
@@ -205,9 +207,69 @@ def run(value):
     )
     if 'routine_backup' in value.get('snapshots',{}):
         refresh_backup(value,inbox,result)
-    if "sleep_triage" in value:
+    if value.get("sleep_triage", {}).get("paired_profile"):
+        run_paired_sleep(value, inbox, result)
+    elif "sleep_triage" in value:
         run_sleep_triage(value, inbox, binding, result)
     return result
+
+
+def run_paired_sleep(value, inbox, result):
+    """Use the current worker's single Decisions allowance on its paired Conversation."""
+    from codex_coordinator import checkpoint
+    import paired_sleep
+    from provider_status import ACTIONS, Alerts, ProviderProblem
+    import sleep_health
+
+    settings = value["sleep_triage"]
+    primary = Path(value["state_dir"]) / "worker-status.json"
+    alerts = Alerts(inbox)
+    operation = "sleep-triage:paired-conversation"
+    with open(str(inbox.path) + ".worker.lock", "a+b") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if json.loads(primary.read_text()) != result["status"]:
+            raise ValueError("another worker advanced; preserve its status")
+        try:
+            legacy = Path(settings["state_dir"])
+            if any((legacy / filename).exists() for filename in ("dispatch.json", "context-dispatch.json")):
+                raise ValueError("legacy triage dispatch requires reconciliation")
+            profile_path = Path(settings["paired_profile"])
+            if profile_path.is_symlink() or profile_path.stat().st_uid != os.getuid() or profile_path.stat().st_mode & 0o077:
+                raise ValueError("private paired profile required")
+            paired = json.loads(profile_path.read_bytes())
+            root = Path(paired["state_dir"])
+            if (root.is_symlink() or root.stat().st_uid != os.getuid() or root.stat().st_mode & 0o077
+                    or paired["being_ref"] != value["context"]["subject"]
+                    or paired["body_ref"] != value["context"]["source_instance"]):
+                raise ValueError("paired Conversation owner differs from the supervised worker")
+            with (root / "paired.lock").open("ab") as source_lock:
+                fcntl.flock(source_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                outcome = paired_sleep.run(paired, root, worker_settings=settings)
+                checkpoint(root / "receiving.json", outcome)
+        except (OSError, ValueError, TypeError, KeyError, sqlite3.Error):
+            outcome = dict(state="blocked", reason_code="observation_unreadable")
+
+        receipt = dict(outcome.get("triage", {}), state=outcome["state"],
+                       source="paired_conversation", capture_complete=outcome.get("capture_complete") is True)
+        if outcome["state"] == "blocked":
+            code = receipt.get("reason_code", outcome.get("reason_code"))
+            code = code if code in ACTIONS else "observation_unreadable"
+            incident = operation + ":source" if code == "observation_unreadable" else operation
+            failure = ProviderProblem("dmk", incident, dict(code=code))
+            receipt["reason_code"] = code
+            receipt["alert_id"] = alerts.report(incident, "selection", failure, reopen=True)
+            result["status"]["state"] = "pending"
+        else:
+            if receipt["capture_complete"]:
+                alerts.resolve(operation + ":source")
+            if receipt.get("classified_pages"):
+                alerts.resolve(operation)
+        result["status"].update(sleep_triage=receipt, updated_ns=time.time_ns())
+        result["status"]["sleep_health"] = sleep_health.health(
+            value["state_dir"], settings["source_review_report"],
+            max_age_seconds=settings["max_age_seconds"], worker=result["status"],
+        )
+        checkpoint(primary, result["status"])
 
 
 def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None):
