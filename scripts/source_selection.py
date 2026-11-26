@@ -1,6 +1,8 @@
 """Source-block selection reused from the qualified durable-recall pilot."""
 import json
 
+from assertion_review import complete_source_envelopes
+
 READING_GUIDANCE = (
     "Retained source blocks preserve speakers and evidence modes. A Human report "
     "is something the human told the being, not proof of the receiving body's "
@@ -17,12 +19,12 @@ READING_GUIDANCE = (
 )
 
 
-def source_decision(value, sources, canon):
+def source_decision(value, sources, canon, *, reuse_source_envelopes=False):
     """Select source blocks; never let generated prose become factual raw text.
 
     This pilot adapter preserves the native writer's closed decision schema.
     Original blocks remain quoted with their channel/receiver, including their
-    qualifications. Existing memory blocks carry stable ID/revision provenance.
+    qualifications. The selection records the existing memory ID and revision.
     """
     if not isinstance(value, dict) or not isinstance(value.get('records'), list):
         raise ValueError('source selection needs a records array')
@@ -44,6 +46,9 @@ def source_decision(value, sources, canon):
             source = available[ref]
             if ref.startswith('memory:'):
                 text = source['raw']
+                if reuse_source_envelopes and complete_source_envelopes(text, include_nested=False):
+                    blocks.append(text)
+                    continue
                 label = f"Previously retained memory {source['id']}, revision {source['revision']}"
             else:
                 text = source['content']

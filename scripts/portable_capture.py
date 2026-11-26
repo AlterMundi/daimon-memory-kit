@@ -260,7 +260,7 @@ def block_messages(sources, canon, binding):
                 'current_canon':canon})}]
 
 
-def selected_decision(value, sources, canon):
+def selected_decision(value, sources, canon, *, reuse_source_envelopes=False):
     if (not isinstance(value, dict) or set(value) - {'outcome','reason','records','links'}
             or not isinstance(value.get('records'), list) or not isinstance(value.get('links'),list)
             or value.get('outcome') not in {'applied','omitted','deferred'}
@@ -320,7 +320,7 @@ def selected_decision(value, sources, canon):
             if type(link[endpoint]) is str and link[endpoint] not in {r['key'] for r in value['records']}:
                 raise ValueError('string link endpoint must be a selected record key')
     # Validate proposed titles and references before adding causal context.
-    source_decision(value, sources, canon)
+    source_decision(value, sources, canon, reuse_source_envelopes=reuse_source_envelopes)
     ordering = {s['id']: i for i, s in enumerate(sources)}
     for record in value['records']:
         refs = set(record['source_ids'])
@@ -334,7 +334,7 @@ def selected_decision(value, sources, canon):
                     refs.add(dep)
                     pending.append(dep)
         record['source_ids'] = sorted(refs, key=lambda r: (ordering.get(r, -1), r))
-    decision = source_decision(value, sources, canon)
+    decision = source_decision(value, sources, canon, reuse_source_envelopes=reuse_source_envelopes)
     aliases = {}
     keep = []
     by_key = {r['key']: r for r in decision['records']}

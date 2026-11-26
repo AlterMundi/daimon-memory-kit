@@ -98,6 +98,36 @@ def test_lookup_success_survives_provider_failure_on_next_request(setup):
     assert result['state']=='complete' and len(calls)==3
 
 
+def test_repeated_updates_preserve_attributed_envelopes_without_recursive_escaping():
+    from assertion_review import source_blocks
+    from portable_capture import selected_decision
+
+    original_text = 'Jo used "fixture" at C:\\work.\nUncertain date.'
+    initial = dict(id='first', content=original_text, channel='human_message',
+                   originating_body='fixture:body', status='new')
+    decision = dict(outcome='applied', reason='Observed source', records=[
+        dict(key='jo', operation='add', title='Jo', shelf='episodes', source_ids=['first'])], links=[])
+    raw = selected_decision(decision, [initial], [])['records'][0]['raw']
+    expected = [original_text]
+    for revision in range(1, 13):
+        origin = dict(id=7, record_uid='record', revision=revision, raw=raw)
+        evidence = dict(initial, id=f'new-{revision}', content=f'Jo reported revision {revision} at C:\\data.')
+        update = dict(outcome='applied', reason='New detail', records=[
+            dict(key='jo', operation='update', title='Jo', chapter_id=7,
+                 expected_revision=revision, source_ids=['memory:record', evidence['id']])], links=[])
+        prior = raw
+        raw = selected_decision(update, [evidence], [origin],
+                                reuse_source_envelopes=True)['records'][0]['raw']
+        assert raw.startswith(prior + '\n\n')
+        assert len(raw) - len(prior) < 180
+        expected.append(evidence['content'])
+    assert [block['quotation'] for block in source_blocks(raw)] == expected
+
+    # A job prepared before the change must keep the historical decision bytes.
+    legacy = selected_decision(update, [evidence], [origin])['records'][0]['raw']
+    assert legacy.startswith('Previously retained memory 7, revision 12:\n' + json.dumps(prior))
+
+
 def test_unread_update_and_changed_evidence_never_overwrite_memory(setup):
     memory,inbox,state,_,binding,_,_=setup
     cid=memory.add_text('episodes','Jo','Jo discussed a clamp.')

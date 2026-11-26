@@ -38,6 +38,7 @@ COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR = '48be301c0d9f3389f6324d9d1e33dd1634a717
 COMPATIBLE_SOURCE_LIMIT_PREDECESSOR = '608c197d046a078ee4367bacda2c92ca95225ccf3925a62eec007615a44fa486'
 COMPATIBLE_TOOL_MEDIA_PREDECESSOR = '3ab7b0039331a8674af68a98b245a42006f540368533d6f0b998837bba87dce1'
 COMPATIBLE_LOOKUP_LIMIT_PREDECESSOR = '8ffbc7d9484cb85066ac47c5e15ea530841eaaaeaacfe118781578e484f0bbc6'
+COMPATIBLE_SOURCE_ENVELOPE_PREDECESSOR = 'ef9003d640f0e935791889fad6538991d6754387ae5b861b26571b107d9abe67'
 COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR = 'd5fb7e45581ecc4e2aa9c0a53fe563024215050e544cb5ab11fb5739588bb498'
 COMPATIBLE_CONTEXT_BOUND_PREDECESSOR = '460e04fbd1a48982ecb4edb6df96d8b6648c41c33392254435a1481258ad207d'
 COMPATIBLE_PAGE_BUDGET_PREDECESSOR = 'b3b37f136837afd72ca7ded81a85c68a4db3d013ecd6014f250e80e27e3d9542'
@@ -62,7 +63,8 @@ def compatible_code_hash(fingerprint, *, current=None):
                            COMPATIBLE_PAGE_BUDGET_PREDECESSOR, COMPATIBLE_CONTEXT_BOUND_PREDECESSOR,
                            COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR, COMPATIBLE_COMPACT_PACKET_PREDECESSOR,
                            COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR, COMPATIBLE_SOURCE_LIMIT_PREDECESSOR,
-                           COMPATIBLE_TOOL_MEDIA_PREDECESSOR, COMPATIBLE_LOOKUP_LIMIT_PREDECESSOR}
+                           COMPATIBLE_TOOL_MEDIA_PREDECESSOR, COMPATIBLE_LOOKUP_LIMIT_PREDECESSOR,
+                           COMPATIBLE_SOURCE_ENVELOPE_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -90,7 +92,8 @@ def _refresh_changed_context(memory, job, job_path):
             raise ValueError('title reconciliation remains pending after two attempts; inspect retained work')
         with memory.connect() as con:
             decision = selection.selected_decision(job['proposal']['selection'],
-                selection_navigation.effective_sources(job), job.get('navigation',{}).get('canon',[]))
+                selection_navigation.effective_sources(job), job.get('navigation',{}).get('canon',[]),
+                reuse_source_envelopes=job['inputs'].get('reuse_source_envelopes', False))
             job['title_conflicts'] = title_conflicts(con, decision)
         job['title_reconciliations'] = job.get('title_reconciliations', 0)+1
     job.setdefault('prior_attempts',[]).append(dict(reason=row['reason'],
@@ -262,6 +265,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             memory.init_db()
             inputs = dict(observations=observations, sources=sources, revisions=revisions,
                           context=context, supporting_observations=list(latest.values()),
+                          reuse_source_envelopes=True,
                           source_window=dict(group_hash=digest(group),progress=window['progress'],
                               complete=window['complete'],budget_bytes=budget_used,
                               used_bytes=window['used_bytes']))
@@ -337,7 +341,9 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
             job['state'] = 'proposed'
             checkpoint(job_path,job)
         canon = job.get('navigation',{}).get('canon',[])
-        decision = selection.selected_decision(job['proposal']['selection'], selection_navigation.effective_sources(job), canon)
+        decision = selection.selected_decision(job['proposal']['selection'],
+            selection_navigation.effective_sources(job), canon,
+            reuse_source_envelopes=job['inputs'].get('reuse_source_envelopes', False))
         if decision['outcome'] == 'deferred':
             result = {'state':'deferred','reason':decision['reason'],
                       'processed_through':index['after'],'proposer_invoked':proposer_invoked}

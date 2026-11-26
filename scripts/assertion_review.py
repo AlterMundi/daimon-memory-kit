@@ -333,12 +333,12 @@ def complete_source_envelopes(text, depth=0, *, include_nested=True):
             return False
         start = match.end()
         try:
-            value, consumed = decoder.raw_decode(text[start:])
+            value, end = decoder.raw_decode(text, start)
         except ValueError:
             return False
         if not isinstance(value, str):
             return False
         if include_nested and match.group(1).startswith('Previously retained memory ') and not complete_source_envelopes(value, depth+1):
             return False
-        cursor, count = start + consumed, count + 1
+        cursor, count = end, count + 1
     return count > 0 and not text[cursor:].strip()
