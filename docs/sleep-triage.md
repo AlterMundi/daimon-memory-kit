@@ -48,9 +48,9 @@ potential memory with native record/revision history, a work-map change with its
 owner's selected source packet, and a Bitácora candidate with the existing
 source packet and institutional intake. Carry corrections and attribution, and
 keep private evidence private. A classifier result is neither a write receipt
-nor authority to share. Preserve editorial discretion and Matrix receiving
-choice. These destination applications and their deduplication still need
-receiving qualification.
+nor authority to share. Preserve editorial discretion and Matrix receiving choice. The finite DMK review below
+applies a selected memory or records its omission. Work-map and Bitácora
+application remain with their owning surfaces.
 
 ## Worker entry point and recovery
 
@@ -96,6 +96,35 @@ copy is retained by this stage. Retire or move a packet only after its owning
 review or handoff has retained its receipt and source pointer. At capacity,
 preserve the cursor and reconcile the existing packets before continuing.
 The capture journal remains the owner of exact sources.
+
+## Review a candidate for the canonical library
+
+Use the same owner-selected worker profile. Inspect one item from a retained
+packet, then search the canonical library and read the relevant existing records
+and revisions. The review command reconstructs the exact human excerpt and only
+the assistant context already selected for that page from the original capture
+journal. Run it in the owner's private environment. The output may contain
+private dialogue.
+
+```bash
+python scripts/sleep_memory_review.py --profile "$profile" --packet "$packet" --item 0
+python scripts/sleep_memory_review.py --profile "$profile" --packet "$packet" --item 0 --decision "$selection"
+```
+
+The decision file contains the inspected `fingerprint` and a CaptureLedger
+`decision` with an explicit `applied` or `omitted` outcome and reason. Apply at
+most one memory per item. Use an expected revision for a correction and omit a
+duplicate that adds no meaningful evidence. The original citation and attribution
+come from the capture journal. Write a self-contained memory that preserves the
+subject, uncertainty, time precision and actual outcome. High probabilities
+only shortlist evidence. They do not assess meaning or authorize a write.
+
+An exact reviewed replay returns the original receipt; a changed decision is
+refused. Verify the canonical read and index separately. Use the existing
+consolidation preview/apply contract for a derived account only when meaningful
+synthesis is supported by the selected originals. The daily worker's account
+reconciler still only updates existing accounts. This foreground command is
+the operator path for reviewed Decisions admission.
 
 ## Verify on every configured cycle
 
