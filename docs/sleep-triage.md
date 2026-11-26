@@ -130,3 +130,12 @@ wire shape, not classifier quality or actual provider acceptance.
 Version 2 pins the human-first request policy. Retained version 1 runs require
 explicit reconciliation before adopting this version. Do not reinterpret their
 in-flight pages as human-first or redispatch a retained attempt.
+
+When the selected API project has a confirmed model-access denial, select
+`"provider_blocked": "access_denied"` in the optional sleep profile. The
+existing daily invocation reports one scoped access incident and leaves the
+triage cursor and pending evidence untouched. It submits no dialogue and makes
+no API request for the blocked phase. Qualify the restored project with a
+fictional example and remove the block only after it returns typed answers.
+The next successful classification resolves the incident. A quiet inbox never
+proves that the model is accessible.

@@ -179,3 +179,41 @@ def test_telecodex_human_frame_excludes_controller_and_session_helpers():
            'Vino Ada.\n\nReturn your answer followed by <daimon-result>')
     assert sleep_triage.human_text(frame)=='Vino Ada.'
     assert sleep_triage.human_text(frame.replace('"author":null','"author":{"kind":"session_request"}'))==''
+
+
+def test_daily_worker_surfaces_confirmed_provider_denial_without_sending(context, tmp_path, monkeypatch):
+    import memory_runtime
+    from capture_inbox import Inbox
+    from provider_status import Alerts
+
+    binding, source, event = context
+    append(source, turn('incident', 'Renata visited.'))
+    capture(binding, event)
+    inbox = Inbox(binding['inbox'], binding)
+    selected = tmp_path / 'blocked-worker'
+    selected.mkdir()
+    status = dict(schema='hmk.worker-status/v1', state='idle', phase=None,
+                  observed=True, updated_ns=sleep_triage.time.time_ns(),
+                  owner='fixture-owner', phases={})
+    path = selected / 'worker-status.json'
+    path.write_text(json.dumps(status))
+    settings = dict(state_dir=str(selected / 'triage'), initial_after=0, steps=1,
+                    credential_env='DMK_TEST_DECISIONS_KEY', source_review_report=str(tmp_path / 'missing'),
+                    max_age_seconds=60, provider_blocked='access_denied')
+    config = dict(state_dir=str(selected), sleep_triage=settings)
+    real_run = sleep_triage.run
+    monkeypatch.setattr(sleep_triage, 'run', lambda *args, **kwargs: pytest.fail('submitted real input'))
+    result = {'status': status}
+    for _ in range(2):
+        memory_runtime.run_sleep_triage(config, inbox, binding, result)
+    assert result['status']['state'] == 'pending'
+    assert result['status']['sleep_health']['dmk']['sleep_triage']['reason_code'] == 'access_denied'
+    assert not (selected / 'triage').exists()
+    notice, = Alerts(inbox).status()['alerts']
+    assert notice['state'] == 'open'
+    settings.pop('provider_blocked')
+    monkeypatch.setenv('DMK_TEST_DECISIONS_KEY', 'fictional-test')
+    monkeypatch.setattr(sleep_triage, 'run', lambda *a, **kw: real_run(*a, **kw, opener=fake_decisions))
+    memory_runtime.run_sleep_triage(config, inbox, binding, result)
+    assert result['status']['sleep_triage']['classified_pages'] == 1
+    assert Alerts(inbox).status()['alerts'][0]['state'] == 'resolved'

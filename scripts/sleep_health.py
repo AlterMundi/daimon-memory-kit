@@ -12,15 +12,16 @@ def fresh(timestamp, now, max_age):
     return type(timestamp) is int and 0 <= now - timestamp <= max_age
 
 
-def health(worker_dir, source_report, *, max_age_seconds, now_ns=None):
+def health(worker_dir, source_report, *, max_age_seconds, now_ns=None, worker=None):
     if type(max_age_seconds) is not int or max_age_seconds < 1:
         raise ValueError('positive freshness limit required')
     now = time.time_ns() if now_ns is None else now_ns
     limit = max_age_seconds * 1_000_000_000
-    try:
-        worker = observe(worker_dir)
-    except (OSError, ValueError):
-        worker = {}
+    if worker is None:
+        try:
+            worker = observe(worker_dir)
+        except (OSError, ValueError):
+            worker = {}
     phases = worker.get('phases', {})
     fresh_worker = fresh(worker.get('updated_ns'), now, limit)
     dmk = {}
@@ -41,6 +42,12 @@ def health(worker_dir, source_report, *, max_age_seconds, now_ns=None):
         dmk[phase] = dict(status=status, phase_state=state, reason_code=row.get('reason_code'))
         if type(row.get('minimum_required_bytes')) is int:
             dmk[phase]['minimum_required_bytes'] = row['minimum_required_bytes']
+    if 'sleep_triage' in worker:
+        triage = worker['sleep_triage']
+        phase = triage['state']
+        status = ('stale' if not fresh_worker else 'blocked' if phase == 'blocked'
+                  else 'observed' if phase == 'caught_up' else 'pending')
+        dmk['sleep_triage'] = dict(status=status, phase_state=phase, reason_code=triage.get('reason_code'))
     try:
         report = json.loads(Path(source_report).read_text())
         if report.get('schema') != 'dm.source-review/v2' or type(report['observed_at_ms']) is not int:
