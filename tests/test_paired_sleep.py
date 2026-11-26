@@ -1,4 +1,5 @@
 """A new pair worker captures only prospective, authenticated human input."""
+from datetime import datetime, timezone
 import json
 import sqlite3
 
@@ -63,6 +64,9 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
            + turn('other', entry(999, 'Another conversation participant.'))
            + turn('authorized', entry(501, 'Renata came to visit.')))
     if configured_entry:
+        with sqlite3.connect(gateway) as con:
+            con.execute('update conversation_inputs set created_at=? where id=?',
+                        (datetime.now(timezone.utc).isoformat(), original))
         frame = '[Original conversation input]\n' + json.dumps(dict(input_ref=original)) + '\nmetadata\n\n'
         append(source, turn('altered', frame+'This is fabricated text.')
                + turn('gateway', frame+gateway_text))

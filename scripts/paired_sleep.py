@@ -68,7 +68,7 @@ def enrolled_thread(profile):
     return (*rows[0], *row)
 
 
-def gateway_original(con, coordinates, native, block):
+def gateway_original(con, coordinates, native, block, *, not_before=None):
     """Accept a native reference only when its text and receiving journal agree."""
     header, separator, text = block.partition('\n\n')
     if header.startswith('[Device-reported playback context]\n'):
@@ -98,6 +98,10 @@ def gateway_original(con, coordinates, native, block):
     original = value.get('text')
     if not isinstance(original, str) or text != original or value.get('tribu_source'):
         return None
+    if not_before is not None:
+        received = datetime.fromisoformat(received_at)
+        if received.tzinfo is None or received < not_before:
+            return None
     if phase in {'sending', 'steering', 'uncertain'} or (
             phase == 'accepted' and (not linked or turn not in {'completed', 'failed', 'cancelled'})):
         raise ValueError('Gateway original has no settled native linkage')
@@ -113,7 +117,8 @@ def original_resolver(profile, binding):
         yield None
     else:
         with readonly(registry) as con:
-            yield partial(gateway_original, con, coordinates, binding['selected_session_id'])
+            boundary = datetime.fromisoformat(binding['sessions_started_at_or_after'])
+            yield partial(gateway_original, con, coordinates, binding['selected_session_id'], not_before=boundary)
 
 
 def enroll(profile, root):
