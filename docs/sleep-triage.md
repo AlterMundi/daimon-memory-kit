@@ -196,7 +196,12 @@ Use `paired_sleep.py enroll --profile "$profile"` on an authorized receiver.
 The profile selects its owner-local Conversation registry (`conversation_db`),
 Codex state store (`native_db`), rollout root (`source_root`), private
 `state_dir`, exact `being_ref` and `body_ref`, and an optional observation path
-recorded as `source_review_report`. Keep the profile private. Authorize the
+recorded as `source_review_report`. Set `conversation_config` to the receiving
+Gateway configuration when its `[interaction]` selects the general conversation.
+DMK verifies the configuration's absolute `db_path` against `conversation_db`
+and matches its owner, chat and topic against the active registry entry. Existing
+direct General topic profiles can omit `conversation_config`. Keep the profile
+private. Authorize the
 forward source before enrollment. The operator binds the paired human's active
 general entry and records its current byte boundary. New input must carry that
 human's authenticated ingress attribution. An unresolved replacement stops

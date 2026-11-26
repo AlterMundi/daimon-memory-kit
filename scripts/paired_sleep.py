@@ -9,6 +9,7 @@ from pathlib import Path
 import sqlite3
 import sys
 import time
+import tomllib
 
 from capture_inbox import Inbox
 from codex_coordinator import checkpoint
@@ -25,13 +26,29 @@ def readonly(path):
 
 def enrolled_thread(profile):
     """Resolve only the current paired human's enrolled general entry."""
-    with readonly(profile['conversation_db']) as con:
-        rows = con.execute('''
+    registry = Path(profile['conversation_db']).resolve(strict=True)
+    config_path = profile.get('conversation_config')
+    if config_path is None:
+        selection = 's.chat_id = u.tg_user_id AND s.thread_id = 1'
+        coordinates = ()
+    else:
+        with Path(config_path).open('rb') as source:
+            config = tomllib.load(source)
+        configured_registry = Path(config['db_path'])
+        if not configured_registry.is_absolute() or configured_registry.resolve(strict=True) != registry:
+            raise ValueError('Conversation configuration and registry differ')
+        entry = config['interaction']
+        coordinates = (entry['human_id'], entry['chat_id'], entry['topic_id'])
+        if any(type(value) is not int or value == 0 for value in coordinates):
+            raise ValueError('invalid configured Conversation coordinates')
+        selection = 's.creator_user_id = ? AND s.chat_id = ? AND s.thread_id = ?'
+    with readonly(registry) as con:
+        rows = con.execute(f'''
             SELECT s.creator_user_id, s.codex_thread_id
               FROM sessions s JOIN users u ON u.tg_user_id = s.creator_user_id
-             WHERE u.allowed=1 AND s.chat_id = u.tg_user_id AND s.thread_id=1
-               AND s.force_fresh_thread=0 AND length(s.codex_thread_id)>0
-        ''').fetchall()
+             WHERE u.allowed=1 AND s.force_fresh_thread=0 AND length(s.codex_thread_id)>0
+               AND {selection}
+        ''', coordinates).fetchall()
     if len(rows) != 1:
         raise ValueError('one active paired general conversation is required')
     with readonly(profile['native_db']) as con:
