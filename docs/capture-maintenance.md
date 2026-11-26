@@ -245,3 +245,10 @@ This starts after the verified header, retains the configured per-turn scope,
 and reuses `drain --max-steps` to process bounded windows. Ordinary forward
 activation still begins at the end of its selected file. No inference occurs
 during capture or drain.
+
+If a completed response has exactly one premature closing brace after its
+outcome and reason, `repair_selection_response.py --framing-only` can preserve
+the decision without another model call. It rejects duplicate keys, additional
+documents and changes to the source evidence. The original dispatch and any
+earlier uncertain reviewer remain retained. Normal producer admission remains
+authoritative.
