@@ -152,7 +152,7 @@ def main():
                     or Path(source['inbox']).resolve() != (paired_state/'capture.sqlite').resolve()):
                 raise ValueError('paired source differs from the canonical memory owner')
             binding, root = source, paired_state/'triage'
-            resolver = stack.enter_context(paired_sleep.original_resolver(paired, source))
+            resolver = stack.enter_context(paired_sleep.original_resolver(paired, source, config['human_id']))
         if args.decision:
             work = stack.enter_context(open(str(Path(binding['inbox']).resolve()) + '.worker.lock', 'a+b'))
             fcntl.flock(work, fcntl.LOCK_EX | fcntl.LOCK_NB)
