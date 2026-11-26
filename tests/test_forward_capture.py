@@ -281,3 +281,38 @@ def test_turn_scope_can_arrive_after_an_early_hook(context):
     append(f,line('turn_context',dict(turn_id='new',cwd='/work')))
     append(f,line('response_item',dict(type='message',role='user',content=[dict(type='input_text',text='Now scoped.')])))
     assert capture(b,e)['capture_complete']
+
+
+def test_explicit_history_drains_one_existing_session_in_bounded_windows(tmp_path):
+    root = tmp_path/'sources'
+    root.mkdir()
+    selected = '01234567-89ab-cdef-0123-456789abcdef'
+    binding = dict(schema='hmk.codex-hook-binding/v2', subject='fixture:ilex',
+                   source_instance='fixture:desk', source_root=str(root),
+                   allowed_cwds=['/work'], inbox=str(tmp_path/'inbox.sqlite'),
+                   max_source_bytes=1024, sessions_started_at_or_after='2026-10-13T00:00:00Z')
+    with pytest.raises(ValueError, match='one exact native session'):
+        activate(binding, tmp_path/'before.sqlite', include_selected_history=True)
+    binding['selected_session_id'] = selected
+    f = root/f'rollout-{selected}.jsonl'
+    header = line('session_meta', dict(id=selected, cwd='/work', timestamp='2026-10-14T00:00:00Z'))
+    turns = [turn(str(i), f'Selected experience {i}. ' + 'x'*100) for i in range(8)]
+    f.write_bytes(header+b''.join(turns))
+    (root/'elsewhere.jsonl').write_bytes(b'unrelated data')
+    result = activate(binding, tmp_path/'before.sqlite', read_budget_bytes=600,
+                      include_selected_history=True)
+    assert result['baseline_files'] == 1 and result['selected_history'] is True
+    payload = dict(hook_event_name='Stop', session_id=selected, cwd='/work',
+                   transcript_path=str(f))
+    first = capture(binding, payload)
+    assert not first['capture_complete'] and first['remaining_bytes'] > 0
+    for _ in range(12):
+        if capture(binding, payload)['capture_complete']:
+            break
+    else:
+        pytest.fail('selected history did not drain')
+    inbox = Inbox(binding['inbox'], binding)
+    with inbox.connect() as conn:
+        rows = conn.execute('SELECT revision FROM heads ORDER BY revision').fetchall()
+    assert [inbox.restore(row['revision']) for row in rows] == [header+raw for raw in turns]
+    assert capture(binding, payload)['revisions'] == []

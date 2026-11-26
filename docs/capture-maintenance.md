@@ -232,3 +232,10 @@ inventories only the matching rollout and verifies the session header.
 Keep the owner's source selection and retention policy separate from the path
 or UUID readback. Adding the selector changes the immutable inbox binding.
 Do not rewrite an existing inbox or reset its cursor to install it.
+
+When the existing conversation is explicitly selected for historical intake,
+activate an unused exact-session inbox with `--include-selected-history`.
+This starts after the verified header, retains the configured per-turn scope,
+and reuses `drain --max-steps` to process bounded windows. Ordinary forward
+activation still begins at the end of its selected file. No inference occurs
+during capture or drain.
