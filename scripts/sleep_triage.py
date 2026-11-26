@@ -22,8 +22,9 @@ from sleep_usage import summarize
 MODEL = 'gpt-6-luna'
 ENDPOINT = 'https://api.openai.com/v1/decisions'
 POLICY = 'dmk.sleep-triage/v2'
+LEGACY_MEMORY_PRIORITY = 'something of lasting value that would help this being recognize its history, understand what changed, or find the thread again. Visits, encounters, relationships, first evidenced appearances of ideas, preferences and lessons are examples, never a closed list. Casual disclosures count. Routine work status alone does not'
 ROUTES = {
-    'memory': 'something of lasting value that would help this being recognize its history, understand what changed, or find the thread again. Visits, encounters, relationships, first evidenced appearances of ideas, preferences and lessons are examples, never a closed list. Casual disclosures count. Routine work status alone does not',
+    'memory': 'a memorable interaction or lived experience, including people, relationships, places and what made it matter. Casual disclosures, evolving ideas and enduring preferences may qualify. A lasting decision or transferable lesson may qualify if it adds value beyond the project record. Omit operational details already answered there',
     'work_map': 'a meaningful change to a shared project, relationship between efforts, decision, actual milestone or blocker that changes the shared picture. Routine commands and minor status do not count',
     'bitacora': 'source evidence for a potential story: a meaningful human question, discovery, obstacle, turning point or outcome that could matter outside this task. Routine progress and a proposal without a turning point are insufficient',
 }
@@ -100,7 +101,7 @@ def human_text(text, *, human_id=None):
         return ''
 
 
-def request_for(page, *, context=(), targets=None):
+def request_for(page, *, context=(), targets=None, legacy_memory_priority=False):
     evidence = [dict(item=idx, channel=piece['channel'],
                      received_at=piece['received_at'], text=piece['text'])
                 for idx, piece in enumerate(page) if targets is None or idx in targets]
@@ -109,6 +110,8 @@ def request_for(page, *, context=(), targets=None):
         if targets is not None and idx not in targets:
             continue
         for route, description in ROUTES.items():
+            if route == 'memory' and legacy_memory_priority:
+                description = LEGACY_MEMORY_PRIORITY
             questions.append(dict(type='predicate', name=f'{route}_{idx}', instructions=(
                 f'Does item {idx} in the supplied dialogue contain {description}? '
                 'Use neighboring items to disambiguate, but judge evidence in the named item. '
@@ -377,11 +380,20 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
                         in current.get('consumed_dispatches', [])):
                     attempt.unlink()
             request = request_for(page) if page else None
+            legacy_memory_priority = False
             # Fence identical text from distinct source windows without sending
             # native identifiers to the provider.
             if request:
                 scope = sha(wire([owner, row['event_key'], current['page']]).encode())
                 request['input'][0]['content'][0]['data']['window'] = scope
+                if active.exists():
+                    retained_hash = json.loads(active.read_text())['request_sha256']
+                    if sha(wire(request).encode()) != retained_hash:
+                        legacy = request_for(page, legacy_memory_priority=True)
+                        legacy['input'][0]['content'][0]['data']['window'] = scope
+                        if sha(wire(legacy).encode()) == retained_hash:
+                            request = legacy
+                            legacy_memory_priority = True
             if retry and active.exists() and json.loads(active.read_text())['state'] != 'complete':
                 if request is None or not active.exists() or not api_key:
                     raise ValueError('current rejected request and credential required')
@@ -392,7 +404,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, human_
             context = assistant_context(con, row, binding, [page[i] for i in targets]) if targets else []
             followup = None
             if context:
-                contextual = request_for(page, context=context, targets=targets)
+                contextual = request_for(page, context=context, targets=targets,
+                                         legacy_memory_priority=legacy_memory_priority)
                 contextual['input'][0]['content'][0]['data']['window'] = scope
                 if retry:
                     if not second.exists() or not api_key:
