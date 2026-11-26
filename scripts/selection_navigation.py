@@ -21,7 +21,10 @@ for pertinent previous encounters, participants and accounts when deciding wheth
 new material changes an existing memory. There is no whole-corpus inventory in
 this prompt: an empty current_canon is not proof of an empty database. Search
 results are navigation, not factual evidence or proof of absence. Follow relevant
-neighbors and read all pages of originals you need. Updates and links to existing
+neighbors and read all pages of originals you need. An original already present
+in current_canon is complete at the shown revision. Use it directly. For an
+incomplete read, continue from the latest next_offset for that original.
+Updates and links to existing
 records require a completely read current record, with its exact chapter ID and
 revision. For read/history, expected_revision is the current revision observed in
 search (current_revision on a historical match, not its old revision); for search
@@ -120,6 +123,9 @@ def _lookup(reader, request, state):
     if request['action'] != 'read':
         return result
     uid = request['record_uid']
+    if any(record['record_uid'] == uid and record['revision'] == revision
+           for record in state['canon']):
+        return result
     part = state['partial'].get(uid)
     offset = request['offset']
     if offset == 0:

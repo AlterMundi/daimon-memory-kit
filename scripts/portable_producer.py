@@ -29,6 +29,8 @@ COMPATIBLE_WINDOW_PREDECESSOR = '56eb7b559a17f26943ad84074c4e28e984d96b72073e0d0
 COMPATIBLE_ELASTIC_PREDECESSOR = '1c25d55ba67012a1bf3059561521e96d25dc335d7bfc47ee5856defc9933a5fd'
 # This successor only changes indexing alerts, not preparation or admission.
 COMPATIBLE_INDEX_ALERT_PREDECESSOR = '531dcdaa9ad0a216af8fd57910fc3eef3631012bd9665f6b43142a20e166b59f'
+# Rereading a page from a verified revision now preserves its complete evidence.
+COMPATIBLE_NAVIGATION_PREDECESSOR = '6daaf7c94e51e6a112ed0ea452b36a604e342602406d982a996abf3794969632'
 
 
 class CanonicalContextChanged(ValueError):
@@ -45,7 +47,8 @@ def _code_hash():
 
 def compatible_code_hash(fingerprint, *, current=None):
     return fingerprint in {current or _code_hash(), COMPATIBLE_WINDOW_PREDECESSOR,
-                           COMPATIBLE_ELASTIC_PREDECESSOR, COMPATIBLE_INDEX_ALERT_PREDECESSOR}
+                           COMPATIBLE_ELASTIC_PREDECESSOR, COMPATIBLE_INDEX_ALERT_PREDECESSOR,
+                           COMPATIBLE_NAVIGATION_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
