@@ -241,6 +241,11 @@ its support metadata; such accounts belong to the reviewed reconciliation phase.
 Selector link prose remains in formation evidence. Canonical link notes identify
 navigation associations, not independent factual support.
 
+Two successive lookup rounds with the same previously observed requests and
+results end navigation. The final request uses the retained source excerpts and
+complete originals. It may explicitly defer if the evidence is insufficient.
+A changed search result or a new source range can still advance navigation.
+
 The runtime supplies its configured memory backend to navigation as well as
 indexing. A reader imported before the private profile was selected must not use
 an unrelated default credential environment. `Reader.live_pool(..., backend=...)`
