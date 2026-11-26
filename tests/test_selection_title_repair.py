@@ -193,3 +193,41 @@ def test_missing_original_is_reviewed_once_before_admission(setup, tmp_path):
     assert process_once(memory, inbox, state, lambda *_: pytest.fail('no generation'),
                         binding, retrieval='lexical')['state'] == 'complete'
     assert memory._read_chapter(cid)['revision'] == 2
+
+
+def test_deferred_update_can_admit_distinct_source_without_changing_original(setup, tmp_path):
+    memory, inbox, state, propose, binding, _, _ = setup
+    cid = memory.add_text('episodes', 'Unrelated saved experience', 'Earlier original.')
+    value = configuration(tmp_path, memory, inbox, state, binding)
+
+    def update(request, directory):
+        return reconciled({'navigation': {'steps': [
+            {'proposal': propose(request, directory)}]}}, cid)
+
+    assert process_once(memory, inbox, state, update, binding,
+                        retrieval='lexical')['state'] == 'pending'
+    job = json.loads((state/'batch-1.json').read_text())
+    with pytest.raises(ValueError, match='retained title repair rejected'):
+        repair(value, 1, 'Read exact original.', mode='missing-original',
+               models=lambda *_: dict(selection=dict(outcome='deferred', reason='Distinct',
+                                                       records=[], links=[])))
+    original = job['navigation']['steps'][-1]['proposal']['selection']
+
+    def new_record(request, directory):
+        target = json.loads(request['messages'][-1]['content'])
+        assert len(target['exact_new_evidence']) == 1
+        record = copy.deepcopy(original['records'][0])
+        record.pop('chapter_id')
+        record.pop('expected_revision')
+        record.update(operation='add', shelf='episodes',
+                      source_ids=target['exact_new_evidence'])
+        return dict(selection=dict(outcome='applied', reason='New episode supported',
+                                   records=[record], links=[]))
+
+    assert repair(value, 1, 'Assess new evidence.', mode='independent-add',
+                  models=new_record)['state'] == 'repaired_for_validation'
+    assert process_once(memory, inbox, state, lambda *_: pytest.fail('no generation'),
+                        binding, retrieval='lexical')['state'] == 'complete'
+    assert memory._read_chapter(cid)['revision'] == 1
+    with memory.connect() as conn:
+        assert conn.execute('SELECT count(*) FROM chapters').fetchone()[0] == 2

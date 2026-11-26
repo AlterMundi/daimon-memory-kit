@@ -221,3 +221,9 @@ owner-local reviewer reads that full original and the frozen selected sources
 once and must support the exact unchanged decision. Missing, stale, unsupported
 or changed decisions stay pending. Recovery prepares the retained decision;
 ordinary producer admission and verified read-back are still required.
+
+A completed, retained deferral of that update can be assessed separately with
+`--mode independent-add`. This uses the same original batch, restricts the
+decision to its exact new source blocks and requires an independent durable
+record with a literal title. It cannot change the old target, substitute
+evidence or add links. It keeps the earlier decision and review receipts.
