@@ -235,3 +235,35 @@ def test_cutover_preserves_cursor_and_preimage(selected, tmp_path):
     assert json.loads(cursor.read_bytes()) == dict(old_cursor, space=target)
     assert json.loads((receipts/'embedding-index.json.before').read_bytes()) == old_cursor
     assert (receipts/'embedding-environment.before').read_bytes() == env
+
+def test_new_group_keeps_text_and_hashes_opaque_multimedia_tool_parts(setup):
+    from capture_inbox import sha, wire
+
+    memory, inbox, state, _, binding, _, original = setup
+    image = dict(type='input_image', image_url='data:image/png;base64,'+'A'*200_000, detail='auto')
+    text = dict(type='input_text', text='Selected display result.')
+    call = dict(type='custom_tool_call', name='exec', call_id='image-fixture', input='Read a fixture')
+    output = dict(type='custom_tool_call_output', call_id='image-fixture', output=[text, image])
+    raw = original + b''.join((wire(dict(type='response_item', payload=item))+'\n').encode()
+                              for item in (call, output))
+    observed = inbox.observe('session-a', {'hook_event_name':'Stop'}, raw)
+    seen = []
+
+    def propose(request, _directory):
+        seen.append(request)
+        blocks = json.loads(request['messages'][1]['content'])['sources']
+        returned, = [block for block in blocks if block['channel']=='tool_response']
+        result = json.loads(returned['content'])
+        assert result['output'][0]==text
+        assert result['output'][1]==dict(type='opaque_media', media_type='input_image',
+            content_index=1, sha256=sha(wire(image).encode()),
+            availability='original preserved; media not interpreted')
+        assert image['image_url'] not in wire(request)
+        return dict(selection=dict(outcome='omitted', reason='Fixture display only.', records=[], links=[]))
+
+    result = process_once(memory,inbox,state,propose,binding,
+        source_budget_bytes=64000,source_max_bytes=128000,source_page_bytes=16000)
+    assert result['state']=='complete' and len(seen)==1
+    saved = json.loads((state/'batch-1.json').read_text())
+    assert saved['inputs']['source_window']['compact_tool_media'] is True
+    assert inbox.restore(observed['revision'])==raw

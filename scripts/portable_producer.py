@@ -36,6 +36,7 @@ COMPATIBLE_COMPACT_PACKET_PREDECESSOR = '6b10a5e8ccefe833c2805819c2ef0493ede3d46
 # The successor only changes when the next selection prompt ends navigation.
 COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR = '48be301c0d9f3389f6324d9d1e33dd1634a717d2725679c4b11f9c505b44d6fe'
 COMPATIBLE_SOURCE_LIMIT_PREDECESSOR = '608c197d046a078ee4367bacda2c92ca95225ccf3925a62eec007615a44fa486'
+COMPATIBLE_TOOL_MEDIA_PREDECESSOR = '3ab7b0039331a8674af68a98b245a42006f540368533d6f0b998837bba87dce1'
 COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR = 'd5fb7e45581ecc4e2aa9c0a53fe563024215050e544cb5ab11fb5739588bb498'
 COMPATIBLE_CONTEXT_BOUND_PREDECESSOR = '460e04fbd1a48982ecb4edb6df96d8b6648c41c33392254435a1481258ad207d'
 COMPATIBLE_PAGE_BUDGET_PREDECESSOR = 'b3b37f136837afd72ca7ded81a85c68a4db3d013ecd6014f250e80e27e3d9542'
@@ -59,7 +60,8 @@ def compatible_code_hash(fingerprint, *, current=None):
                            COMPATIBLE_NAVIGATION_PREDECESSOR, COMPATIBLE_COMPLETE_READ_PREDECESSOR,
                            COMPATIBLE_PAGE_BUDGET_PREDECESSOR, COMPATIBLE_CONTEXT_BOUND_PREDECESSOR,
                            COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR, COMPATIBLE_COMPACT_PACKET_PREDECESSOR,
-                           COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR, COMPATIBLE_SOURCE_LIMIT_PREDECESSOR}
+                           COMPATIBLE_REPEATED_LOOKUP_PREDECESSOR, COMPATIBLE_SOURCE_LIMIT_PREDECESSOR,
+                           COMPATIBLE_TOOL_MEDIA_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -194,7 +196,7 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                                 'SELECT * FROM observations WHERE source=? ORDER BY id DESC LIMIT 1',
                                 (source,)).fetchone())
                 group = dict(owner=owner,after=index['after'],observations=observations,
-                             latest=latest,base_revisions=index['source_revisions'])
+                             latest=latest,base_revisions=index['source_revisions'],compact_tool_media=True)
             if any(row['error'] or row['revision'] is None for row in latest.values()):
                 return {'state':'deferred','reason':'incomplete source capture',
                         'processed_through':index['after'],'proposer_invoked':False}
@@ -220,7 +222,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                     return {'state':'deferred','reason':'unsupported source items',
                             'source':source,'details':normalized['unsupported'],
                             'processed_through':index['after'],'proposer_invoked':False}
-                groups[source] = selection.block_sources(normalized, binding['source_instance'])
+                groups[source] = selection.block_sources(normalized, binding['source_instance'],
+                    compact_tool_media=group.get('compact_tool_media', False))
                 sources.extend(groups[source])
                 revisions[source] = {'revision':row['revision'],'sha256':normalized['sha256']}
             # Do not consume an early hook prompt that has not yet reached its
@@ -261,6 +264,8 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                           source_window=dict(group_hash=digest(group),progress=window['progress'],
                               complete=window['complete'],budget_bytes=budget_used,
                               used_bytes=window['used_bytes']))
+            if group.get('compact_tool_media'):
+                inputs['source_window']['compact_tool_media'] = True
             if paging is not None:
                 inputs['source_window']['paging'] = paging
             request = dict(messages=selection.block_messages(sources,[],context),
@@ -283,7 +288,9 @@ def process_once(memory, inbox, state_dir, proposer, context, *, limit=32,
                 raise ValueError('prepared source differs from retained bytes')
             if paging is None:
                 originals['sources/'+digest(source)+'.jsonl'] = data
-            source_groups[source] = selection.block_sources(selection.codex_sources(data,source=source),binding['source_instance'])
+            source_groups[source] = selection.block_sources(
+                selection.codex_sources(data, source=source), binding['source_instance'],
+                compact_tool_media=inputs.get('source_window', {}).get('compact_tool_media', False))
         if paging is not None:
             if paging.get('schema') != source_pages.SCHEMA:
                 raise ValueError('unknown retained paging schema')

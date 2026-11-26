@@ -80,3 +80,8 @@ The optional [snapshot storage and retention policy](snapshot-retention.md) move
 full pre-write copies onto an explicitly selected data volume and bounds the future
 working set through the existing finite worker. It preserves pending operations,
 rollback pins, exact restore evidence and the separately retained historical archive.
+
+New source groups keep textual parts of tool responses and replace typed image or
+audio parts in the selection view with a digest and position. The exact capture
+remains in the receiving inbox for authorized use. Frozen groups and their
+paging frontiers retain the original projection when continued.
