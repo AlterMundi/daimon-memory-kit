@@ -50,18 +50,28 @@ def health(worker_dir, source_report, *, max_age_seconds, now_ns=None, worker=No
         dmk['sleep_triage'] = dict(status=status, phase_state=phase, reason_code=triage.get('reason_code'))
     try:
         report = json.loads(Path(source_report).read_text())
-        if report.get('schema') != 'dm.source-review/v2' or type(report['observed_at_ms']) is not int:
-            raise ValueError('unsupported Matrix Source review receipt')
+        if type(report['observed_at_ms']) is not int:
+            raise ValueError('unsupported Matrix Source review time')
         seen = report['observed_at_ms'] * 1_000_000
-        unavailable = report['unavailable']
-        unconfirmed = report['unconfirmed_targets']
-        if not isinstance(unavailable, list) or not isinstance(unconfirmed, list):
-            raise ValueError('invalid Matrix Source review coverage')
+        if report.get('schema') == 'dm.source-review/v2':
+            unavailable = report['unavailable']
+            unconfirmed = report['unconfirmed_targets']
+            if not isinstance(unconfirmed, list):
+                raise ValueError('invalid target confirmation coverage')
+            unconfirmed_count = len(unconfirmed)
+        elif (report.get('schema') == 'dm.source-review-projection/v1'
+              and report.get('source_schema') == 'dm.source-review/v2'):
+            unavailable = report['metadata']['unavailable']
+            unconfirmed_count = None
+        else:
+            raise ValueError('unsupported Matrix Source review receipt')
+        if not isinstance(unavailable, list):
+            raise ValueError('invalid availability coverage')
         state = ('stale' if not fresh(seen, now, limit) else
-                 'partial' if unavailable or unconfirmed else 'observed')
+                 'partial' if unavailable or unconfirmed_count != 0 else 'observed')
         discovery = dict(status=state, observed_at_ms=report['observed_at_ms'],
-                         unavailable=len(unavailable), unconfirmed=len(unconfirmed))
-    except (OSError, ValueError, KeyError, AttributeError):
+                         unavailable=len(unavailable), unconfirmed=unconfirmed_count)
+    except (OSError, ValueError, KeyError, AttributeError, TypeError):
         discovery = dict(status='unobserved')
     return dict(
         dmk=dmk,

@@ -114,6 +114,12 @@ def test_metadata_is_not_learning_and_blocked_capture_is_visible(tmp_path):
     assert result['matrix']['receiving_learning'] == 'requires_receiving_evidence'
     assert health(tmp_path, report, max_age_seconds=30, now_ns=150_000_000_000)['matrix']['source_review']['status'] == 'stale'
 
+    report.write_text(json.dumps(dict(schema='dm.source-review-projection/v1',
+                                      source_schema='dm.source-review/v2', observed_at_ms=100_000,
+                                      metadata={'unavailable': []})))
+    sample = health(tmp_path, report, max_age_seconds=30, now_ns=110_000_000_000)['matrix']['source_review']
+    assert sample['status'] == 'partial' and sample['unconfirmed'] is None
+
 
 def test_selected_worker_exports_triage_receipt_and_current_health(context, tmp_path, monkeypatch):
     import memory_runtime
