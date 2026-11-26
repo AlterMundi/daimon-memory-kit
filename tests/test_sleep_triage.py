@@ -258,3 +258,40 @@ def test_triage_accepts_oversize_tool_range_and_reviews_following_human_text(con
     assert second['state'] == 'caught_up' and second['classified_pages'] == 1
     assert human in seen[1]
     assert all('TOOL_PAYLOAD_NOT_FOR_TRIAGE' not in request for request in seen)
+
+
+def test_local_triage_failure_alerts_once_and_resolves_after_a_verified_empty_scan(context, tmp_path, monkeypatch):
+    from capture_inbox import Inbox
+    import memory_runtime
+    from provider_status import Alerts, safe_projection
+
+    binding, _, _ = context
+    inbox = Inbox(binding['inbox'], binding)
+    selected = tmp_path / 'worker'
+    selected.mkdir()
+    status = dict(schema='hmk.worker-status/v1', state='pending', observed=True, phase=None,
+                  updated_ns=sleep_triage.time.time_ns(), owner='fixture-owner', phases={})
+    (selected / 'worker-status.json').write_text(json.dumps(status))
+    config = dict(state_dir=str(selected), sleep_triage=dict(
+        state_dir=str(selected / 'triage'), initial_after=0, steps=1,
+        credential_env='DMK_TEST_DECISIONS_KEY', source_review_report=str(tmp_path / 'missing'),
+        max_age_seconds=60,
+    ))
+    result = {'status': status}
+
+    def broken(*args, **kwargs):
+        raise ValueError('private failure detail')
+
+    with monkeypatch.context() as patch:
+        patch.setattr(sleep_triage, 'run', broken)
+        memory_runtime.run_sleep_triage(config, inbox, binding, result)
+        memory_runtime.run_sleep_triage(config, inbox, binding, result)
+    original, = safe_projection(inbox)['items']
+    assert original['problem_code'] == 'observation_unreadable'
+    assert original['processing_state'] == 'open'
+    assert 'private failure detail' not in json.dumps(Alerts(inbox).status())
+    memory_runtime.run_sleep_triage(config, inbox, binding, result)
+    recovered, = safe_projection(inbox)['items']
+    assert recovered['incident_id'] == original['incident_id']
+    assert recovered['processing_state'] == 'resolved'
+    assert result['status']['sleep_triage']['classified_pages'] == 0

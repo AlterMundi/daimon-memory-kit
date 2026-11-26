@@ -25,6 +25,7 @@ ACTIONS = {
     'response_incomplete':'Inspect the retained response and output limit before resuming.',
     'dispatch_unresolved':'Reconcile the retained dispatch before another billable request.',
     'provider_error':'Inspect the retained provider status before resuming.',
+    'observation_unreadable':'Repair the sleep input or retained checkpoint; preserve the source and running cursor.',
     'storage_pressure':'Restore backup storage capacity and explicitly refresh the periodic backup; ordinary committed memory is preserved.',
 }
 
