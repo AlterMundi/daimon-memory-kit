@@ -17,7 +17,29 @@ from memory_models import Models
 from memory_runtime import profile
 
 
-def repair(value, request_path, reason, *, models=None):
+def remove_early_close(content):
+    def unique(pairs):
+        result = dict(pairs)
+        if len(result) != len(pairs):
+            raise ValueError('repeated JSON key prevents a unique repair')
+        return result
+
+    decoder = json.JSONDecoder(object_pairs_hook=unique)
+    text = content.strip()
+    head, end = decoder.raw_decode(text)
+    if (not isinstance(head, dict) or set(head) != {'outcome', 'reason'}
+            or text[end-1] != '}' or not text[end:].lstrip().startswith(',')):
+        raise ValueError('no uniquely identifiable premature decision close')
+    corrected = decoder.decode(text[:end-1] + text[end:])
+    if (not isinstance(corrected, dict)
+            or set(corrected) != {'outcome', 'reason', 'records', 'links'}
+            or corrected['outcome'] != head['outcome'] or corrected['reason'] != head['reason']
+            or not isinstance(corrected['records'], list) or not isinstance(corrected['links'], list)):
+        raise ValueError('framing repair does not preserve one complete decision')
+    return corrected
+
+
+def repair(value, request_path, reason, *, models=None, framing_only=False):
     if not isinstance(reason, str) or not reason.strip():
         raise ValueError('explicit semantic reconciliation reason required')
     state = Path(value['state_dir']).resolve()
@@ -69,6 +91,8 @@ def repair(value, request_path, reason, *, models=None):
         else:
             raise ValueError('valid JSON requires ordinary schema/evidence reconciliation')
         identity = dict(request_sha256=key, receipt_sha256=digest(receipt))
+        if framing_only:
+            identity['repair'] = 'premature_object_close'
         repair_dir = work/('semantic-repair-'+digest(identity))
         approval = repair_dir/'authorization.json'
         if approval.exists():
@@ -82,6 +106,26 @@ def repair(value, request_path, reason, *, models=None):
             if step.get('semantic_repair') != identity:
                 raise ValueError('navigation step already has another proposal')
             return dict(state='replayed', model_invoked=False, cursor_advanced=False)
+        if framing_only:
+            from capturectl import title_conflicts
+            from memory_runtime import load_memory
+            from portable_capture import selected_decision
+            from selection_navigation import effective_sources
+            corrected = remove_early_close(receipt['content'])
+            sources = effective_sources(job)
+            decision = selected_decision(corrected, sources, job['navigation']['canon'])
+            if job['inputs'].get('source_window', {}).get('paging'):
+                from source_pages import validate_citations
+                validate_citations(corrected, sources)
+            with load_memory(value).connect() as connection:
+                if title_conflicts(connection, decision):
+                    raise ValueError('framing repair cannot admit a duplicate title')
+            result = dict(selection=corrected, dispatch=dict(model_calls=0, recovery=identity))
+            checkpoint(repair_dir/'result.json', result)
+            step['proposal'] = result
+            step['semantic_repair'] = identity
+            checkpoint(job_path, job)
+            return dict(state='repaired_for_validation', model_invoked=False, cursor_advanced=False)
         models = models or Models(value['generation'],value['review'],value['source_scope'])
         # Reuse the qualified native review transport. This is response repair,
         # not proof that a consolidation or a factual review has occurred.
@@ -107,8 +151,9 @@ def main():
     parser.add_argument('--profile',type=Path,required=True)
     parser.add_argument('--request',type=Path,required=True)
     parser.add_argument('--reason',required=True)
+    parser.add_argument('--framing-only',action='store_true')
     args=parser.parse_args()
-    print(json.dumps(repair(profile(args.profile),args.request,args.reason)))
+    print(json.dumps(repair(profile(args.profile),args.request,args.reason,framing_only=args.framing_only)))
 
 
 if __name__=='__main__':

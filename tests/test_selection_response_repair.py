@@ -65,3 +65,16 @@ def test_foreign_request_and_changed_source_are_refused(setup,tmp_path):
     with setup[1].connect() as c:c.execute("update revisions set delta=?",(b'changed',))
     with pytest.raises(ValueError,match='altered'):
         repair(value,path,'No.',models=lambda *a:pytest.fail('must not dispatch'))
+
+
+def test_completed_framing_repair_removes_only_the_premature_close():
+    from repair_selection_response import remove_early_close
+
+    text = '{"outcome":"applied","reason":"keep } in text"}, "records": [{"title":"one"}],"links":[]}'
+    assert remove_early_close(text) == {
+        'outcome':'applied','reason':'keep } in text','records':[{'title':'one'}],'links':[],
+    }
+    with pytest.raises(ValueError):
+        remove_early_close('{"outcome":"applied","reason":"a"}, "records": [],"links":[],"reason":"changed"}')
+    with pytest.raises(ValueError):
+        remove_early_close('{"outcome":"applied","reason":"a"}, "records": []')
