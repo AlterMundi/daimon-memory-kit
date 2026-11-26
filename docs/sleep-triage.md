@@ -235,8 +235,14 @@ the Telegram original reference privately. A profile may also select
 `voice_transcripts: true` for committed Conversation voice inputs. The native
 envelope must match the exact retained typed capture proof and transcript.
 Classify only the retained automatic interpretation and carry its source kind
-into the private decision and canonical evidence. DMK sends no audio, performs
-no second transcription, and keeps live acoustic windows outside this route.
+into the private decision and canonical evidence. Select
+`foreground_voice_transcripts: true` to include voice originals delegated from
+Avatar to the same paired Conversation. Review the exact retained input text
+and distinguish grouped Live provider fragments from committed clip
+transcripts. The assistant's formulation and other members' dialogue remain
+outside this memory input. Ordinary Avatar dialogue without a settled paired
+turn requires separate source attribution. DMK sends no audio and performs no
+second transcription.
 
 On a receiver that already has a daily worker, first reconcile the preceding
 Decisions backlog and retain its receipts. Then set `sleep_triage.paired_profile`

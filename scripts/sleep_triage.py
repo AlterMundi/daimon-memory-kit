@@ -351,6 +351,7 @@ def valid_omission(omit):
 
 def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=None, human_id=None,
         gateway_original=None, telegram_text=False, voice_transcripts=False,
+        foreground_voice_transcripts=False,
         opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
@@ -360,7 +361,9 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
         raise ValueError('invalid starting observation')
     if omit is not None and (retry is not None or steps != 1 or not valid_omission(omit)):
         raise ValueError('inspect one exact Decisions request and supply an omission reason')
-    if (telegram_text or voice_transcripts) and gateway_original is None:
+    channels = dict(telegram_text=telegram_text, voice_transcripts=voice_transcripts,
+                    foreground_voice_transcripts=foreground_voice_transcripts)
+    if any(channels.values()) and gateway_original is None:
         raise ValueError('paired input channels require an enrolled original resolver')
     if human_id is not None and (type(human_id) is not int or human_id <= 0):
         raise ValueError('paired human ID must be positive')
@@ -392,11 +395,9 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                     or current.get('human_id') != human_id):
                 raise ValueError('triage cursor binding or policy differs')
             if (current.get('gateway_originals', False) != (gateway_original is not None)
-                    or current.get('telegram_text', False) != telegram_text
-                    or current.get('voice_transcripts', False) != voice_transcripts):
+                    or any(current.get(key, False) != enabled for key, enabled in channels.items())):
                 if not (gateway_original is not None and human_id is not None
-                        and (not current.get('telegram_text', False) or telegram_text)
-                        and (not current.get('voice_transcripts', False) or voice_transcripts)
+                        and all(enabled or not current.get(key, False) for key, enabled in channels.items())
                         and current['after'] == current['page'] == 0
                         and not current.get('consumed_dispatches')
                         and not any((root / name).exists()
@@ -404,10 +405,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                         and not any((root / 'packets').iterdir())):
                     raise ValueError('triage cursor binding or policy differs')
                 current['gateway_originals'] = True
-                if telegram_text:
-                    current['telegram_text'] = True
-                if voice_transcripts:
-                    current['voice_transcripts'] = True
+                current.update({key: True for key, enabled in channels.items() if enabled})
                 checkpoint(cursor, current)
         else:
             if after is None or after > through:
@@ -417,10 +415,7 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                 current['human_id'] = human_id
             if gateway_original is not None:
                 current['gateway_originals'] = True
-            if telegram_text:
-                current['telegram_text'] = True
-            if voice_transcripts:
-                current['voice_transcripts'] = True
+            current.update({key: True for key, enabled in channels.items() if enabled})
             checkpoint(cursor, current)
         active = root / 'dispatch.json'
         second = root / 'context-dispatch.json'

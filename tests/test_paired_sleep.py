@@ -1,5 +1,6 @@
 """A new pair worker captures only prospective, authenticated human input."""
 from datetime import datetime, timezone
+from hashlib import sha256
 import json
 import sqlite3
 
@@ -15,6 +16,50 @@ from tests.test_backupctl import config as backup_config
 from tests.test_durable_memory_foundation import mc
 from tests.test_forward_capture import append, context, line, turn
 from tests.test_sleep_triage import fake_decisions
+
+
+def test_live_delegation_contributes_only_the_exact_provider_input(tmp_path):
+    ref = 'c095b1da-26d2-4d2c-8eff-7c1ddaf5fa70'
+    heard = 'I planted a fig tree beside the old workshop.'
+    dialogue = '00839024-0abc-410c-8001-3eecbe2ab250'
+    proof = dict(dialogue=dialogue, text_sha256=sha256(heard.encode()).hexdigest())
+    retained = dict(dialogue_id=dialogue, formulation='Assistant-only formulation', live_window=proof)
+    doc = dict(text=heard, foreground_dialogue=dialogue, foreground_delegation=retained)
+    frame = (
+        '[Original conversation input]\n' + json.dumps(dict(input_ref=ref)) + '\nmetadata\n\n'
+        '[Voice foreground formulation]\n' + json.dumps(retained) + '\nmetadata\n\n'
+        '[Live input transcript window]\nmetadata\nSource: ' + json.dumps(proof) + '\n' + heard
+    )
+    with sqlite3.connect(tmp_path/'owner.sqlite') as db:
+        db.executescript('''
+        CREATE TABLE sessions (id, chat_id, thread_id);
+        INSERT INTO sessions VALUES (1, -100500, 73);
+        CREATE TABLE turns (id, session_id, from_user_id, native_thread_id, status);
+        CREATE TABLE conversation_inputs (id, human_id, session_id, native_thread, phase,
+                                          local_turn, retired, doc, created_at);
+        INSERT INTO turns VALUES (1, 1, 501, 'native', 'completed');
+        ''')
+        db.execute("INSERT INTO conversation_inputs VALUES (?,501,1,'native','accepted',1,0,?,'2026-11-26T03:00:00+00:00')",
+                   (ref, json.dumps(doc)))
+
+        def resolve(value, *, turn=None):
+            return paired_sleep.gateway_original(db, (501, -100500, 73), 'native', value,
+                                                 foreground_voice_transcripts=True)
+
+        assert paired_sleep.gateway_original(db, (501, -100500, 73), 'native', frame) is None
+        assert resolve(frame + ' Changed.') is None
+        assert resolve(frame.replace('Assistant-only formulation', 'Fabricated formulation')) is None
+        changed_window = frame.rsplit(proof['text_sha256'], 1)
+        assert resolve('0'.join(changed_window)) is None
+        page, = sleep_triage.pages_for(turn('live', frame), 'native', 'body',
+                                      human_id=501, gateway_original=resolve)
+        item, = page
+        assert item['text'] == heard
+        assert item['channel'] == 'live_input_transcription'
+        assert item['original_input_ref'] == ref
+        db.execute("UPDATE turns SET native_thread_id='unrelated'")
+        with pytest.raises(ValueError, match='no settled native linkage'):
+            resolve(frame)
 
 
 @pytest.mark.parametrize('configured_entry', [False, True])
