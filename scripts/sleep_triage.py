@@ -367,9 +367,18 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                 raise ValueError('existing cursor must be resumed without --after')
             current = json.loads(cursor.read_text())
             if (current['binding_sha256'] != owner or current['schema'] != POLICY
-                    or current.get('human_id') != human_id
-                    or current.get('gateway_originals', False) != (gateway_original is not None)):
+                    or current.get('human_id') != human_id):
                 raise ValueError('triage cursor binding or policy differs')
+            if current.get('gateway_originals', False) != (gateway_original is not None):
+                if not (gateway_original is not None and human_id is not None
+                        and current['after'] == current['page'] == 0
+                        and not current.get('consumed_dispatches')
+                        and not any((root / name).exists()
+                                    for name in ('dispatch.json', 'context-dispatch.json', 'rejections'))
+                        and not any((root / 'packets').iterdir())):
+                    raise ValueError('triage cursor binding or policy differs')
+                current['gateway_originals'] = True
+                checkpoint(cursor, current)
         else:
             if after is None or after > through:
                 raise ValueError('explicit starting observation within the inbox required')

@@ -56,6 +56,16 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
             paired_sleep.enroll(dict(profile, conversation_db=str(native)), root)
     paired_sleep.enroll(profile, root)
     paired_sleep.enroll(profile, root)
+    binding = json.loads((root/'binding.json').read_text())['binding']
+    triage = root/'triage'
+    assert sleep_triage.run(binding, triage, after=0, human_id=501)['state'] == 'caught_up'
+    pending = triage/'dispatch.json'
+    pending.write_text('{"request_sha256":"retained"}')
+    with paired_sleep.original_resolver(profile, binding, 501) as resolver:
+        with pytest.raises(ValueError, match='triage cursor binding or policy differs'):
+            sleep_triage.run(binding, triage, human_id=501, gateway_original=resolver)
+    assert pending.read_text() == '{"request_sha256":"retained"}'
+    pending.unlink()
 
     def entry(author, text):
         meta = dict(author=None, authorized_human=author, original_human_author=author)
@@ -107,7 +117,7 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
                    if any(row.get('original_input_ref') == original
                           for row in json.loads(file.read_text())['sources'])]
         binding = json.loads((root/'binding.json').read_text())['binding']
-        with paired_sleep.original_resolver(profile, binding) as resolver:
+        with paired_sleep.original_resolver(profile, binding, 501) as resolver:
             candidate = read_candidate(binding, triage, packet.stem, 0, gateway_original=resolver)
         assert candidate['source']['text'] == gateway_text
         assert candidate['source']['original_input_ref'] == original

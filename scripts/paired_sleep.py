@@ -111,14 +111,14 @@ def gateway_original(con, coordinates, native, block, *, not_before=None):
 
 
 @contextmanager
-def original_resolver(profile, binding):
+def original_resolver(profile, binding, human_id):
     registry, coordinates = conversation_registry(profile)
-    if coordinates is None:
-        yield None
-    else:
-        with readonly(registry) as con:
-            boundary = datetime.fromisoformat(binding['sessions_started_at_or_after'])
-            yield partial(gateway_original, con, coordinates, binding['selected_session_id'], not_before=boundary)
+    coordinates = coordinates if coordinates is not None else (human_id, human_id, 1)
+    if coordinates[0] != human_id:
+        raise ValueError('Gateway actor differs from paired enrollment')
+    boundary = datetime.fromisoformat(binding['sessions_started_at_or_after'])
+    with readonly(registry) as con:
+        yield partial(gateway_original, con, coordinates, binding['selected_session_id'], not_before=boundary)
 
 
 def enroll(profile, root):
@@ -193,7 +193,7 @@ def run(profile, root, *, worker_settings=None):
         if 'provider_blocked' in worker_settings:
             settings['provider_blocked'] = worker_settings['provider_blocked']
     value = dict(state_dir=str(root), sleep_triage=settings)
-    with original_resolver(profile, binding) as resolver:
+    with original_resolver(profile, binding, config['human_id']) as resolver:
         run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver)
     out = saved['status']['sleep_triage']
     return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),

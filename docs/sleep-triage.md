@@ -210,7 +210,12 @@ recorded as `source_review_report`. Set `conversation_config` to the receiving
 Gateway configuration when its `[interaction]` selects the general conversation.
 DMK verifies the configuration's absolute `db_path` against `conversation_db`
 and matches its owner, chat and topic against the active registry entry. Existing
-direct General topic profiles can omit `conversation_config`. Keep the profile
+direct General topic profiles can omit `conversation_config`; the already
+verified owner and direct General entry supply the same original-journal scope.
+An older pristine triage cursor may adopt original lookup in place. A cursor
+with retained decisions, dispatches or rejection history requires explicit
+reconciliation first. This policy preserves the enrolled source boundary.
+Keep the profile
 private. Authorize the
 forward source before enrollment. The operator binds the paired human's active
 general entry and records its current byte boundary. New input must carry that
