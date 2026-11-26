@@ -252,3 +252,10 @@ the decision without another model call. It rejects duplicate keys, additional
 documents and changes to the source evidence. The original dispatch and any
 earlier uncertain reviewer remain retained. Normal producer admission remains
 authoritative.
+
+When consecutive lookups reread pages of originals already verified at their
+current revision, the next bounded selection uses those complete originals
+directly. It can defer if required evidence is still missing. Earlier lookup
+results and dispatch receipts remain available in the original journal. A
+revision change still requires reading the current original before any update
+or link can pass admission.
