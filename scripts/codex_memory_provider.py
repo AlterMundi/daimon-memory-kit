@@ -14,6 +14,7 @@ import subprocess
 import time
 
 import bounded_native_turn
+import native_response_schema
 from capturectl import digest
 from codex_coordinator import checkpoint
 
@@ -280,15 +281,25 @@ def dispatch(request_path, root, catalog, runner=subprocess.run, credential_file
             *argv,
         ]
         if bounded:
+            original_schema = native_response_schema.decision_schema(
+                request["response_schema"], request["phase"],
+            )
+            strict_schema, wrapped = native_response_schema.for_codex(original_schema)
+            receipt["native_response_schema_sha256"] = digest(strict_schema)
+            if wrapped:
+                stdin += "\nReturn the decision under the single result field."
+
             def retain(key, evidence):
                 receipt[key] = evidence
                 checkpoint(receipt_path, receipt)
 
             content, usage = bounded_native_turn.execute(
                 isolated, credential_fd=credential_fd, model=model, cwd=str(cwd.resolve()),
-                text=stdin, schema=request["response_schema"],
+                text=stdin, schema=strict_schema,
                 output_limit=request["output_token_limit"], retain=retain,
             )
+            receipt["native_response_content"] = content
+            content = native_response_schema.decode(content, original_schema, wrapped)
             receipt.update(
                 state="completed", content=content, usage=usage, tool_calls_observed=[],
                 actual_response_model=receipt["provider_usage"]["observed_model"],

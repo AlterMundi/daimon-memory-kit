@@ -294,3 +294,11 @@ isolated request stops before acknowledging a provider reservation. It
 qualifies the native admission protocol only. A real provider outcome still
 needs its own receipt. The failure report includes a closed admission stage
 and bounded RPC code without provider text or source content.
+
+Bounded Codex generation uses the provider's strict structured-output subset.
+The native adapter transports navigation alternatives inside a closed object
+and represents optional fields by null. It decodes that transport back to the
+existing DMK decision and then uses the ordinary source, scope, revision, and
+admission checks. Retained receipts preserve the raw native response, the
+provider schema hash, and the normalized decision separately. Do not retry a
+previous reserved operation merely because a compatible schema is available.
