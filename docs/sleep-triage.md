@@ -171,3 +171,17 @@ no API request for the blocked phase. Qualify the restored project with a
 fictional example and remove the block only after it returns typed answers.
 The next successful classification resolves the incident. A quiet inbox never
 proves that the model is accessible.
+
+## Read Decisions usage
+
+`worker-status.json` includes `completed_page_usage`, the known usage and
+receipt counts for the pages completed during that run. A page completed after
+recovery can consume an already received response.
+
+Run `python scripts/sleep_usage.py --state-dir "$triage_state"` for a
+content-free aggregate of retained typed responses and uncertain attempts,
+grouped by receipt completion day in Buenos Aires. An active response and its
+published copy count once. Older undated receipts contribute to a separate
+undated total. Known zeros and missing usage are distinct, and cached input is
+part of the input count. Windows cover retained Decisions receipts only. This
+readout does not claim full memory-job cost or reconstruct retired receipts.
