@@ -3,6 +3,7 @@
 import argparse
 from contextlib import closing
 import fcntl
+from io import BytesIO
 import json
 import math
 import os
@@ -32,11 +33,27 @@ PIECE_CHARS = 1800
 
 
 def dialogue(delta, source, body, role):
-    normalized = codex_sources(delta, source=source, dialogue_role=role)
-    return block_sources(dict(sources=[
-        item for item in normalized['sources']
-        if not item.get('instruction_context') and not item.get('retrieved_context')
-    ]), body)
+    """Read only the selected role while retaining the original byte identity."""
+    if not delta.endswith(b'\n'):
+        raise ValueError('source ends with an incomplete JSONL item')
+    offset = 0
+    selected = []
+    for raw in BytesIO(delta):
+        start, offset = offset, offset + len(raw)
+        row = json.loads(raw)
+        if not isinstance(row, dict):
+            raise ValueError('source item must be an object')
+        if row.get('type') != 'response_item':
+            continue
+        payload = row.get('payload')
+        if not isinstance(payload, dict):
+            raise ValueError('response item payload must be an object')
+        if payload.get('type') != 'message' or payload.get('role') != role:
+            continue
+        for item in codex_sources(raw, source=source)['sources']:
+            if not item['instruction_context']:
+                selected.append(dict(item, id=f"{source}:{start}:{item['original_sha256']}"))
+    return block_sources(dict(sources=selected), body)
 
 
 def pages_for(delta, source, body):
