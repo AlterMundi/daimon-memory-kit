@@ -1,8 +1,9 @@
 """Run Decisions over one explicitly approved, forward-only general conversation."""
 import argparse
-from contextlib import closing
+from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 import fcntl
+from functools import partial
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import sqlite3
 import sys
 import time
 import tomllib
+import uuid
 
 from capture_inbox import Inbox
 from codex_coordinator import checkpoint
@@ -24,23 +26,30 @@ def readonly(path):
     return closing(sqlite3.connect(Path(path).resolve(strict=True).as_uri() + '?mode=ro', uri=True))
 
 
-def enrolled_thread(profile):
-    """Resolve only the current paired human's enrolled general entry."""
+def conversation_registry(profile):
     registry = Path(profile['conversation_db']).resolve(strict=True)
     config_path = profile.get('conversation_config')
     if config_path is None:
+        return registry, None
+    with Path(config_path).open('rb') as source:
+        config = tomllib.load(source)
+    configured_registry = Path(config['db_path'])
+    if not configured_registry.is_absolute() or configured_registry.resolve(strict=True) != registry:
+        raise ValueError('Conversation configuration and registry differ')
+    entry = config['interaction']
+    coordinates = (entry['human_id'], entry['chat_id'], entry['topic_id'])
+    if any(type(value) is not int or value == 0 for value in coordinates):
+        raise ValueError('invalid configured Conversation coordinates')
+    return registry, coordinates
+
+
+def enrolled_thread(profile):
+    """Resolve only the current paired human's enrolled general entry."""
+    registry, coordinates = conversation_registry(profile)
+    if coordinates is None:
         selection = 's.chat_id = u.tg_user_id AND s.thread_id = 1'
         coordinates = ()
     else:
-        with Path(config_path).open('rb') as source:
-            config = tomllib.load(source)
-        configured_registry = Path(config['db_path'])
-        if not configured_registry.is_absolute() or configured_registry.resolve(strict=True) != registry:
-            raise ValueError('Conversation configuration and registry differ')
-        entry = config['interaction']
-        coordinates = (entry['human_id'], entry['chat_id'], entry['topic_id'])
-        if any(type(value) is not int or value == 0 for value in coordinates):
-            raise ValueError('invalid configured Conversation coordinates')
         selection = 's.creator_user_id = ? AND s.chat_id = ? AND s.thread_id = ?'
     with readonly(registry) as con:
         rows = con.execute(f'''
@@ -57,6 +66,54 @@ def enrolled_thread(profile):
     if not row:
         raise ValueError('native source is not available')
     return (*rows[0], *row)
+
+
+def gateway_original(con, coordinates, native, block):
+    """Accept a native reference only when its text and receiving journal agree."""
+    header, separator, text = block.partition('\n\n')
+    if header.startswith('[Device-reported playback context]\n'):
+        header, separator, text = text.partition('\n\n')
+    lines = header.splitlines()
+    if (not separator or len(lines) < 2 or lines[0] not in {
+            '[Original conversation input]', '[Device-reported conversational context]'}):
+        return None
+    try:
+        ref = json.loads(lines[1])['input_ref']
+        if str(uuid.UUID(ref)) != ref:
+            return None
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return None
+    row = con.execute("""
+        SELECT c.doc, c.phase, t.status, c.created_at,
+               t.session_id=s.id AND t.from_user_id=c.human_id AND t.native_thread_id=c.native_thread
+          FROM conversation_inputs c JOIN sessions s ON s.id=c.session_id
+          LEFT JOIN turns t ON t.id=c.local_turn
+         WHERE c.id=? AND c.human_id=? AND s.chat_id=? AND s.thread_id=?
+           AND c.native_thread=? AND c.retired=0
+    """, (ref, *coordinates, native)).fetchone()
+    if row is None:
+        return None
+    doc, phase, turn, received_at, linked = row
+    value = json.loads(doc)
+    original = value.get('text')
+    if not isinstance(original, str) or text != original or value.get('tribu_source'):
+        return None
+    if phase in {'sending', 'steering', 'uncertain'} or (
+            phase == 'accepted' and (not linked or turn not in {'completed', 'failed', 'cancelled'})):
+        raise ValueError('Gateway original has no settled native linkage')
+    if phase != 'accepted':
+        return None
+    return dict(text=original, original_input_ref=ref, received_at=received_at)
+
+
+@contextmanager
+def original_resolver(profile, binding):
+    registry, coordinates = conversation_registry(profile)
+    if coordinates is None:
+        yield None
+    else:
+        with readonly(registry) as con:
+            yield partial(gateway_original, con, coordinates, binding['selected_session_id'])
 
 
 def enroll(profile, root):
@@ -82,6 +139,14 @@ def enroll(profile, root):
     checkpoint(saved, config)
 
 
+def verified_binding(profile, config):
+    binding = config['binding']
+    actual = enrolled_thread(profile)
+    if actual != (config['human_id'], binding['selected_session_id'], config['transcript'], config['cwd']):
+        raise ValueError('the authorized native entry has changed')
+    return binding
+
+
 def run(profile, root):
     config = json.loads((root/'binding.json').read_bytes())
     if config['schema'] != SCHEMA:
@@ -91,9 +156,7 @@ def run(profile, root):
     alerts = Alerts(inbox)
     operation = 'paired-sleep-input'
     try:
-        actual = enrolled_thread(profile)
-        if actual != (config['human_id'], binding['selected_session_id'], config['transcript'], config['cwd']):
-            raise ValueError('the authorized native entry has changed')
+        verified_binding(profile, config)
         payload = dict(hook_event_name='Stop', session_id=binding['selected_session_id'],
                        transcript_path=config['transcript'], cwd=config['cwd'])
         source = capture(binding, payload)
@@ -113,10 +176,12 @@ def run(profile, root):
     from memory_runtime import run_sleep_triage
     checkpoint(root/'worker-status.json', status)
     saved = dict(status=status)
-    run_sleep_triage(dict(state_dir=str(root), sleep_triage=dict(
-        state_dir=str(triage), initial_after=initial, steps=4, human_id=config['human_id'],
-        credential_env='DMK_DECISIONS_API_KEY', max_age_seconds=93600,
-        source_review_report=profile.get('source_review_report'))), inbox, binding, saved)
+    settings = dict(state_dir=str(triage), initial_after=initial, steps=4,
+                    human_id=config['human_id'], credential_env='DMK_DECISIONS_API_KEY',
+                    max_age_seconds=93600, source_review_report=profile.get('source_review_report'))
+    value = dict(state_dir=str(root), sleep_triage=settings)
+    with original_resolver(profile, binding) as resolver:
+        run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver)
     out = saved['status']['sleep_triage']
     return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),
                 capture_complete=source['capture_complete'])

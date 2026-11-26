@@ -204,8 +204,14 @@ direct General topic profiles can omit `conversation_config`. Keep the profile
 private. Authorize the
 forward source before enrollment. The operator binds the paired human's active
 general entry and records its current byte boundary. New input must carry that
-human's authenticated ingress attribution. An unresolved replacement stops
-intake until the source is explicitly reconciled.
+human's authenticated ingress attribution. For Gateway originals with the
+configured Conversation, DMK verifies the exact rendered input reference and
+text against the retained owner, entry and native turn. Pending native linkage
+blocks review of that range until it settles. Free-form native prompts and
+peer inputs cannot supply this attribution. The original input reference is
+retained in the private packet and canonical evidence and omitted from the
+classification request. An unresolved replacement stops intake until the
+source is explicitly reconciled.
 
 Run `paired_sleep.py run --profile "$profile"` from the selected receiving
 service once daily at 08:00 America/Argentina/Buenos_Aires. Use the existing
@@ -214,5 +220,8 @@ unprivileged worker. The operation captures one bounded range and classifies at
 most four pages. It installs no Codex hook and sends no input to Codex. Its
 receipts and outbox are in the selected private state directory. A suspended
 service preserves its journal and checkpoint for later recovery. This receiver
-only performs source intake and classification. Canonical admission can use
-the same retained evidence and is qualified separately.
+performs source intake and classification. For canonical admission use the
+existing review command with `--profile "$canonical_profile"` and
+`--paired-profile "$profile"`. It verifies that both profiles belong to the
+same owner and body, re-reads the original reference, and applies the existing
+explicit review and idempotent receipt.

@@ -210,7 +210,7 @@ def run(value):
     return result
 
 
-def run_sleep_triage(value, inbox, binding, result):
+def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None):
     from codex_coordinator import checkpoint
     from provider_status import ACTIONS, Alerts, ProviderProblem
     import sleep_health
@@ -236,7 +236,7 @@ def run_sleep_triage(value, inbox, binding, result):
             try:
                 receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
                                            api_key=os.environ.get(settings["credential_env"]),
-                                           human_id=settings.get("human_id"))
+                                           human_id=settings.get("human_id"), gateway_original=gateway_original)
             except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
                 attempt = None
                 for name in ("context-dispatch.json", "dispatch.json"):
