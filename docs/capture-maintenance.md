@@ -282,3 +282,12 @@ receipt, full job and completed navigation, and replaces only the uncommitted
 final request with a compact selection. It refuses reservations, retries, usage,
 results and canonically staged work. Process the replacement through ordinary
 admission and verify indexing and alert resolution separately.
+
+When a selected progressive source window reaches its configured context
+ceiling, a requested earlier range can remain unread. The worker retains that
+lookup and gives the selector its outcome alongside the exact visible source
+and verified originals. It asks for a final bounded selection, which must defer
+if required evidence depends on an unread range. The review can finish on
+evidence already present when it is sufficient. A deferred decision keeps the
+cursor in place. Sibling canonical lookups do not run after a source refusal.
+Ordinary non-paged windows keep their existing resumable budget behavior.
