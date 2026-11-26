@@ -265,3 +265,20 @@ directly. It can defer if required evidence is still missing. Earlier lookup
 results and dispatch receipts remain available in the original journal. A
 revision change still requires reading the current original before any update
 or link can pass admission.
+
+
+Accumulated lookup results are kept in the journal. When their inclusion would
+take the navigation packet beyond 700,000 UTF-8 bytes, the selector receives a
+final request with the same source window and completely read canonical evidence.
+If that request is also too large, selection stays visibly pending without a new
+provider call. This applies to navigation growth; the initial source window is
+still governed by the selected worker's source budget.
+
+For an older pending job rejected by native bounded-turn admission before any
+provider reservation, the owner-local `reprepare_pending` API accepts
+`preserve_navigation=True` and `refused_navigation_request=Path(...)`. Verify the
+exact retained request and rejection first. The operation keeps the old request,
+receipt, full job and completed navigation, and replaces only the uncommitted
+final request with a compact selection. It refuses reservations, retries, usage,
+results and canonically staged work. Process the replacement through ordinary
+admission and verify indexing and alert resolution separately.
