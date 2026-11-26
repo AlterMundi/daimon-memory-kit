@@ -272,7 +272,7 @@ def run_paired_sleep(value, inbox, result):
         checkpoint(primary, result["status"])
 
 
-def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None):
+def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None, telegram_text=False):
     from codex_coordinator import checkpoint
     from provider_status import ACTIONS, Alerts, ProviderProblem
     import sleep_health
@@ -298,7 +298,8 @@ def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None):
             try:
                 receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
                                            api_key=os.environ.get(settings["credential_env"]),
-                                           human_id=settings.get("human_id"), gateway_original=gateway_original)
+                                           human_id=settings.get("human_id"), gateway_original=gateway_original,
+                                           telegram_text=telegram_text)
             except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
                 attempt = None
                 for name in ("context-dispatch.json", "dispatch.json"):

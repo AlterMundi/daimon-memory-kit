@@ -42,29 +42,44 @@ def dialogue(delta, source, body, role):
         raise ValueError('source ends with an incomplete JSONL item')
     offset = 0
     selected = []
+    turn = None
+    native_turns = {}
     for raw in BytesIO(delta):
         start, offset = offset, offset + len(raw)
         row = json.loads(raw)
         if not isinstance(row, dict):
             raise ValueError('source item must be an object')
+        payload = row.get('payload')
+        if row.get('type') == 'event_msg' and isinstance(payload, dict):
+            kind = payload.get('type')
+            if kind in ('task_started', 'turn_started'):
+                turn = payload.get('turn_id')
+            elif kind in ('task_complete', 'turn_complete', 'turn_aborted') and payload.get('turn_id') == turn:
+                turn = None
         if row.get('type') != 'response_item':
             continue
-        payload = row.get('payload')
         if not isinstance(payload, dict):
             raise ValueError('response item payload must be an object')
         if payload.get('type') != 'message' or payload.get('role') != role:
             continue
         for item in codex_sources(raw, source=source)['sources']:
             if not item['instruction_context']:
-                selected.append(dict(item, id=f"{source}:{start}:{item['original_sha256']}"))
-    return block_sources(dict(sources=selected), body)
+                source_id = f"{source}:{start}:{item['original_sha256']}"
+                selected.append(dict(item, id=source_id))
+                if role == 'user' and isinstance(turn, str):
+                    native_turns[source_id] = turn
+    blocks = block_sources(dict(sources=selected), body)
+    for block in blocks:
+        if block['id'] in native_turns:
+            block['native_turn'] = native_turns[block['id']]
+    return blocks
 
 
 def pages_for(delta, source, body, *, human_id=None, gateway_original=None):
     page = []
     for block in dialogue(delta, source, body, 'user'):
         content = human_text(block['content'], human_id=human_id)
-        original = None if content or gateway_original is None else gateway_original(block['content'])
+        original = None if content or gateway_original is None else gateway_original(block['content'], turn=block.get('native_turn'))
         if original is not None:
             content = original['text']
         for start in range(0, len(content), PIECE_CHARS):
@@ -73,6 +88,8 @@ def pages_for(delta, source, body, *, human_id=None, gateway_original=None):
                         text=content[start:start + PIECE_CHARS])
             if original is not None:
                 item.update(original_input_ref=original['original_input_ref'], received_at=original['received_at'])
+                if 'original_channel' in original:
+                    item['original_channel'] = original['original_channel']
             if page and (len(page) == 8 or len(wire([*page, item]).encode()) > PAGE_BYTES):
                 yield page
                 page = []
@@ -331,7 +348,7 @@ def valid_omission(omit):
 
 
 def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=None, human_id=None,
-        gateway_original=None, opener=urllib.request.urlopen):
+        gateway_original=None, telegram_text=False, opener=urllib.request.urlopen):
     if binding.get('schema') != 'hmk.codex-hook-binding/v2':
         raise ValueError('explicit existing forward capture binding required')
     if type(steps) is not int or not 1 <= steps <= 32:
@@ -340,6 +357,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
         raise ValueError('invalid starting observation')
     if omit is not None and (retry is not None or steps != 1 or not valid_omission(omit)):
         raise ValueError('inspect one exact Decisions request and supply an omission reason')
+    if telegram_text and gateway_original is None:
+        raise ValueError('Telegram review requires an enrolled original resolver')
     if human_id is not None and (type(human_id) is not int or human_id <= 0):
         raise ValueError('paired human ID must be positive')
     root = Path(root)
@@ -369,8 +388,10 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
             if (current['binding_sha256'] != owner or current['schema'] != POLICY
                     or current.get('human_id') != human_id):
                 raise ValueError('triage cursor binding or policy differs')
-            if current.get('gateway_originals', False) != (gateway_original is not None):
+            if (current.get('gateway_originals', False) != (gateway_original is not None)
+                    or current.get('telegram_text', False) != telegram_text):
                 if not (gateway_original is not None and human_id is not None
+                        and (not current.get('telegram_text', False) or telegram_text)
                         and current['after'] == current['page'] == 0
                         and not current.get('consumed_dispatches')
                         and not any((root / name).exists()
@@ -378,6 +399,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                         and not any((root / 'packets').iterdir())):
                     raise ValueError('triage cursor binding or policy differs')
                 current['gateway_originals'] = True
+                if telegram_text:
+                    current['telegram_text'] = True
                 checkpoint(cursor, current)
         else:
             if after is None or after > through:
@@ -387,6 +410,8 @@ def run(binding, root, *, after=None, steps=12, api_key=None, retry=None, omit=N
                 current['human_id'] = human_id
             if gateway_original is not None:
                 current['gateway_originals'] = True
+            if telegram_text:
+                current['telegram_text'] = True
             checkpoint(cursor, current)
         active = root / 'dispatch.json'
         second = root / 'context-dispatch.json'

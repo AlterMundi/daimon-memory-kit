@@ -16,7 +16,7 @@ import paired_sleep
 import sleep_triage
 
 
-def read_candidate(binding, root, packet_id, item, *, gateway_original=None):
+def read_candidate(binding, root, packet_id, item, *, gateway_original=None, telegram_text=False):
     """Reconstruct one exact authorized human excerpt without reopening its session."""
     if not re.fullmatch(r'[0-9a-f]{64}', packet_id) or type(item) is not int or not 0 <= item < 8:
         raise ValueError('select a packet hash and a human item index')
@@ -34,7 +34,8 @@ def read_candidate(binding, root, packet_id, item, *, gateway_original=None):
     owner = sha(wire(binding).encode())
     cursor = json.loads((root / 'cursor.json').read_text())
     if (cursor['binding_sha256'] != owner or cursor['schema'] != sleep_triage.POLICY
-                or cursor.get('gateway_originals', False) != (gateway_original is not None)):
+                or cursor.get('gateway_originals', False) != (gateway_original is not None)
+                or cursor.get('telegram_text', False) != telegram_text):
         raise ValueError('triage state belongs to another capture binding')
     observation = packet['observation']
     with closing(sqlite3.connect(Path(binding['inbox']).resolve().as_uri() + '?mode=ro', uri=True)) as con:
@@ -109,7 +110,7 @@ def apply_review(ledger, binding, candidate, fingerprint, decision):
     references = [evidence]
     if ref := source.get('original_input_ref'):
         event_id = 'sleep-human:' + sha(wire([binding['subject'], ref, start, end]).encode())
-        references.append('conversation:' + ref)
+        references.append(source.get('original_channel', 'conversation') + ':' + ref)
     meta = dict(mode='reported', subject=binding['subject'],
                 source_instance=binding['source_instance'], source_uri=evidence,
                 evidence=references)
@@ -163,6 +164,7 @@ def main():
             root = profile['sleep_triage']['state_dir']
     with ExitStack() as stack:
         resolver = None
+        telegram_text = False
         if args.paired_profile:
             paired = json.loads(Path(args.paired_profile).read_text())
             paired_state = Path(paired['state_dir'])
@@ -177,11 +179,13 @@ def main():
             binding, root = source, paired_state/'triage'
             if profile is None:
                 profile = standalone_library(paired, binding)
+            telegram_text = paired.get('telegram_text') is True
             resolver = stack.enter_context(paired_sleep.original_resolver(paired, source, config['human_id']))
         if args.decision:
             work = stack.enter_context(open(str(Path(binding['inbox']).resolve()) + '.worker.lock', 'a+b'))
             fcntl.flock(work, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        result = read_candidate(binding, root, args.packet, args.item, gateway_original=resolver)
+        result = read_candidate(binding, root, args.packet, args.item,
+                                gateway_original=resolver, telegram_text=telegram_text)
         if args.decision:
             selected = json.loads(Path(args.decision).read_text())
             ledger = CaptureLedger(memory_runtime.load_memory(profile))
