@@ -291,3 +291,7 @@ if required evidence depends on an unread range. The review can finish on
 evidence already present when it is sufficient. A deferred decision keeps the
 cursor in place. Sibling canonical lookups do not run after a source refusal.
 Ordinary non-paged windows keep their existing resumable budget behavior.
+The unread-source notice and any validation feedback are fields in the single
+native source packet. An earlier malformed compact packet with adjacent user
+roles can be replaced through the same explicit recovery API if its exact
+request is retained and there is no dispatch, response or retry receipt.

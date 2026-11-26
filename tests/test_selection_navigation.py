@@ -305,3 +305,45 @@ def test_reprepare_only_rejected_step_and_keep_its_exact_request(setup):
     assert json.loads(receipt_path.read_text()) == failed
     assert json.loads(path.read_text())['inputs'] == original['inputs']
     assert process_once(memory,inbox,state,valid,binding,retrieval='lexical')['state']=='complete'
+
+
+def test_reprepare_local_native_renderer_refusal_with_no_attempt(setup):
+    from pathlib import Path
+    from capturectl import digest
+    from portable_capture import block_schema
+    from portable_producer import reprepare_pending
+
+    memory, inbox, state, valid, binding, _, _ = setup
+
+    def stop(request, work):
+        raise ValueError('stop before locally preparing invalid render')
+
+    with pytest.raises(ValueError, match='stop before'):
+        process_once(memory, inbox, state, stop, binding, retrieval='lexical')
+    path = state/'batch-1.json'
+    job = json.loads(path.read_text())
+    step = job['navigation']['steps'][0]
+    step['request']['response_schema'] = block_schema()
+    work, = state.glob('batch-1-dispatch-*/navigation-1')
+    requests = work/'requests'
+    requests.mkdir()
+
+    def save_fixture():
+        path.write_text(json.dumps(job))
+        request = dict(step['request'], format='hmk-fictional-bounded-memory-operation/v1')
+        file = requests/(digest(request)+'.json')
+        file.write_text(json.dumps(request))
+        return file
+
+    args = dict(preserve_navigation=True, refused_navigation_request=save_fixture())
+    with pytest.raises(ValueError, match='absent receipt alone'):
+        reprepare_pending(memory, inbox, state, 'Verify local renderer refusal', **args)
+
+    step['request']['messages'].append(dict(role='user', content='Consecutive user turn'))
+    args['refused_navigation_request'] = save_fixture()
+    result = reprepare_pending(memory, inbox, state, 'Verify local renderer refusal', **args)
+    assert json.loads(Path(result['preserved_job']).read_text()) == job
+    assert args['refused_navigation_request'].exists()
+    new = json.loads(path.read_text())['navigation']['steps'][0]['request']
+    assert [message['role'] for message in new['messages']] == ['system', 'user']
+    assert process_once(memory, inbox, state, valid, binding, retrieval='lexical')['state'] == 'complete'

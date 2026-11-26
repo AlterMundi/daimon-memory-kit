@@ -423,7 +423,15 @@ def test_paged_navigation_reports_unread_context_without_repeating_the_lookup(se
         assert request['response_schema'] == portable_capture.block_schema()
         notice = json.loads(request['messages'][-1]['content'])
         assert notice['unread_source_requests'][0]['anchor'] == 'anchor'
-        assert 'not read' in notice['instruction']
+        assert 'not read' in notice['source_limit_instruction']
+        assert [message['role'] for message in request['messages']] == ['system', 'user']
+        from codex_memory_provider import command
+        native = dict(request, format='hmk-fictional-bounded-memory-operation/v1',
+                      source_scope='fictional', model='gpt-6.2-sol', phase='capture',
+                      output_token_limit=64, reasoning_effort='low', fresh_context=True,
+                      native_memory_allowed=False, tools_allowed=False)
+        _, rendered = command(native, state/'catalog.json', state, state)
+        assert json.loads(rendered)['unread_source_requests'] == notice['unread_source_requests']
         return dict(selection=dict(outcome='deferred', reason='A required range is unread.',
                                    records=[], links=[]))
 

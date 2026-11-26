@@ -114,14 +114,17 @@ def request_for(job, *, final_only=False):
             '\nReturn a final selection using the supplied source and completely read originals. '
             'If evidence required for a supported decision is still missing, defer and state what is missing. '
             'Do not request another lookup.')
+        payload = json.loads(compact_messages[1]['content'])
         if source_limit:
-            compact_messages.append({'role': 'user', 'content': wire({
-                'unread_source_requests': source_limit,
-                'instruction': 'Those ranges were not read. Defer if evidence required to finish the '
-                               'current window depends on them. Do not treat unread ranges as absent.',
-            })})
+            payload.update(
+                unread_source_requests=source_limit,
+                source_limit_instruction='Those ranges were not read. Defer if evidence required to '
+                                         'finish the current window depends on them. Do not treat '
+                                         'unread ranges as absent.',
+            )
         if 'feedback' in last_step:
-            compact_messages.append({'role': 'user', 'content': wire(last_step['feedback'])})
+            payload['selection_feedback'] = last_step['feedback']
+        compact_messages[1]['content'] = wire(payload)
         packet = {'messages': compact_messages, 'response_schema': final_schema}
         size = len(wire(packet).encode())
         if size > MAX_SELECTION_CONTEXT_BYTES:

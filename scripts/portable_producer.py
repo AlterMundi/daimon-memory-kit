@@ -32,6 +32,7 @@ COMPATIBLE_INDEX_ALERT_PREDECESSOR = '531dcdaa9ad0a216af8fd57910fc3eef3631012bd9
 # Rereading a page from a verified revision now preserves its complete evidence.
 COMPATIBLE_NAVIGATION_PREDECESSOR = '6daaf7c94e51e6a112ed0ea452b36a604e342602406d982a996abf3794969632'
 COMPATIBLE_COMPLETE_READ_PREDECESSOR = 'ea7ce31de16e14d01da1053c0165bcbaf4b261687a2576886ec1ed72ca5d9e19'
+COMPATIBLE_COMPACT_PACKET_PREDECESSOR = '6b10a5e8ccefe833c2805819c2ef0493ede3d46779f636849c0d534382c3664b'
 COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR = 'd5fb7e45581ecc4e2aa9c0a53fe563024215050e544cb5ab11fb5739588bb498'
 COMPATIBLE_CONTEXT_BOUND_PREDECESSOR = '460e04fbd1a48982ecb4edb6df96d8b6648c41c33392254435a1481258ad207d'
 COMPATIBLE_PAGE_BUDGET_PREDECESSOR = 'b3b37f136837afd72ca7ded81a85c68a4db3d013ecd6014f250e80e27e3d9542'
@@ -54,7 +55,7 @@ def compatible_code_hash(fingerprint, *, current=None):
                            COMPATIBLE_ELASTIC_PREDECESSOR, COMPATIBLE_INDEX_ALERT_PREDECESSOR,
                            COMPATIBLE_NAVIGATION_PREDECESSOR, COMPATIBLE_COMPLETE_READ_PREDECESSOR,
                            COMPATIBLE_PAGE_BUDGET_PREDECESSOR, COMPATIBLE_CONTEXT_BOUND_PREDECESSOR,
-                           COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR}
+                           COMPATIBLE_PROGRESSIVE_CONTEXT_PREDECESSOR, COMPATIBLE_COMPACT_PACKET_PREDECESSOR}
 
 
 def _refresh_changed_context(memory, job, job_path):
@@ -592,13 +593,24 @@ def reprepare_pending(memory, inbox, state_dir, reason, *, preserve_navigation=F
                     or (work/'responses'/request_path.name).exists()
                     or any(request.get(k) != v for k, v in step['request'].items())):
                 raise ValueError('retained navigation request differs or has a retry')
-            receipt = json.loads((work/'dispatches'/request_path.name).read_text())
-            failure = receipt.get('native_failure', {})
-            if (receipt.get('request_sha256') != key or receipt.get('state') != 'failed'
-                    or receipt.get('provider_reservation') or receipt.get('provider_usage')
-                    or receipt.get('usage') or receipt.get('content') or receipt.get('native_response_content')
-                    or failure != {'code': 'admission_refused', 'stage': 'bounded_turn_start', 'rpc_code': -32602}):
-                raise ValueError('native rejection before any provider reservation is required')
+            receipt_path = work/'dispatches'/request_path.name
+            if receipt_path.exists():
+                receipt = json.loads(receipt_path.read_text())
+                failure = receipt.get('native_failure', {})
+                if (receipt.get('request_sha256') != key or receipt.get('state') != 'failed'
+                        or receipt.get('provider_reservation') or receipt.get('provider_usage')
+                        or receipt.get('usage') or receipt.get('content') or receipt.get('native_response_content')
+                        or failure != {'code': 'admission_refused', 'stage': 'bounded_turn_start', 'rpc_code': -32602}):
+                    raise ValueError('native rejection before any provider reservation is required')
+            else:
+                roles = [message.get('role') for message in request['messages']]
+                # The native renderer rejects consecutive user turns before
+                # creating any dispatch receipt or starting a provider process.
+                if (request.get('format') not in {'hmk-selected-bounded-memory-operation/v1',
+                                                  'hmk-fictional-bounded-memory-operation/v1'}
+                        or request['response_schema'] != selection.block_schema()
+                        or roles not in (['system', 'user', 'user'], ['system', 'user', 'user', 'user'])):
+                    raise ValueError('an absent receipt alone does not establish native rejection')
             replacement = selection_navigation.request_for(job, final_only=True)
             if replacement == step['request']:
                 raise ValueError('bounded replacement must change the rejected request')
