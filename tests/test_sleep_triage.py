@@ -39,7 +39,7 @@ def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_pa
         if memory_priority is not None:
             patch.setattr(sleep_triage, 'request_for',
                           lambda page, **kwargs: build_request(page, memory_priority=memory_priority, **kwargs))
-        def interrupted(*args):
+        def interrupted(*args, **kwargs):
             raise RuntimeError('local interruption after provider receipt')
         patch.setattr(sleep_triage, 'write_packet', interrupted)
         with pytest.raises(RuntimeError):
@@ -306,3 +306,40 @@ def test_local_triage_failure_alerts_once_and_resolves_after_a_verified_empty_sc
     assert recovered['incident_id'] == original['incident_id']
     assert recovered['processing_state'] == 'resolved'
     assert result['status']['sleep_triage']['classified_pages'] == 0
+
+def test_reviewed_omission_preserves_page_without_provider_and_recovers(context, tmp_path, monkeypatch):
+    binding, source, event = context
+    append(source, turn('status', 'Is the job still running?'))
+    capture(binding, event)
+    root = tmp_path / 'triage'
+
+    def never_dispatch(*args, **kwargs):
+        pytest.fail('reviewed local omission must not invoke a provider')
+
+    with pytest.raises(ValueError, match='exact undispatched'):
+        sleep_triage.run(binding, root, after=0, steps=1, omit=('0'*64, 'Routine status'), opener=never_dispatch)
+    owner = sleep_triage.sha(sleep_triage.wire(binding).encode())
+    with sleep_triage.closing(sleep_triage.sqlite3.connect(binding['inbox'])) as con:
+        con.row_factory = sleep_triage.sqlite3.Row
+        row = sleep_triage.next_observation(con, 0, 1)
+        page, = sleep_triage.source_pages(con, row, binding)
+        request = sleep_triage.request_for(page)
+        scope = sleep_triage.sha(sleep_triage.wire([owner, row['event_key'], 0]).encode())
+        request['input'][0]['content'][0]['data']['window'] = scope
+        fingerprint = sleep_triage.sha(sleep_triage.wire(request).encode())
+    original = sleep_triage.checkpoint
+    with monkeypatch.context() as patch:
+        def interrupted(path, value):
+            if path.name == 'cursor.json':
+                raise RuntimeError('interrupted after private omission receipt')
+            original(path, value)
+        patch.setattr(sleep_triage, 'checkpoint', interrupted)
+        with pytest.raises(RuntimeError, match='interrupted'):
+            sleep_triage.run(binding, root, steps=1, omit=(fingerprint, 'Routine status'), opener=never_dispatch)
+    packet, = (root/'packets').glob('*.json')
+    retained = packet.read_bytes()
+    receipt = json.loads(retained)
+    assert receipt['state'] == 'omitted' and receipt['decision'] is None
+    assert len(receipt['sources']) == 1 and b'Is the job' not in retained
+    assert sleep_triage.run(binding, root, steps=1, opener=never_dispatch)['state'] == 'caught_up'
+    assert packet.read_bytes() == retained
