@@ -189,3 +189,25 @@ published copy count once. Older undated receipts contribute to a separate
 undated total. Known zeros and missing usage are distinct, and cached input is
 part of the input count. Windows cover retained Decisions receipts only. This
 readout does not claim full memory-job cost or reconstruct retired receipts.
+
+## New paired receivers without a forward capture worker
+
+Use `paired_sleep.py enroll --profile "$profile"` on an authorized receiver.
+The profile selects its owner-local Conversation registry (`conversation_db`),
+Codex state store (`native_db`), rollout root (`source_root`), private
+`state_dir`, exact `being_ref` and `body_ref`, and an optional observation path
+recorded as `source_review_report`. Keep the profile private. Authorize the
+forward source before enrollment. The operator binds the paired human's active
+general entry and records its current byte boundary. New input must carry that
+human's authenticated ingress attribution. An unresolved replacement stops
+intake until the source is explicitly reconciled.
+
+Run `paired_sleep.py run --profile "$profile"` from the selected receiving
+service once daily at 08:00 America/Argentina/Buenos_Aires. Use the existing
+systemd encrypted credential or its existing privileged delivery pipe into the
+unprivileged worker. The operation captures one bounded range and classifies at
+most four pages. It installs no Codex hook and sends no input to Codex. Its
+receipts and outbox are in the selected private state directory. A suspended
+service preserves its journal and checkpoint for later recovery. This receiver
+only performs source intake and classification. Canonical admission can use
+the same retained evidence and is qualified separately.

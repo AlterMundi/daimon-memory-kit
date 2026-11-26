@@ -44,7 +44,7 @@ def read_candidate(binding, root, packet_id, item):
         fields = ('conversation', 'revision', 'file_start', 'file_end', 'delta_sha256')
         if row is None or any(row[k] != packet[k] for k in fields):
             raise ValueError('retained capture range differs or was lost')
-        pages = sleep_triage.source_pages(con, row, binding)
+        pages = sleep_triage.source_pages(con, row, binding, human_id=cursor.get('human_id'))
         for offset, page in enumerate(pages):
             key = sha(wire([sleep_triage.POLICY, row['event_key'], offset]).encode())
             if key == packet_id:
