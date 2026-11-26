@@ -21,7 +21,8 @@ def fake_decisions(request, timeout):
     ], 'usage': {'input_tokens': 100}}).encode())
 
 
-def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_path, monkeypatch):
+@pytest.mark.parametrize('legacy_receipt', [False, True])
+def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_path, monkeypatch, legacy_receipt):
     binding, source, event = context
     append(source, turn('incident', 'Esta mañana Renata nos visitó mientras probábamos el prototipo.'))
     capture(binding, event)
@@ -32,7 +33,11 @@ def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_pa
         return fake_decisions(request, timeout)
 
     original = sleep_triage.write_packet
+    build_request = sleep_triage.request_for
     with monkeypatch.context() as patch:
+        if legacy_receipt:
+            patch.setattr(sleep_triage, 'request_for',
+                          lambda page, **kwargs: build_request(page, legacy_memory_priority=True, **kwargs))
         def interrupted(*args):
             raise RuntimeError('local interruption after provider receipt')
         patch.setattr(sleep_triage, 'write_packet', interrupted)
@@ -47,6 +52,8 @@ def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_pa
     assert len(seen) == 1
     assert 'Renata' in json.dumps(seen[0]) and 'old story' not in json.dumps(seen[0])
     assert set(q['name'] for q in seen[0]['questions']) == {'memory_0', 'work_map_0', 'bitacora_0', 'needs_context_0'}
+    instruction = next(q['instructions'] for q in seen[0]['questions'] if q['name'] == 'memory_0')
+    assert ('adds value beyond the project record' in instruction) == (not legacy_receipt)
     packet = json.loads(next((state / 'packets').glob('*.json')).read_text())
     assert packet['decision']['scores']['memory_0'] == 0.9
     assert packet['sources'][0]['source_id'] and 'Renata' not in json.dumps(packet)
