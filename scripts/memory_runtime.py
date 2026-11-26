@@ -5,6 +5,7 @@ The receiving launcher supplies credentials in its process environment.
 """
 
 import argparse
+from contextlib import ExitStack
 import fcntl
 import importlib.util
 import json
@@ -129,12 +130,14 @@ def profile(path):
     if "sleep_triage" in value:
         settings = value["sleep_triage"]
         if (not isinstance(settings, dict)
-                or set(settings) - {"provider_blocked", "paired_profile"} != {
+                or set(settings) - {"provider_blocked", "paired_profile", "foreground_profile"} != {
                     "state_dir", "initial_after", "steps", "credential_env",
                     "source_review_report", "max_age_seconds"}
                 or ("provider_blocked" in settings and settings["provider_blocked"] != "access_denied")
-                or ("paired_profile" in settings and (not isinstance(settings["paired_profile"], str)
-                                                      or not Path(settings["paired_profile"]).is_absolute()))
+                or {"paired_profile", "foreground_profile"} <= set(settings)
+                or any(key in settings and (not isinstance(settings[key], str)
+                                            or not Path(settings[key]).is_absolute())
+                       for key in ("paired_profile", "foreground_profile"))
                 or any(not isinstance(settings[k], str) or not Path(settings[k]).is_absolute()
                        for k in ("state_dir", "source_review_report"))
                 or not Path(settings["state_dir"]).resolve().is_relative_to(Path(value["state_dir"]).resolve())
@@ -298,12 +301,32 @@ def run_sleep_triage(value, inbox, binding, result, *, gateway_original=None,
                            alert_id=alerts.report(operation, "selection", failure))
         else:
             try:
-                receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
-                                           api_key=os.environ.get(settings["credential_env"]),
-                                           human_id=settings.get("human_id"), gateway_original=gateway_original,
-                                           telegram_text=telegram_text, voice_transcripts=voice_transcripts,
-                                           foreground_voice_transcripts=foreground_voice_transcripts,
-                                           foreground_direct_inputs=foreground_direct_inputs)
+                with ExitStack() as stack:
+                    foreground = {}
+                    remaining = False
+                    if profile_path := settings.get("foreground_profile"):
+                        import paired_sleep
+
+                        profile, selected, human, exclude = stack.enter_context(
+                            paired_sleep.supervised_foreground(profile_path, binding))
+                        cutoff = profile["native_observation_after"]
+                        cursor = json.loads((root / "cursor.json").read_text())
+                        if (cursor.get("foreground_after", cutoff) != cutoff
+                                or ("foreground_after" not in cursor and (
+                                    cursor["after"] != cutoff or cursor["page"] or any(
+                                        (root / name).exists() for name in ("dispatch.json", "context-dispatch.json"))))):
+                            raise ValueError("Avatar source requires the settled preceding review")
+                        remaining = paired_sleep.capture_foreground(profile, selected, human, inbox,
+                                                                     after=cursor["after"])
+                        foreground.update(foreground_after=cutoff, foreground_filter=exclude)
+                    receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
+                                               api_key=os.environ.get(settings["credential_env"]),
+                                               human_id=settings.get("human_id"), gateway_original=gateway_original,
+                                               telegram_text=telegram_text, voice_transcripts=voice_transcripts,
+                                               foreground_voice_transcripts=foreground_voice_transcripts,
+                                               foreground_direct_inputs=foreground_direct_inputs, **foreground)
+                    if remaining:
+                        receipt["state"] = "pending"
             except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
                 attempt = None
                 for name in ("context-dispatch.json", "dispatch.json"):

@@ -21,6 +21,35 @@ def fake_decisions(request, timeout):
     ], 'usage': {'input_tokens': 100}}).encode())
 
 
+def test_avatar_cutover_preserves_existing_packets_and_uses_the_same_cycle(context, tmp_path):
+    from capture_inbox import Inbox, sha, wire
+    from paired_sleep import FOREGROUND_SCHEMA
+    from sleep_memory_review import read_candidate
+
+    binding, source, event = context
+    state = tmp_path / 'triage'
+    append(source, turn('old', 'Renata came to visit.'))
+    capture(binding, event)
+    prior = sleep_triage.run(binding, state, after=0, steps=1, api_key='fixture', opener=fake_decisions)
+    old_packet = next((state/'packets').glob('*.json')).stem
+    clip = 'A distinct Avatar conversation.'
+    append(source, turn('delegated', clip))
+    capture(binding, event)
+    ref = 'c095b1da-26d2-4d2c-8eff-7c1ddaf5fa70'
+    raw = wire([dict(ref=ref,received_at='2026-11-26T12:00:00+00:00',text=clip)]).encode()
+    payload = dict(schema=FOREGROUND_SCHEMA,originals=[ref],capture_range=dict(header_bytes=0))
+    sealed = Inbox(binding['inbox'],binding).observe('gateway-foreground:'+sha(raw),payload,raw)
+    policy = dict(foreground_after=prior['after'],foreground_filter=lambda text: text==clip)
+    current = sleep_triage.run(binding,state,steps=2,api_key='fixture',opener=fake_decisions,**policy)
+    assert current['classified_pages']==1 and current['after']==sealed['observation_id']
+    assert read_candidate(binding,state,old_packet,0)['source']['text']=='Renata came to visit.'
+    packet = next(path.stem for path in (state/'packets').glob('*.json')
+                  if json.loads(path.read_text())['observation']==sealed['observation_id'])
+    assert read_candidate(binding,state,packet,0,**policy)['source']['original_input_ref']==ref
+    with pytest.raises(ValueError,match='Avatar intake must start after'):
+        sleep_triage.run(binding, state, steps=1)
+
+
 @pytest.mark.parametrize('memory_priority', [None, sleep_triage.PREVIOUS_MEMORY_PRIORITY,
                                              sleep_triage.LEGACY_MEMORY_PRIORITY])
 def test_forward_delta_receipt_recovers_after_local_interruption(context, tmp_path, monkeypatch, memory_priority):
