@@ -341,3 +341,33 @@ def test_paged_causal_citation_requires_visible_evidence():
     assert prior['sources'][0]['id']==pages[-2]['id']
     validate_citations({'records':[{'source_ids':['response',pages[-2]['id']]}]},
                        [pages[-2], response])
+
+
+def test_rereading_a_page_keeps_complete_evidence_for_the_same_revision():
+    from selection_navigation import _lookup
+
+    class Reader:
+        revision = 1
+
+        def call(self, request):
+            offset = request['offset']
+            return dict(status='ok', record=dict(record_uid='original', revision=self.revision),
+                        raw='First ' if offset == 0 else 'last.', next_offset=6 if offset == 0 else None)
+
+    reader = Reader()
+    state = dict(canon=[], partial={})
+    request = dict(action='read', record_uid='original', query='', offset=0, expected_revision=1)
+    _lookup(reader, request, state)
+    _lookup(reader, dict(request, offset=6), state)
+    original = dict(record_uid='original', revision=1, raw='First last.')
+    assert state['canon'] == [original]
+
+    assert _lookup(reader, request, state)['next_offset'] == 6
+    assert state == dict(canon=[original], partial={})
+
+    reader.revision = 2
+    assert _lookup(reader, request, state)['status'] == 'revision_changed'
+    _lookup(reader, dict(request, expected_revision=2), state)
+    assert not state['canon']
+    _lookup(reader, dict(request, offset=6, expected_revision=2), state)
+    assert state == dict(canon=[dict(original, revision=2)], partial={})
