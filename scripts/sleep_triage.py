@@ -153,6 +153,10 @@ def decisions(request, response):
     return scores, refused
 
 
+class CredentialRequired(ValueError):
+    """An eligible request has not been sent because the worker has no key."""
+
+
 def dispatch(request, path, api_key, *, opener=urllib.request.urlopen):
     request_hash = sha(wire(request).encode())
     if path.exists():
@@ -161,7 +165,7 @@ def dispatch(request, path, api_key, *, opener=urllib.request.urlopen):
             raise ValueError('retained dispatch needs explicit reconciliation; no automatic retry')
         return receipt
     if not api_key:
-        raise ValueError('an OpenAI API credential is required for Decisions')
+        raise CredentialRequired('an OpenAI API credential is required for Decisions')
     checkpoint(path, dict(state='started', request_sha256=request_hash))
     started = time.monotonic()
     call = urllib.request.Request(

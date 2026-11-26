@@ -212,7 +212,7 @@ def run(value):
 
 def run_sleep_triage(value, inbox, binding, result):
     from codex_coordinator import checkpoint
-    from provider_status import Alerts, ProviderProblem
+    from provider_status import ACTIONS, Alerts, ProviderProblem
     import sleep_health
     import sleep_triage
 
@@ -224,6 +224,7 @@ def run_sleep_triage(value, inbox, binding, result):
         if json.loads(path.read_text()) != result["status"]:
             raise ValueError("another worker advanced; preserve its status")
         operation = "sleep-triage:" + result["status"]["owner"]
+        local_operation = operation + ":input"
         alerts = Alerts(inbox)
         after = None if (root / "cursor.json").exists() else settings["initial_after"]
         blocked = settings.get("provider_blocked")
@@ -236,21 +237,38 @@ def run_sleep_triage(value, inbox, binding, result):
                 receipt = sleep_triage.run(binding, root, after=after, steps=settings["steps"],
                                            api_key=os.environ.get(settings["credential_env"]))
             except (ValueError, KeyError, IndexError, OSError, sqlite3.Error) as error:
-                attempt = {}
+                attempt = None
                 for name in ("context-dispatch.json", "dispatch.json"):
-                    active = root / name
-                    if active.is_file():
-                        retained = json.loads(active.read_text())
-                        if retained.get("state") != "complete":
-                            attempt = retained
-                            break
-                receipt = dict(state="blocked", reason_code="inspect_sleep_triage", error_type=type(error).__name__)
-                if attempt:
-                    problem = attempt.get("problem", {"code": "dispatch_unresolved"})
-                    failure = ProviderProblem("openai-decisions", attempt["request_sha256"], problem)
-                    receipt.update(alert_id=alerts.report(operation, "selection", failure),
-                                   reason_code=failure.problem["code"])
+                    try:
+                        retained = json.loads((root / name).read_text())
+                    except FileNotFoundError:
+                        continue
+                    except (OSError, ValueError):
+                        attempt = dict(problem={"code": "dispatch_unresolved"})
+                        break
+                    if not isinstance(retained, dict):
+                        attempt = dict(problem={"code": "dispatch_unresolved"})
+                        break
+                    if retained.get("state") != "complete":
+                        attempt = retained
+                        break
+                if attempt is not None:
+                    problem = attempt.get("problem")
+                    if not isinstance(problem, dict) or problem.get("code") not in ACTIONS:
+                        problem = {"code": "dispatch_unresolved"}
+                    failure = ProviderProblem("openai-decisions", attempt.get("request_sha256", operation), problem)
+                    incident = operation
+                elif isinstance(error, sleep_triage.CredentialRequired):
+                    failure = ProviderProblem("openai-decisions", operation, {"code": "authentication_failed"})
+                    incident = operation
+                else:
+                    failure = ProviderProblem("dmk", local_operation, {"code": "observation_unreadable"})
+                    incident = local_operation
+                receipt = dict(state="blocked", reason_code=failure.problem["code"],
+                               error_type=type(error).__name__,
+                               alert_id=alerts.report(incident, "selection", failure, reopen=True))
             else:
+                alerts.resolve(local_operation)
                 if receipt["classified_pages"]:
                     alerts.resolve(operation)
         if receipt["state"] == "blocked":

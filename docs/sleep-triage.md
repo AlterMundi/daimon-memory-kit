@@ -89,7 +89,11 @@ HTTP rejection, fix the cause and explicitly run the same state with
 The original rejection and reason remain in private state. Do not authorize a
 second call after a timeout or ambiguous server result without reconciliation.
 The worker projects retained provider failures through the existing DMK outbox.
-A standalone run returns the failure directly.
+The same outbox reports unreadable local input before a dispatch. A verified
+scan can resolve that local incident even when there is no eligible dialogue.
+Restoring the Decisions credential or provider access still requires a successful
+classification to resolve the provider incident. A standalone run returns the
+failure directly.
 
 Each step uses at most 12,000 bytes of human dialogue packet and 32 initial
 predicates, plus the bounded optional follow-up. There are at most 32 steps per
