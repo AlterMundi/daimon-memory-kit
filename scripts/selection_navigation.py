@@ -189,7 +189,7 @@ def advance(job, job_path, work, proposer, *, database, steps=4, retrieval='hybr
     state = job['navigation']
     binding = job['inputs']['context']
     reader = Reader.live_pool(database, being_ref=binding['subject'],
-        body_ref=binding['source_instance'],retrieval=retrieval,backend=backend)
+        body_ref=binding['source_instance'],max_bytes=24000,retrieval=retrieval,backend=backend)
     dispatched = 0
     while True:
         if state.get('halted_reason'):

@@ -253,6 +253,12 @@ documents and changes to the source evidence. The original dispatch and any
 earlier uncertain reviewer remain retained. Normal producer admission remains
 authoritative.
 
+Selection navigation uses the existing reader with a 24,000-byte response
+limit per lookup. A single selection step can request at most eight lookups.
+The same revision and contiguous offsets remain required, including when a
+retained batch resumes with a different page size. The interactive recall
+reader keeps its existing limits.
+
 When consecutive lookups reread pages of originals already verified at their
 current revision, the next bounded selection uses those complete originals
 directly. It can defer if required evidence is still missing. Earlier lookup
