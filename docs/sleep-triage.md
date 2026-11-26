@@ -252,7 +252,10 @@ copy or provider call. The safe backup state is retained alongside review;
 a failed backup remains visible independently of Decisions. A suspended
 service preserves its journal and checkpoint for later recovery. This receiver
 performs source intake and classification. For canonical admission use the
-existing review command with `--profile "$canonical_profile"` and
-`--paired-profile "$profile"`. It verifies that both profiles belong to the
-same owner and body, re-reads the original reference, and applies the existing
-explicit review and idempotent receipt.
+existing review command. On a standalone paired worker use
+`sleep_memory_review.py --paired-profile "$profile" --packet "$packet" --item 0`.
+It opens only the already enrolled canonical library protected by the same
+owner backup profile. For a receiver with a separate canonical worker, pass
+`--profile "$canonical_profile"` as well. Both routes re-read the original
+reference and use the same explicit review, optional `--decision` and idempotent
+receipt.

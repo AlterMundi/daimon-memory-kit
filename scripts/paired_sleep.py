@@ -200,15 +200,9 @@ def run(profile, root, *, worker_settings=None):
                 capture_complete=source['capture_complete'])
 
 
-def maintain_backup(profile, root):
-    """Refresh the selected canonical owner's existing periodic protection."""
-    from memory_runtime import backup_notice
-    from periodic_backups import Baselines
+def owner_backup_profile(profile, binding):
     import snapshot_store
 
-    config = json.loads((root/'binding.json').read_bytes())
-    binding = verified_binding(profile, config)
-    inbox = Inbox(binding['inbox'], binding)
     path = Path(profile['backup_profile'])
     if (not path.is_absolute() or path.is_symlink() or path.stat().st_uid != os.getuid()
             or path.stat().st_mode & 0o077):
@@ -217,15 +211,27 @@ def maintain_backup(profile, root):
     policy = snapshot_store.policy(backup['snapshots'])
     if policy['routine_backup']['subject'] != binding['subject']:
         raise ValueError('backup and paired source owner differ')
+    return backup['database'], policy
+
+
+def maintain_backup(profile, root):
+    """Refresh the selected canonical owner's existing periodic protection."""
+    from memory_runtime import backup_notice
+    from periodic_backups import Baselines
+
+    config = json.loads((root/'binding.json').read_bytes())
+    binding = verified_binding(profile, config)
+    inbox = Inbox(binding['inbox'], binding)
+    database, policy = owner_backup_profile(profile, binding)
     try:
-        pool = Baselines(backup['database'], policy)
+        pool = Baselines(database, policy)
         if not pool.manifest_path.is_file():
             raise ValueError('existing paired baseline enrollment required')
         result = pool.refresh()
     except (OSError, ValueError, TypeError, KeyError, sqlite3.Error):
         result = dict(state='failed', reason_code='backup_state_unreadable')
 
-    return backup_notice(dict(database=backup['database'], snapshots=policy,
+    return backup_notice(dict(database=database, snapshots=policy,
                               context={k: binding[k] for k in ('subject', 'source_instance')}),
                          inbox, result)
 

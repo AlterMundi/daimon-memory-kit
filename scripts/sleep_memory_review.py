@@ -4,6 +4,7 @@ from contextlib import ExitStack, closing
 import datetime
 import fcntl
 import json
+import os
 from pathlib import Path
 import re
 import sqlite3
@@ -124,21 +125,42 @@ def apply_review(ledger, binding, candidate, fingerprint, decision):
     return ledger.assess(receipt['event_key'], decision)
 
 
+def standalone_library(paired, binding):
+    """Use the same enrolled owner library as the paired periodic backup."""
+    from periodic_backups import Baselines
+
+    database, policy = paired_sleep.owner_backup_profile(paired, binding)
+    pool = Baselines(database, policy)
+    if not pool.manifest_path.is_file():
+        raise ValueError('existing canonical owner library enrollment required')
+    pool.read()
+    bound = os.environ.get('HMK_DB_PATH')
+    if bound is not None and Path(bound).resolve() != pool.database:
+        raise ValueError('receiving database binding differs')
+    return dict(database=str(pool.database),
+                memory_base=os.environ.get('HMK_AGENT_MEMORY_BASE', str(pool.database.parent)))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--profile', required=True)
+    parser.add_argument('--profile', help='Existing canonical worker profile, when available')
     parser.add_argument('--paired-profile', help='Owner-local paired Decisions profile, if separate from the canonical worker')
     parser.add_argument('--packet', required=True)
     parser.add_argument('--item', required=True, type=int)
     parser.add_argument('--decision', help='Private JSON with fingerprint and reviewed CaptureLedger decision')
     args = parser.parse_args()
-    profile = memory_runtime.profile(args.profile)
-    binding = json.loads(Path(profile['binding']).read_text())
-    if Path(binding['inbox']).resolve() != Path(profile['inbox']).resolve() or any(
-        binding[k] != profile['context'][k] for k in ('subject', 'source_instance')
-    ):
-        raise ValueError('review binding differs from the selected worker')
-    root = profile['sleep_triage']['state_dir']
+    if not args.profile and not args.paired_profile:
+        parser.error('an existing worker or paired profile is required')
+    profile = memory_runtime.profile(args.profile) if args.profile else None
+    binding = None
+    if profile is not None:
+        binding = json.loads(Path(profile['binding']).read_text())
+        if Path(binding['inbox']).resolve() != Path(profile['inbox']).resolve() or any(
+            binding[k] != profile['context'][k] for k in ('subject', 'source_instance')
+        ):
+            raise ValueError('review binding differs from the selected worker')
+        if not args.paired_profile:
+            root = profile['sleep_triage']['state_dir']
     with ExitStack() as stack:
         resolver = None
         if args.paired_profile:
@@ -148,10 +170,13 @@ def main():
             if config['schema'] != paired_sleep.SCHEMA:
                 raise ValueError('unsupported paired binding')
             source = paired_sleep.verified_binding(paired, config)
-            if (any(source[key] != binding[key] for key in ('subject', 'source_instance'))
-                    or Path(source['inbox']).resolve() != (paired_state/'capture.sqlite').resolve()):
+            if (Path(source['inbox']).resolve() != (paired_state/'capture.sqlite').resolve()
+                    or (binding is not None and any(source[key] != binding[key]
+                                                     for key in ('subject', 'source_instance')))):
                 raise ValueError('paired source differs from the canonical memory owner')
             binding, root = source, paired_state/'triage'
+            if profile is None:
+                profile = standalone_library(paired, binding)
             resolver = stack.enter_context(paired_sleep.original_resolver(paired, source, config['human_id']))
         if args.decision:
             work = stack.enter_context(open(str(Path(binding['inbox']).resolve()) + '.worker.lock', 'a+b'))
