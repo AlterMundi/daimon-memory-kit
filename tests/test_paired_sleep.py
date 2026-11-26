@@ -41,9 +41,10 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
                               'create table turns(id, session_id, from_user_id, native_thread_id, status);')
             original = 'c095b1da-26d2-4d2c-8eff-7c1ddaf5fa70'
             gateway_text = 'We watched the sunrise together at the lake.'
+            proof = dict(source_sha256='typed-voice-proof')
             con.execute("insert into turns values('turn-1',1,501,?,'sending')", (native_id,))
             con.execute("insert into conversation_inputs values(?,501,1,?,'sending','turn-1',0,?,?)",
-                        (original, native_id, json.dumps(dict(text=gateway_text)), '2026-11-26T03:00:00+00:00'))
+                        (original, native_id, json.dumps(dict(text=gateway_text, voice=dict(transcription=proof))), '2026-11-26T03:00:00+00:00'))
     root = tmp_path/'sleep'
     root.mkdir(mode=0o700)
     profile = dict(source_root=str(journal), native_db=str(native), conversation_db=str(gateway),
@@ -53,6 +54,7 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
         config.write_text(f'db_path = {json.dumps(str(gateway))}\n[interaction]\n'
                           f'human_id = 501\nchat_id = {chat}\ntopic_id = {topic}\n')
         profile['conversation_config'] = str(config)
+        profile['voice_transcripts'] = True
         with pytest.raises(ValueError, match='configuration and registry differ'):
             paired_sleep.enroll(dict(profile, conversation_db=str(native)), root)
     paired_sleep.enroll(profile, root)
@@ -81,8 +83,10 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
             con.execute('update conversation_inputs set created_at=? where id=?',
                         (datetime.now(timezone.utc).isoformat(), original))
         frame = '[Original conversation input]\n' + json.dumps(dict(input_ref=original)) + '\nmetadata\n\n'
-        append(source, turn('altered', frame+'This is fabricated text.')
-               + turn('gateway', frame+gateway_text))
+        typed = ('[Committed voice input]\nCapture: '+original+'\nAutomatic interpretation.\nProvenance: '
+                 +json.dumps(proof)+'\n\n')
+        append(source, turn('altered', frame+typed+'This is fabricated text.')
+               + turn('gateway', frame+typed+gateway_text))
 
     real_run = sleep_triage.run
     observed = []
@@ -119,7 +123,8 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
                           for row in json.loads(file.read_text())['sources'])]
         binding = json.loads((root/'binding.json').read_text())['binding']
         with paired_sleep.original_resolver(profile, binding, 501) as resolver:
-            candidate = read_candidate(binding, triage, packet.stem, 0, gateway_original=resolver)
+            candidate = read_candidate(binding, triage, packet.stem, 0, gateway_original=resolver,
+                                       voice_transcripts=True)
         assert candidate['source']['text'] == gateway_text
         assert candidate['source']['original_input_ref'] == original
         ledger = CaptureLedger(mc)
@@ -131,6 +136,7 @@ def test_paired_scope_survives_restart_and_refuses_replacement(tmp_path, monkeyp
         assert apply_review(ledger, binding, candidate, candidate['fingerprint'], decision) == saved
         record = mc._read_chapter(saved['records']['sunrise']['chapter_id'])
         assert 'conversation:'+original in json.loads(record['source_metadata_json'])['evidence']
+        assert 'automatic-transcript:'+original in json.loads(record['source_metadata_json'])['evidence']
     paired_sleep.run(profile, root)
     assert len(observed) == (2 if configured_entry else 1)
 
@@ -217,6 +223,20 @@ def test_paired_cycle_reuses_owner_baseline_without_copy(backup_config, context,
     backup.write_text(json.dumps(backup_config))
     with pytest.raises(ValueError, match='owner differ'):
         paired_sleep.maintain_backup(dict(backup_profile=str(backup)), root)
+
+def test_committed_voice_requires_exact_retained_transcript_and_typed_proof(tmp_path):
+    ref = 'c095b1da-26d2-4d2c-8eff-7c1ddaf5fa70'
+    words = 'Nos encontramos mirando el amanecer.'
+    proof = dict(capture_stop='duration_limit', source_sha256='fixture-voice-proof')
+    original = dict(text=words, voice=dict(transcription=proof))
+    typed = ('[Committed voice input]\nCapture: ' + ref
+             + '\nAutomatic interpretation.\nProvenance: ' + json.dumps(proof) + '\n')
+    rendered = typed + paired_sleep.VOICE_WARNINGS['duration_limit'] + '\n' + words
+    assert paired_sleep.committed_voice_matches(rendered, ref, original)
+    assert not paired_sleep.committed_voice_matches(rendered + ' Extra words.', ref, original)
+    assert not paired_sleep.committed_voice_matches(rendered, 'another-original', original)
+    assert not paired_sleep.committed_voice_matches(rendered.replace('fixture-voice-proof', 'changed-proof'), ref, original)
+
 
 def test_telegram_text_requires_exact_owner_turn_and_text(tmp_path):
     registry = tmp_path/'gateway.sqlite'

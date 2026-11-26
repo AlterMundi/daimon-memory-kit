@@ -68,7 +68,7 @@ def enrolled_thread(profile):
     return (*rows[0], *row)
 
 
-def gateway_original(con, coordinates, native, block, *, not_before=None):
+def gateway_original(con, coordinates, native, block, *, not_before=None, voice_transcripts=False):
     """Accept a native reference only when its text and receiving journal agree."""
     header, separator, text = block.partition('\n\n')
     if header.startswith('[Device-reported playback context]\n'):
@@ -96,7 +96,13 @@ def gateway_original(con, coordinates, native, block, *, not_before=None):
     doc, phase, turn, received_at, linked = row
     value = json.loads(doc)
     original = value.get('text')
-    if not isinstance(original, str) or text != original or value.get('tribu_source'):
+    if not isinstance(original, str) or value.get('tribu_source'):
+        return None
+    voice = text.startswith('[Committed voice input]\n')
+    if voice:
+        if not voice_transcripts or not committed_voice_matches(text, ref, value):
+            return None
+    elif text != original:
         return None
     if not_before is not None:
         received = datetime.fromisoformat(received_at)
@@ -107,7 +113,30 @@ def gateway_original(con, coordinates, native, block, *, not_before=None):
         raise ValueError('Gateway original has no settled native linkage')
     if phase != 'accepted':
         return None
-    return dict(text=original, original_input_ref=ref, received_at=received_at)
+    accepted = dict(text=original, original_input_ref=ref, received_at=received_at)
+    if voice:
+        accepted['channel'] = 'human_voice_transcription'
+    return accepted
+
+
+VOICE_WARNINGS = {
+    'duration_limit': 'Device reports recording stopped at the duration limit. The ending may be missing. Do not assume this fragment is the complete request; wait for or clarify the continuation. This warning is system metadata, not human speech.\n',
+    'audio_flush_unconfirmed': 'Device could not confirm the final audio buffer. The human explicitly chose to send the retained fragment; its ending may be missing. Do not assume the complete request was captured; wait for or clarify the continuation. This warning is system metadata, not human speech.\n',
+}
+
+
+def committed_voice_matches(rendered, ref, original):
+    parsed = rendered.split('\n', 4)
+    if len(parsed) != 5 or parsed[1] != 'Capture: ' + ref or not parsed[3].startswith('Provenance: '):
+        return False
+    try:
+        proof = json.loads(parsed[3].removeprefix('Provenance: '))
+    except ValueError:
+        return False
+    if not isinstance(proof, dict) or not proof or proof != (original.get('voice') or {}).get('transcription'):
+        return False
+    warning = VOICE_WARNINGS.get(proof.get('capture_stop'), '')
+    return parsed[4] == warning + '\n' + original['text']
 
 
 def telegram_original(con, coordinates, native, turn, text, *, not_before):
@@ -153,7 +182,8 @@ def original_resolver(profile, binding, human_id):
     boundary = datetime.fromisoformat(binding['sessions_started_at_or_after'])
     with readonly(registry) as con:
         native = binding['selected_session_id']
-        original = partial(gateway_original, con, coordinates, native, not_before=boundary)
+        original = partial(gateway_original, con, coordinates, native, not_before=boundary,
+                           voice_transcripts=profile.get('voice_transcripts') is True)
 
         def resolve(text, *, turn=None):
             found = original(text)
@@ -238,7 +268,8 @@ def run(profile, root, *, worker_settings=None):
     value = dict(state_dir=str(root), sleep_triage=settings)
     with original_resolver(profile, binding, config['human_id']) as resolver:
         run_sleep_triage(value, inbox, binding, saved, gateway_original=resolver,
-                         telegram_text=profile.get('telegram_text') is True)
+                         telegram_text=profile.get('telegram_text') is True,
+                         voice_transcripts=profile.get('voice_transcripts') is True)
     out = saved['status']['sleep_triage']
     return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),
                 capture_complete=source['capture_complete'])

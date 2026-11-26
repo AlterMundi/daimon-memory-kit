@@ -231,7 +231,12 @@ source is explicitly reconciled. A profile may explicitly select
 journal text, author, topic, and confirmed native turn linkage. An in-flight
 match stays pending. Text from other turns and administrative commands remain
 outside that intake; audio uses its own authenticated route. The receipt keeps
-the Telegram original reference privately.
+the Telegram original reference privately. A profile may also select
+`voice_transcripts: true` for committed Conversation voice inputs. The native
+envelope must match the exact retained typed capture proof and transcript.
+Classify only the retained automatic interpretation and carry its source kind
+into the private decision and canonical evidence. DMK sends no audio, performs
+no second transcription, and keeps live acoustic windows outside this route.
 
 On a receiver that already has a daily worker, first reconcile the preceding
 Decisions backlog and retain its receipts. Then set `sleep_triage.paired_profile`
