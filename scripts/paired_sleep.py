@@ -99,7 +99,7 @@ def run(profile, root):
     run_sleep_triage(dict(state_dir=str(root), sleep_triage=dict(
         state_dir=str(triage), initial_after=initial, steps=4, human_id=config['human_id'],
         credential_env='DMK_DECISIONS_API_KEY', max_age_seconds=93600,
-        source_review_report=profile['source_review_report'])), inbox, binding, saved)
+        source_review_report=profile.get('source_review_report'))), inbox, binding, saved)
     out = saved['status']['sleep_triage']
     return dict(triage=out, state=('pending' if out['state'] != 'blocked' and not source['capture_complete'] else out['state']),
                 capture_complete=source['capture_complete'])
