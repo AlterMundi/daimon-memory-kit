@@ -163,3 +163,33 @@ def test_collision_replay_refuses_changed_canonical_evidence_without_new_call(se
     with pytest.raises(ValueError,match='canonical evidence changed'):
         repair(value,1,'Reconcile collision.',mode='collision',models=rejected)
     assert len(calls)==1
+
+
+def test_missing_original_is_reviewed_once_before_admission(setup, tmp_path):
+    memory, inbox, state, propose, binding, _, _ = setup
+    cid = memory.add_text('episodes', 'Existing encounter', 'The retained encounter.')
+    value = configuration(tmp_path, memory, inbox, state, binding)
+
+    def ungrounded(request, directory):
+        return reconciled({'navigation': {'steps': [
+            {'proposal': propose(request, directory)}]}}, cid)
+
+    assert process_once(memory, inbox, state, ungrounded, binding,
+                        retrieval='lexical')['state'] == 'pending'
+    job = json.loads((state/'batch-1.json').read_text())
+    calls = []
+
+    def native(request, directory):
+        calls.append(request)
+        canon = json.loads(request['messages'][1]['content'])['current_canon']
+        assert canon[0]['raw'] == 'The retained encounter.'
+        return job['navigation']['steps'][-1]['proposal']
+
+    assert repair(value, 1, 'Read the exact original.', mode='missing-original',
+                  models=native)['state'] == 'repaired_for_validation'
+    assert repair(value, 1, 'Read the exact original.', mode='missing-original',
+                  models=native)['state'] == 'replayed'
+    assert len(calls) == 1 and memory._read_chapter(cid)['revision'] == 1
+    assert process_once(memory, inbox, state, lambda *_: pytest.fail('no generation'),
+                        binding, retrieval='lexical')['state'] == 'complete'
+    assert memory._read_chapter(cid)['revision'] == 2
